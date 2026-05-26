@@ -1,0 +1,22 @@
+# Entorno virtual Python
+entorno_web_seguros/
+
+# Variables de entorno
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Node / Frontend
+node_modules/
+dist/
+.vite/
+
+# VSCode
+.vscode/
+
+# Sistema
+.DS_Store
+Thumbs.db
