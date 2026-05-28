@@ -184,14 +184,12 @@ Un buen commit dice **qué** se hizo y opcionalmente **por qué**, no cómo:
 ❌ "arreglé cosas"
 ❌ "wip"
 ```
-
-### Si es tu primer push de esa rama
-
-```bash
-git push -u origin mi-funcionalidad
-```
-
-El `-u` establece el "upstream" para que los próximos `git push` funcionen sin especificar la rama.
+> [!NOTE]
+> ### Si es tu primer push de esa rama
+>```bash
+>git push -u origin mi-funcionalidad
+>```
+>El `-u` establece el "upstream" para que los próximos `git push` funcionen sin especificar la rama.
 
 ---
 
