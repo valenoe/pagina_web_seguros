@@ -6,11 +6,11 @@ Plataforma web para la gestión de seguros: catálogo de productos, cotizaciones
 
 ## Stack
 
-| Capa | Tecnología |
-|------|-----------|
-| Backend | Python 3.14, FastAPI, SQLAlchemy 2, Uvicorn |
-| Base de datos | MariaDB |
-| Frontend | React 19, Vite 8, Tailwind CSS 4 |
+| Capa          | Tecnología                                  |
+| ------------- | ------------------------------------------- |
+| Backend       | Python 3.14, FastAPI, SQLAlchemy 2, Uvicorn |
+| Base de datos | MariaDB                                     |
+| Frontend      | React 19, Vite 8, Tailwind CSS 4            |
 
 ---
 
@@ -71,8 +71,8 @@ mysql -u usuario -p seguros_web_db < DB.sql
 
 ## Variables de entorno
 
-| Variable | Descripción |
-|----------|-------------|
+| Variable       | Descripción                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------------- |
 | `DATABASE_URL` | Cadena de conexión a MariaDB. Formato: `mysql+pymysql://usuario:contraseña@host:puerto/nombre_db` |
 
 ---
@@ -80,3 +80,9 @@ mysql -u usuario -p seguros_web_db < DB.sql
 ## Deployment
 
 > Pendiente. El proyecto será desplegado en una máquina virtual de DigitalOcean.
+
+---
+
+## Estado 01-06-2026
+
+Prueba de base de datos
