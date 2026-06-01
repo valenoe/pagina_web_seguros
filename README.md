@@ -85,4 +85,8 @@ mysql -u usuario -p seguros_web_db < DB.sql
 
 ## Estado 01-06-2026
 
-Prueba de base de datos
+- Conexión a MariaDB verificada (`SHOW TABLES` exitoso)
+- Schema aplicado: 7 tablas creadas (`DB.sql`)
+- Modelos SQLAlchemy definidos en `backend-web-seguros/models/`
+- 2 tests en `backend-web-seguros/tests/`: `test_conexion.py` verifica la conexión a la base de datos, `seed_catalogo.py` inserta 3 seguros de prueba en `web_seguros_catalogo` (Accidentes Personales, Automóvil, Incendio y Sismo)
+- Router `/seguros` operativo: `GET /seguros/` lista el catálogo activo, `GET /seguros/{id}` retorna un seguro específico
