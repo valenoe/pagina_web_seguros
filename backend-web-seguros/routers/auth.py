@@ -2,8 +2,8 @@ import os
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+import bcrypt
 from jose import jwt
-from passlib.context import CryptContext
 from dotenv import load_dotenv
 from database import get_db
 from models.cliente import Cliente, PortalAcceso
@@ -14,8 +14,6 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -39,7 +37,7 @@ def login(datos: LoginIn, db: Session = Depends(get_db)):
     if not acceso or not acceso.password_hash:
         raise _CREDENCIALES_INVALIDAS
 
-    if not pwd_context.verify(datos.password, acceso.password_hash):
+    if not bcrypt.checkpw(datos.password.encode(), acceso.password_hash.encode()):
         raise _CREDENCIALES_INVALIDAS
 
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
