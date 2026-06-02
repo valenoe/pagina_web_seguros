@@ -3635,233 +3635,360 @@ POR QUE ELEGIRNOS
   }
 }
 
-/* ====================
-INFORMACION UTIL
-==================== */
+/* CONTACTO */
 
-.news-section{
+.contact-page{
+background:#f7f8fc;
+}
 
-padding:110px 8%;
+.contact-hero{
 
-background:white;
+padding:120px 8% 90px;
+
+text-align:center;
 
 }
 
-.news-header{
+.contact-hero span{
 
-max-width:850px;
+background:#f47c20;
 
-margin-bottom:60px;
+color:white;
 
-}
+padding:12px 22px;
 
-.news-header span{
+border-radius:999px;
 
-display:inline-block;
-
-background:
-rgba(
-244,
-124,
-32,
-0.12
-);
-
-color:#f47c20;
-
-padding:
-12px 22px;
-
-border-radius:
-999px;
-
-font-weight:
-900;
-
-margin-bottom:
-22px;
+font-weight:800;
 
 }
 
-.news-header h2{
+.contact-hero h1{
 
-font-size:
-54px;
+font-size:64px;
 
-line-height:
-1.08;
+margin-top:30px;
 
-color:
-#07195a;
-
-margin-bottom:
-22px;
+color:#081d6c;
 
 }
 
-.news-header p{
+.contact-hero p{
 
-font-size:
-20px;
+max-width:700px;
 
-line-height:
-1.8;
+margin:24px auto;
 
-color:
-#555;
+font-size:20px;
 
-max-width:
-700px;
+color:#666;
 
 }
 
-.news-grid{
+.contact-content{
+
+padding:0 8% 120px;
 
 display:grid;
 
-grid-template-columns:
-repeat(
-3,
-1fr
-);
+grid-template-columns:1fr 1fr;
 
-gap:
-28px;
+gap:40px;
 
 }
 
-.news-card{
+.contact-card,
+.contact-form{
 
-padding:
-38px;
+background:white;
 
-border-radius:
-34px;
+padding:48px;
 
-background:
-#f6f7fb;
-
-transition:
-.3s;
+border-radius:32px;
 
 }
 
-.news-card:hover{
+.contact-card span{
 
-transform:
-translateY(-8px);
+color:#f47c20;
 
-box-shadow:
-0 25px 70px rgba(0,0,0,.08);
+font-weight:800;
 
 }
 
-.news-tag{
+.contact-card h2{
 
-display:inline-block;
+font-size:42px;
 
-padding:
-10px 18px;
+margin:20px 0;
 
-border-radius:
-999px;
-
-background:
-rgba(
-244,
-124,
-32,
-0.12
-);
-
-color:
-#f47c20;
-
-font-weight:
-800;
-
-margin-bottom:
-24px;
+color:#081d6c;
 
 }
 
-.news-card h3{
+.contact-list{
 
-font-size:
-30px;
+display:grid;
 
-line-height:
-1.25;
+gap:24px;
 
-color:
-#07195a;
-
-margin-bottom:
-18px;
+margin-top:36px;
 
 }
 
-.news-card p{
+.contact-list strong{
 
-color:
-#555;
-
-line-height:
-1.8;
-
-margin-bottom:
-28px;
+color:#081d6c;
 
 }
 
-.news-card a{
+.contact-list p{
 
-font-weight:
-900;
+margin-top:6px;
 
-color:
-#07195a;
+color:#555;
 
 }
 
-.news-card a:hover{
+.contact-cotizar{
 
-color:
-#f47c20;
+margin-top:40px;
+
+width:100%;
+
+height:64px;
+
+background:#081d6c;
+
+color:white;
+
+border:none;
+
+border-radius:999px;
+
+font-size:18px;
+
+font-weight:800;
+
+cursor:pointer;
+
+}
+
+.contact-form{
+
+display:grid;
+
+gap:24px;
+
+}
+
+.contact-form input,
+.contact-form textarea{
+
+width:100%;
+
+padding:18px;
+
+border-radius:18px;
+
+border:1px solid #ddd;
+
+}
+
+.contact-form textarea{
+
+height:180px;
+
+}
+
+.contact-form button{
+
+height:64px;
+
+background:#f47c20;
+
+color:white;
+
+border:none;
+
+border-radius:999px;
+
+font-size:18px;
+
+font-weight:800;
+
+cursor:pointer;
 
 }
 
 @media(max-width:1000px){
 
-.news-grid{
+.contact-content{
 
-grid-template-columns:
-1fr;
+grid-template-columns:1fr;
 
 }
 
-.news-header h2{
+.contact-hero h1{
 
-font-size:
-40px;
+font-size:42px;
 
 }
 
 }
-.purpose-button {
-  margin-top: 36px;
-  background: #f47c20;
-  color: white;
+/* ======================
+LUPA HEADER
+====================== */
+
+.header-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-button {
+  background: transparent;
   border: none;
-  padding: 18px 34px;
-  border-radius: 999px;
-  font-size: 17px;
-  font-weight: 900;
+
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   cursor: pointer;
-  transition: 0.25s ease;
+
+  border-radius: 999px;
+
+  transition: .2s;
 }
 
-.purpose-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 18px 45px rgba(244, 124, 32, 0.28);
+.search-button:hover {
+  background: rgba(7, 25, 90, 0.06);
+}
+
+/* ICONO LUPA */
+
+.search-icon {
+  width: 18px;
+  height: 18px;
+
+  border: 3px solid #07195a;
+
+  border-radius: 50%;
+
+  position: relative;
+
+  display: block;
+}
+
+.search-icon::after {
+  content: "";
+
+  width: 10px;
+  height: 3px;
+
+  background: #07195a;
+
+  position: absolute;
+
+  right: -8px;
+  bottom: -6px;
+
+  transform: rotate(45deg);
+
+  border-radius: 10px;
+}
+
+/* CAJA */
+
+.search-box {
+  position: absolute;
+
+  top: 60px;
+  right: -80px;
+
+  width: 320px;
+
+  background: white;
+
+  border-radius: 22px;
+
+  padding: 16px;
+
+  box-shadow:
+  0 25px 70px rgba(0,0,0,.12);
+
+  z-index: 9999;
+}
+
+.search-box input {
+
+  width: 100%;
+
+  height: 52px;
+
+  border: none;
+
+  background: #f3f4f6;
+
+  border-radius: 14px;
+
+  padding: 0 18px;
+
+  outline: none;
+
+  font-size: 15px;
+
+}
+
+.search-results {
+
+  margin-top: 14px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 8px;
+
+  max-height: 260px;
+
+  overflow-y: auto;
+
+}
+
+.search-results button {
+
+  background: transparent;
+
+  border: none;
+
+  padding: 12px;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  border-radius: 12px;
+
+  color: #07195a;
+
+  font-weight: 700;
+
+}
+
+.search-results button:hover {
+
+  background: #f5f6fa;
+
+}
+
+.search-results span {
+
+  padding: 12px;
+
+  color: gray;
+
 }
