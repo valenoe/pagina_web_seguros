@@ -10,18 +10,15 @@ function Hero() {
           Prieto & Correa Seguros
         </span>
 
-        <h1>
-          Protegemos lo que más valoras.
-        </h1>
+        <h1>Protegemos lo que más valoras.</h1>
 
         <p>
-          Más de 30 años entregando asesoría, confianza y soluciones de seguros
-          para personas y empresas.
+          Más de 30 años entregando asesoría, confianza y soluciones
+          de seguros para personas y empresas.
         </p>
 
         <div className="hero-buttons">
           <button
-            type="button"
             className="hero-primary"
             onClick={() => navigate("/cotizador")}
           >
@@ -29,7 +26,6 @@ function Hero() {
           </button>
 
           <button
-            type="button"
             className="hero-secondary"
             onClick={() => navigate("/seguros")}
           >

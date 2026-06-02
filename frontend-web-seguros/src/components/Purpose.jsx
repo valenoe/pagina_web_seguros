@@ -11,11 +11,11 @@ function Purpose() {
       <div className="purpose-content">
         <span>Nosotros</span>
 
-        <h2>Más de tres décadas protegiendo personas y empresas.</h2>
+        <h2>Más que seguros, construimos confianza.</h2>
 
         <p>
-          En Prieto & Correa acompañamos a nuestros clientes con asesoría
-          cercana, soluciones personalizadas y respaldo permanente.
+          En Prieto & Correa acompañamos a personas, familias y empresas con
+          asesoría cercana, alternativas personalizadas y respaldo permanente.
         </p>
 
         <div className="purpose-stats">
