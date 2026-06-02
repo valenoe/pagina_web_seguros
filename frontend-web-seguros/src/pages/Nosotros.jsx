@@ -10,7 +10,11 @@ function Nosotros() {
       <Header />
 
       <main className="nosotros">
+
+        {/* HERO */}
+
         <section className="nosotros-hero">
+
           <span>Prieto & Correa</span>
 
           <h1>
@@ -18,129 +22,258 @@ function Nosotros() {
           </h1>
 
           <p>
-            Somos una corredora de seguros enfocada en acompañar personas y
-            empresas con asesoría cercana y soluciones adaptadas a cada
-            necesidad.
+            Acompañamos personas, familias y empresas mediante asesoría cercana,
+            confianza y soluciones de protección adaptadas a cada necesidad.
           </p>
+
         </section>
+
+        {/* QUIENES SOMOS */}
+
+        <section className="historia-section">
+
+          <div className="historia-left">
+
+            <span>
+              Quiénes Somos
+            </span>
+
+            <h2>
+              Construimos relaciones basadas en confianza y cercanía
+            </h2>
+
+            <p>
+              Prieto & Correa Seguros nace en Talca en 1993, con el propósito de entregar una
+              asesoría cercana y acompañamiento permanente, entendiendo que
+              cada cliente necesita protección adaptada a su realidad.
+            </p>
+
+            <p>
+              Desde nuestros inicios, hemos trabajado construyendo relaciones de
+              confianza basadas en el compromiso, la transparencia y una atención
+              verdaderamente personalizada.
+              
+            </p>
+
+            <p>
+              A lo largo de más de 30 años de trayectoria en la Región del Maule, 
+              hemos acompañado a nuestros clientes en distintas etapas de sus vidas, entregando orientación para que puedan tomar decisiones 
+              informadas y acceder a soluciones de protección acordes a sus necesidades.
+
+        
+            </p>
+
+            <p>
+              Hoy continuamos evolucionando y fortaleciendo nuestros canales de atención, 
+              manteniendo intacta nuestra esencia: estar presentes cuando más nos necesitan.
+              
+            </p>
+
+          </div>
+
+          <div className="historia-right">
+
+            <div className="historia-card">
+
+              <h3>
+                +30
+              </h3>
+
+              <span>
+                años construyendo confianza
+              </span>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        {/* MISION */}
 
         <section className="corporativo-section">
-          <div className="corporativo-text">
-            <span>Misión</span>
 
-            <h2>Proteger con asesoría cercana y soluciones confiables</h2>
+          <div className="corporativo-text">
+
+            <span>
+              Misión
+            </span>
+
+            <h2>
+              Acompañar y asesorar con cercanía y compromiso
+            </h2>
 
             <p>
-              Nuestra misión es acompañar a personas, familias y empresas en la
-              elección de seguros adecuados, entregando orientación clara,
-              respaldo permanente y una atención comprometida.
+              Acompañar y asesorar a nuestros clientes con cercanía,
+              transparencia y compromiso, construyendo relaciones de
+              confianza duraderas y entregando soluciones adaptadas a
+              las necesidades de cada persona y empresa.
             </p>
+
           </div>
 
           <div className="corporativo-image">
-            <div className="image-placeholder">Imagen misión</div>
+
+            <div className="image-placeholder">
+
+              confianza que permanece
+
+            </div>
+
           </div>
+
         </section>
+
+
+        {/* CULTURA */}
 
         <section className="corporativo-section reverse">
-          <div className="corporativo-text">
-            <span>Propósito</span>
 
-            <h2>Entregar tranquilidad en cada decisión importante</h2>
+          <div className="corporativo-text">
+
+            <span>
+              Nuestra Cultura
+            </span>
+
+            <h2>
+              Principios que guían cada relación
+            </h2>
 
             <p>
-              Nuestro propósito es simplificar el mundo de los seguros para que
-              cada cliente pueda tomar decisiones informadas, seguras y
-              acompañadas por un equipo experto.
+              Nuestra cultura se basa en pilares que representan
+              nuestro compromiso y la forma en que nos relacionamos
+              con cada cliente.
             </p>
+
           </div>
 
           <div className="corporativo-image">
-            <div className="image-placeholder">Imagen propósito</div>
+
+            <div className="image-placeholder">
+
+              cercanía y protección
+
+            </div>
+
           </div>
+
         </section>
 
+
+        {/* VALORES */}
+
         <section className="valores-corporativos">
+
           <div className="valores-corporativos-header">
-            <h2>Nuestros valores</h2>
+
+            <h2>
+              Nuestros valores
+            </h2>
 
             <p>
-              Estos principios orientan nuestra forma de trabajar y la relación
-              que construimos con cada cliente.
+              Más que palabras, representan la forma en que acompañamos
+              y protegemos a nuestros clientes.
             </p>
+
           </div>
 
           <div className="valores-corporativos-grid">
-            <article className="valor-corporativo-card">
-              <div className="valor-icono">🤝</div>
-
-              <h3>Confianza</h3>
-
-              <p>
-                Construimos relaciones duraderas mediante transparencia,
-                responsabilidad y cumplimiento en cada proceso.
-              </p>
-            </article>
 
             <article className="valor-corporativo-card">
-              <div className="valor-icono">👥</div>
 
-              <h3>Cercanía</h3>
+              <div className="valor-icono">
+                👥
+              </div>
+
+              <h3>
+                Cercanía
+              </h3>
 
               <p>
-                Escuchamos a nuestros clientes y entregamos una atención humana,
-                clara y personalizada.
+                Trato personalizado y acompañamiento constante.
               </p>
+
             </article>
+
 
             <article className="valor-corporativo-card">
-              <div className="valor-icono">🛡️</div>
 
-              <h3>Compromiso</h3>
+              <div className="valor-icono">
+                🤝
+              </div>
+
+              <h3>
+                Confianza
+              </h3>
 
               <p>
-                Nos involucramos activamente en cada necesidad, solicitud y
-                acompañamiento de nuestros clientes.
+                Relaciones basadas en honestidad y cumplimiento.
               </p>
+
             </article>
+
 
             <article className="valor-corporativo-card">
-              <div className="valor-icono">⭐</div>
 
-              <h3>Excelencia</h3>
+              <div className="valor-icono">
+                🛡️
+              </div>
+
+              <h3>
+                Compromiso
+              </h3>
 
               <p>
-                Buscamos mejorar continuamente nuestros procesos, servicios y
-                experiencia digital.
+                Nos involucramos verdaderamente en cada necesidad.
               </p>
+
             </article>
+
+
+            <article className="valor-corporativo-card">
+
+              <div className="valor-icono">
+                ✨
+              </div>
+
+              <h3>
+                Transparencia
+              </h3>
+
+              <p>
+                Orientamos de forma clara para decisiones seguras.
+              </p>
+
+            </article>
+
           </div>
+
         </section>
 
-        <section className="compromiso-section">
-          <div>
-            <span>Compromiso con nuestros clientes</span>
 
-            <h2>Asesoría, respaldo y acompañamiento permanente</h2>
-
-            <p>
-              Nuestro compromiso es estar presentes antes, durante y después de
-              la contratación de un seguro, apoyando a cada cliente con
-              información clara y soluciones oportunas.
-            </p>
-          </div>
-        </section>
+        {/* CTA */}
 
         <section className="cta-nosotros">
-          <h2>¿Buscas una propuesta personalizada?</h2>
 
-          <button onClick={() => navigate("/cotizador")}>
+          <h2>
+
+            ¿Buscas una propuesta personalizada?
+
+          </h2>
+
+          <button
+            onClick={() => navigate("/cotizador")}
+          >
             Solicitar cotización
           </button>
+
         </section>
+
       </main>
 
       <Footer />
+
     </>
   );
 }

@@ -4,17 +4,26 @@ import Services from "../components/Services";
 import Purpose from "../components/Purpose";
 import News from "../components/News";
 import Stats from "../components/Stats";
+import InsurancePartners from "../components/InsurancePartners";
 import Footer from "../components/Footer";
 
 function Home() {
   return (
     <>
       <Header />
+
       <Hero />
+
       <Services />
+
       <Purpose />
+
       <News />
+
       <Stats />
+
+      <InsurancePartners />
+
       <Footer />
     </>
   );
