@@ -1,90 +1,52 @@
-const API_URL =
-"http://localhost:8000/api";
+const API_URL = "http://localhost:8000";
 
-export async function getData(endpoint){
-
-try{
-
-const response =
-await fetch(
-`${API_URL}${endpoint}`
-);
-
-if(!response.ok){
-
-throw new Error(
-"Error al obtener datos"
-);
-
+async function apiFetch(endpoint, options = {}) {
+  const res = await fetch(`${API_URL}${endpoint}`, options);
+  if (!res.ok) throw new Error(`Error ${res.status}`);
+  return res.json();
 }
 
-return await response.json();
-
+async function apiPost(endpoint, body) {
+  return apiFetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
 
-catch(error){
-
-console.error(error);
-
-return [];
-
+function authHeaders(token) {
+  return { Authorization: `Bearer ${token}` };
 }
 
+// Seguros
+export async function obtenerSeguros() {
+  return apiFetch("/seguros/");
 }
 
-/* CLIENTES */
-
-export async function obtenerClientes(){
-
-return getData(
-"/clientes"
-);
-
+// Contacto — { nombre, email, telefono?, mensaje? }
+export async function enviarContacto(data) {
+  return apiPost("/contacto/", data);
 }
 
-/* SEGUROS */
-
-export async function obtenerSeguros(){
-
-return getData(
-"/seguros"
-);
-
+// Cotizaciones — { id_seguro, nombre, rut, tipo_cliente, email, telefono, canal, mensaje?, datos_adicionales? }
+export async function enviarCotizacion(data) {
+  return apiPost("/cotizaciones/", data);
 }
 
-/* CONTACTO */
-
-export async function enviarFormulario(data){
-
-try{
-
-const response =
-await fetch(
-`${API_URL}/contacto`,
-{
-
-method:"POST",
-
-headers:{
-"Content-Type":
-"application/json"
-},
-
-body:
-JSON.stringify(data)
-
+// Auth — { rut, tipo_cliente, password }
+export async function login(data) {
+  return apiPost("/auth/login", data);
 }
 
-);
-
-return await response.json();
-
+// Portal (requiere JWT)
+export async function getMisCotizaciones(token) {
+  return apiFetch("/portal/mis-cotizaciones", { headers: authHeaders(token) });
 }
 
-catch(error){
-
-console.log(error);
-
+export async function getMisPolizas(token) {
+  return apiFetch("/portal/mis-polizas", { headers: authHeaders(token) });
 }
 
+export async function getDetallePoliza(token, id) {
+  return apiFetch(`/portal/mis-polizas/${id}`, { headers: authHeaders(token) });
 }

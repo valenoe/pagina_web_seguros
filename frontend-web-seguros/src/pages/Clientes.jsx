@@ -1,84 +1,87 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
-
 import Footer from "../components/Footer";
+import { login } from "../services/api";
 
-import {
-useNavigate
-}
+function Clientes() {
+  const navigate = useNavigate();
 
-from
-"react-router-dom";
+  const [formulario, setFormulario] = useState({
+    rut: "",
+    tipo_cliente: "persona",
+    password: "",
+  });
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState("");
 
-function Clientes(){
+  function cambiarDato(e) {
+    setFormulario({ ...formulario, [e.target.name]: e.target.value });
+  }
 
-const navigate=
-useNavigate();
+  async function ingresar(e) {
+    e.preventDefault();
+    setError("");
+    setCargando(true);
+    try {
+      const data = await login(formulario);
+      localStorage.setItem("token", data.access_token);
+      navigate("/clientes/dashboard");
+    } catch {
+      setError("RUT o contraseña incorrectos.");
+    } finally {
+      setCargando(false);
+    }
+  }
 
-function ingresar(e){
+  return (
+    <>
+      <Header />
 
-e.preventDefault();
+      <section className="clientes">
+        <div className="clientes-box">
+          <h1>Acceso Clientes</h1>
+          <p>Ingresa al portal con tu RUT y contraseña.</p>
 
-navigate(
-"/clientes/dashboard"
-);
+          <form onSubmit={ingresar}>
+            <input
+              name="rut"
+              required
+              value={formulario.rut}
+              onChange={cambiarDato}
+              placeholder="RUT (ej: 12.345.678-9)"
+            />
 
-}
+            <select
+              name="tipo_cliente"
+              value={formulario.tipo_cliente}
+              onChange={cambiarDato}
+            >
+              <option value="persona">Persona natural</option>
+              <option value="empresa">Empresa</option>
+            </select>
 
-return(
+            <input
+              name="password"
+              type="password"
+              required
+              value={formulario.password}
+              onChange={cambiarDato}
+              placeholder="Contraseña"
+            />
 
-<>
+            {error && <p className="form-error">{error}</p>}
 
-<Header />
+            <button type="submit" disabled={cargando}>
+              {cargando ? "Ingresando..." : "Ingresar"}
+            </button>
+          </form>
+        </div>
+      </section>
 
-<section className="clientes">
-
-<div className="clientes-box">
-
-<h1>
-
-Acceso Clientes
-
-</h1>
-
-<p>
-
-Ingresa al portal.
-
-</p>
-
-<form
-onSubmit={
-ingresar
-}
->
-
-<input
-placeholder="Correo"
-/>
-
-<input
-placeholder="Contraseña"
-type="password"
-/>
-
-<button>
-
-Ingresar
-
-</button>
-
-</form>
-
-</div>
-
-</section>
-
-<Footer />
-
-</>
-
-);
-
+      <Footer />
+    </>
+  );
 }
 
 export default Clientes;

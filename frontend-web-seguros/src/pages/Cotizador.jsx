@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-
+import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-
-import { segurosDestacados } from "../data/siteData";
+import useFetch from "../hooks/useFetch";
+import { obtenerSeguros, enviarCotizacion } from "../services/api";
 
 const regionesComunas = {
   "Arica y Parinacota": ["Arica", "Camarones", "Putre", "General Lagos"],
@@ -27,32 +26,36 @@ const regionesComunas = {
 
 function Cotizador() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const preseleccionado = location.state?.id_seguro ?? "";
+
+  const { data: seguros, loading: loadingSeguros } = useFetch(obtenerSeguros);
 
   const [formulario, setFormulario] = useState({
     nombre: "",
     rut: "",
-    correo: "",
+    tipo_cliente: "persona",
+    email: "",
     telefono: "",
     region: "",
     comuna: "",
-    seguro: "",
+    id_seguro: preseleccionado,
     mensaje: "",
   });
 
   const [busquedaRegion, setBusquedaRegion] = useState("");
   const [busquedaComuna, setBusquedaComuna] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState("");
 
   const regiones = Object.keys(regionesComunas);
 
-  const regionesFiltradas = regiones.filter((region) =>
-    region.toLowerCase().includes(busquedaRegion.toLowerCase())
+  const regionesFiltradas = regiones.filter((r) =>
+    r.toLowerCase().includes(busquedaRegion.toLowerCase())
   );
 
-  const todasLasComunas = regiones.flatMap((region) =>
-    regionesComunas[region].map((comuna) => ({
-      comuna,
-      region,
-    }))
+  const todasLasComunas = regiones.flatMap((r) =>
+    regionesComunas[r].map((c) => ({ comuna: c, region: r }))
   );
 
   const comunasFiltradas = todasLasComunas.filter((item) =>
@@ -62,53 +65,52 @@ function Cotizador() {
   );
 
   function cambiarDato(e) {
-    setFormulario({
-      ...formulario,
-      [e.target.name]: e.target.value,
-    });
+    setFormulario({ ...formulario, [e.target.name]: e.target.value });
   }
 
   function seleccionarRegion(region) {
-    setFormulario({
-      ...formulario,
-      region,
-      comuna: "",
-    });
-
+    setFormulario({ ...formulario, region, comuna: "" });
     setBusquedaRegion(region);
     setBusquedaComuna("");
   }
 
   function seleccionarComuna(item) {
-    setFormulario({
-      ...formulario,
-      region: item.region,
-      comuna: item.comuna,
-    });
-
+    setFormulario({ ...formulario, region: item.region, comuna: item.comuna });
     setBusquedaRegion(item.region);
     setBusquedaComuna(item.comuna);
   }
 
-  function enviarCotizacion(e) {
+  async function enviarCotizacionHandler(e) {
     e.preventDefault();
+    setError("");
 
-    if (
-      !formulario.nombre ||
-      !formulario.rut ||
-      !formulario.correo ||
-      !formulario.telefono ||
-      !formulario.region ||
-      !formulario.comuna ||
-      !formulario.seguro
-    ) {
-      alert("Por favor completa todos los campos obligatorios.");
+    if (!formulario.id_seguro) {
+      setError("Selecciona un tipo de seguro.");
       return;
     }
 
-    console.log("Solicitud enviada", formulario);
-
-    navigate("/cotizacion-exitosa");
+    setEnviando(true);
+    try {
+      await enviarCotizacion({
+        id_seguro: Number(formulario.id_seguro),
+        nombre: formulario.nombre,
+        rut: formulario.rut,
+        tipo_cliente: formulario.tipo_cliente,
+        email: formulario.email,
+        telefono: formulario.telefono,
+        canal: "tradicional",
+        mensaje: formulario.mensaje || null,
+        datos_adicionales:
+          formulario.region || formulario.comuna
+            ? { region: formulario.region, comuna: formulario.comuna }
+            : null,
+      });
+      navigate("/cotizacion-exitosa");
+    } catch {
+      setError("No se pudo enviar la solicitud. Intenta de nuevo.");
+    } finally {
+      setEnviando(false);
+    }
   }
 
   return (
@@ -123,7 +125,7 @@ function Cotizador() {
         </div>
 
         <div className="cotizador-box">
-          <form className="cotizador-form" onSubmit={enviarCotizacion}>
+          <form className="cotizador-form" onSubmit={enviarCotizacionHandler}>
             <div>
               <label>Nombre completo *</label>
               <input
@@ -147,12 +149,25 @@ function Cotizador() {
             </div>
 
             <div>
-              <label>Correo *</label>
+              <label>Tipo de cliente *</label>
+              <select
+                name="tipo_cliente"
+                required
+                value={formulario.tipo_cliente}
+                onChange={cambiarDato}
+              >
+                <option value="persona">Persona natural</option>
+                <option value="empresa">Empresa</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Correo electrónico *</label>
               <input
                 type="email"
-                name="correo"
+                name="email"
                 required
-                value={formulario.correo}
+                value={formulario.email}
                 onChange={cambiarDato}
                 placeholder="correo@ejemplo.cl"
               />
@@ -170,30 +185,20 @@ function Cotizador() {
             </div>
 
             <div className="search-field">
-              <label>Buscar región *</label>
+              <label>Buscar región</label>
               <input
-                required
                 value={busquedaRegion}
                 onChange={(e) => {
                   setBusquedaRegion(e.target.value);
-                  setFormulario({
-                    ...formulario,
-                    region: "",
-                    comuna: "",
-                  });
+                  setFormulario({ ...formulario, region: "", comuna: "" });
                 }}
                 placeholder="Ej: Maule"
               />
-
               {busquedaRegion && !formulario.region && (
                 <div className="suggestions">
-                  {regionesFiltradas.map((region) => (
-                    <button
-                      type="button"
-                      key={region}
-                      onClick={() => seleccionarRegion(region)}
-                    >
-                      {region}
+                  {regionesFiltradas.map((r) => (
+                    <button type="button" key={r} onClick={() => seleccionarRegion(r)}>
+                      {r}
                     </button>
                   ))}
                 </div>
@@ -201,20 +206,15 @@ function Cotizador() {
             </div>
 
             <div className="search-field">
-              <label>Buscar comuna *</label>
+              <label>Buscar comuna</label>
               <input
-                required
                 value={busquedaComuna}
                 onChange={(e) => {
                   setBusquedaComuna(e.target.value);
-                  setFormulario({
-                    ...formulario,
-                    comuna: "",
-                  });
+                  setFormulario({ ...formulario, comuna: "" });
                 }}
                 placeholder="Ej: Talca"
               />
-
               {busquedaComuna && !formulario.comuna && (
                 <div className="suggestions">
                   {comunasFiltradas.slice(0, 12).map((item) => (
@@ -233,18 +233,20 @@ function Cotizador() {
             <div>
               <label>Tipo de seguro *</label>
               <select
-                name="seguro"
+                name="id_seguro"
                 required
-                value={formulario.seguro}
+                value={formulario.id_seguro}
                 onChange={cambiarDato}
+                disabled={loadingSeguros}
               >
                 <option value="">Selecciona seguro</option>
-
-                {segurosDestacados.map((seguro) => (
-                  <option key={seguro.id} value={seguro.titulo}>
-                    {seguro.titulo}
-                  </option>
-                ))}
+                {seguros
+                  .filter((s) => s.permite_tradicional)
+                  .map((s) => (
+                    <option key={s.id_seguro} value={s.id_seguro}>
+                      {s.nombre}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -258,12 +260,15 @@ function Cotizador() {
               />
             </div>
 
-            <button type="submit">Enviar solicitud</button>
+            {error && <p className="form-error">{error}</p>}
+
+            <button type="submit" disabled={enviando}>
+              {enviando ? "Enviando..." : "Enviar solicitud"}
+            </button>
           </form>
 
           <div className="cotizador-info">
             <h2>¿Qué pasa después?</h2>
-
             <ul>
               <li>Recibimos tu solicitud de cotización.</li>
               <li>Analizamos las mejores opciones según tus necesidades.</li>
