@@ -1,8 +1,6 @@
-from passlib.context import CryptContext
+import bcrypt
 from database import SessionLocal
 from models.cliente import Cliente, PortalAcceso
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 CLIENTE = {
     "rut": "12.456.789-3",
@@ -31,8 +29,8 @@ def seed():
         acceso = PortalAcceso(
             cliente_id=cliente.id_cliente,
             tipo_acceso="password",
-            pin_hash=pwd_context.hash("000000"),
-            password_hash=pwd_context.hash(PASSWORD_PRUEBA),
+            pin_hash=bcrypt.hashpw("000000".encode(), bcrypt.gensalt()).decode(),
+            password_hash=bcrypt.hashpw(PASSWORD_PRUEBA.encode(), bcrypt.gensalt()).decode(),
             tiene_cuenta=True,
             portal_acceso_activo=True,
         )

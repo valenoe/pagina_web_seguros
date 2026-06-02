@@ -34,8 +34,7 @@ entorno_web_seguros\Scripts\activate   # Windows
 pip install -r requirements.txt
 
 # Configurar variables de entorno
-# Crear el archivo backend-web-seguros/.env con:
-DATABASE_URL=mysql+pymysql://usuario:contraseña@localhost:3306/seguros_web_db
+# Crear el archivo backend-web-seguros/.env con el contenido de la sección Variables de entorno
 
 # Levantar el servidor de desarrollo
 cd backend-web-seguros
@@ -61,19 +60,69 @@ El frontend queda disponible en `http://localhost:5173`.
 
 ## Base de datos
 
-El schema completo está en `DB.sql`. Para crearlo desde cero:
+El schema completo está en `DB.sql`. Para inicializar desde cero:
 
 ```bash
 mysql -u usuario -p seguros_web_db < DB.sql
+```
+
+Para cargar datos de prueba:
+
+```bash
+cd backend-web-seguros
+python -m tests.seed_catalogo       # 3 seguros de prueba
+python -m tests.seed_portal_acceso  # 1 cliente con acceso al portal
 ```
 
 ---
 
 ## Variables de entorno
 
-| Variable       | Descripción                                                                                       |
-| -------------- | ------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL` | Cadena de conexión a MariaDB. Formato: `mysql+pymysql://usuario:contraseña@host:puerto/nombre_db` |
+Crear el archivo `backend-web-seguros/.env` con las siguientes variables:
+
+| Variable                      | Descripción                                                             | Ejemplo                                                            |
+| ----------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `DATABASE_URL`                | Cadena de conexión a MariaDB                                            | `mysql+pymysql://usuario:contraseña@localhost:3306/seguros_web_db` |
+| `SECRET_KEY`                  | Clave secreta para firmar los JWT (generar con `secrets.token_hex(32)`) | `2075b8055d372c...`                                                |
+| `ALGORITHM`                   | Algoritmo de firma JWT                                                  | `HS256`                                                            |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Duración del token en minutos                                           | `480`                                                              |
+| `ALLOWED_ORIGINS`             | Orígenes permitidos para CORS, separados por coma                       | `http://localhost:5173,https://prietocorrea.cl`                    |
+
+---
+
+## Endpoints disponibles
+
+### Público
+
+| Método | Ruta             | Descripción                             |
+| ------ | ---------------- | --------------------------------------- |
+| `GET`  | `/seguros/`      | Lista el catálogo de seguros activos    |
+| `GET`  | `/seguros/{id}`  | Detalle de un seguro                    |
+| `POST` | `/contacto/`     | Envía un formulario de contacto         |
+| `POST` | `/cotizaciones/` | Crea una solicitud de cotización        |
+| `POST` | `/auth/login`    | Login con RUT y contraseña, retorna JWT |
+
+### Portal del cliente (requiere JWT)
+
+| Método | Ruta                       | Descripción                                    |
+| ------ | -------------------------- | ---------------------------------------------- |
+| `GET`  | `/portal/mis-cotizaciones` | Lista las cotizaciones del cliente autenticado |
+| `GET`  | `/portal/mis-polizas`      | Lista las pólizas del cliente autenticado      |
+| `GET`  | `/portal/mis-polizas/{id}` | Detalle de una póliza con sus beneficiarios    |
+
+---
+
+## Scripts de prueba
+
+Ubicados en `backend-web-seguros/tests/`. Ejecutar desde `backend-web-seguros/`.
+
+| Script                  | Descripción                                                   |
+| ----------------------- | ------------------------------------------------------------- |
+| `test_conexion.py`      | Verifica la conexión a MariaDB con `SHOW TABLES`              |
+| `seed_catalogo.py`      | Inserta 3 seguros en `web_seguros_catalogo`                   |
+| `seed_contacto.py`      | Inserta 1 lead de prueba en `web_leads_contacto`              |
+| `seed_cotizacion.py`    | Inserta 1 cotización de prueba en `web_cotizaciones`          |
+| `seed_portal_acceso.py` | Inserta 1 cliente con acceso al portal (imprime credenciales) |
 
 ---
 
@@ -81,12 +130,6 @@ mysql -u usuario -p seguros_web_db < DB.sql
 
 > Pendiente. El proyecto será desplegado en una máquina virtual de DigitalOcean.
 
----
+## Base de datos
 
-## Estado 01-06-2026
-
-- Conexión a MariaDB verificada (`SHOW TABLES` exitoso)
-- Schema aplicado: 7 tablas creadas (`DB.sql`)
-- Modelos SQLAlchemy definidos en `backend-web-seguros/models/`
-- 2 tests en `backend-web-seguros/tests/`: `test_conexion.py` verifica la conexión a la base de datos, `seed_catalogo.py` inserta 3 seguros de prueba en `web_seguros_catalogo` (Accidentes Personales, Automóvil, Incendio y Sismo)
-- Router `/seguros` operativo: `GET /seguros/` lista el catálogo activo, `GET /seguros/{id}` retorna un seguro específico
+https://dbdiagram.io/d/6a1604dcb62396d22c779ea4
