@@ -14,13 +14,19 @@ const CATEGORIAS = {
   "Accidentes Personales": "Personas",
   "Asistencia en Viaje": "Personas",
   Garantías: "Empresas",
-  "Responsabilidad Civil Argentina": "Empresas",
+  "Responsabilidad Civil": "Empresas",
 };
 
 const ICONOS = {
-  Vehículos: "🚗",
-  Personas: "🛡️",
-  Empresas: "🏢",
+  "Seguro de Auto": "🚗",
+  SOAP: "🧾",
+  Hogar: "🏠",
+  "Accidentes Personales": "🛡️",
+  "Asistencia en Viaje": "✈️",
+  "Responsabilidad Civil": "🏢",
+  Garantías: "📄",
+  "Mujer Segura": "✨",
+  Mascotas: "🐾",
 };
 
 function getCategoria(nombre) {
@@ -28,6 +34,13 @@ function getCategoria(nombre) {
     if (nombre.toLowerCase().includes(key.toLowerCase())) return cat;
   }
   return "Otros";
+}
+
+function getIcono(nombre) {
+  for (const [key, icono] of Object.entries(ICONOS)) {
+    if (nombre.toLowerCase().includes(key.toLowerCase())) return icono;
+  }
+  return "📋";
 }
 
 function Seguros() {
@@ -49,10 +62,10 @@ function Seguros() {
       <main className="seguros-page">
         <section className="seguros-hero">
           <span>Seguros</span>
-          <h1>Soluciones de protección para cada etapa</h1>
+          <h1>Soluciones de protección para cada necesidad</h1>
           <p>
             Encuentra seguros para personas, familias, vehículos y empresas con
-            el respaldo y asesoría de Prieto & Correa.
+            asesoría cercana y acompañamiento personalizado.
           </p>
         </section>
 
@@ -71,42 +84,52 @@ function Seguros() {
         {loading ? (
           <p className="cargando">Cargando seguros...</p>
         ) : (
-          <section className="seguros-list">
-            {segurosFiltrados.map((seguro) => {
-              const categoria = getCategoria(seguro.nombre);
-              return (
-                <article className="seguro-card" key={seguro.id_seguro}>
-                  <div className="seguro-icon">{ICONOS[categoria] ?? "📋"}</div>
-                  <span>{categoria}</span>
-                  <h2>{seguro.nombre}</h2>
-                  <p>{seguro.descripcion}</p>
+          <section className="seguros-premium-grid">
+            {segurosFiltrados.map((seguro) => (
+              <article className="seguro-premium-card" key={seguro.id_seguro}>
+                <div className="seguro-premium-top">
+                  <div className="seguro-premium-icon">{getIcono(seguro.nombre)}</div>
+                  <span>{getCategoria(seguro.nombre)}</span>
+                </div>
 
-                  {seguro.permite_digital && seguro.url_externa ? (
-                    <a
-                      href={seguro.url_externa}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Cotizar online
-                    </a>
-                  ) : null}
+                <h2>{seguro.nombre}</h2>
+                <p>{seguro.descripcion}</p>
 
-                  {seguro.permite_tradicional ? (
-                    <button
-                      onClick={() =>
-                        navigate("/cotizador", {
-                          state: { id_seguro: seguro.id_seguro, nombre: seguro.nombre },
-                        })
-                      }
-                    >
-                      Cotizar con asesor
-                    </button>
-                  ) : null}
-                </article>
-              );
-            })}
+                {seguro.permite_digital && seguro.url_externa ? (
+                  <a href={seguro.url_externa} target="_blank" rel="noreferrer">
+                    Cotizar online
+                  </a>
+                ) : null}
+
+                {seguro.permite_tradicional ? (
+                  <button
+                    onClick={() =>
+                      navigate("/cotizador", {
+                        state: { id_seguro: seguro.id_seguro, nombre: seguro.nombre },
+                      })
+                    }
+                  >
+                    Cotizar seguro
+                  </button>
+                ) : null}
+              </article>
+            ))}
           </section>
         )}
+
+        <section className="seguros-cta">
+          <div>
+            <span>Asesoría personalizada</span>
+            <h2>¿No sabes qué seguro necesitas?</h2>
+            <p>
+              Nuestro equipo puede ayudarte a comparar alternativas y encontrar
+              una solución adecuada para ti o tu empresa.
+            </p>
+          </div>
+          <button onClick={() => navigate("/cotizador")}>
+            Solicitar asesoría
+          </button>
+        </section>
       </main>
 
       <Footer />
