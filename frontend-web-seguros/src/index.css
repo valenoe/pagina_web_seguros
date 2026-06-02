@@ -8,17 +8,9 @@ padding:0;
 box-sizing:border-box;
 }
 
-/* ====================
-HTML
-==================== */
-
 html{
 scroll-behavior:smooth;
 }
-
-/* ====================
-BODY
-==================== */
 
 body{
 
@@ -34,25 +26,50 @@ color:
 
 overflow-x:hidden;
 
+-webkit-font-smoothing:antialiased;
+
 }
 
 /* ====================
-TIPOGRAFIA PREMIUM
+TIPOGRAFIA
 ==================== */
 
-h1,
-h2,
-h3{
+h1{
 
 font-family:
-'Cormorant Garamond',
-serif;
+'Inter',
+sans-serif;
 
 font-weight:
-600;
+800;
+
+letter-spacing:
+-2px;
+
+}
+
+h2{
+
+font-family:
+'Inter',
+sans-serif;
+
+font-weight:
+700;
 
 letter-spacing:
 -1px;
+
+}
+
+h3{
+
+font-family:
+'Inter',
+sans-serif;
+
+font-weight:
+700;
 
 }
 
@@ -71,6 +88,13 @@ li{
 font-family:
 'Inter',
 sans-serif;
+
+}
+
+p{
+
+line-height:
+1.7;
 
 }
 
