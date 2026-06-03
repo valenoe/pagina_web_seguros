@@ -56,7 +56,35 @@ npm run dev
 
 El frontend queda disponible en `http://localhost:5173`.
 
----
+### Estructura del frontend
+
+```
+frontend-web-seguros/src/
+├── components/       # Header, Footer, Hero, WhatsAppButton, etc.
+├── pages/            # Home, Seguros, Cotizador, Contacto, Clientes, Dashboard, Nosotros
+├── routes/           # Router.jsx con todas las rutas
+├── services/         # api.js — todas las llamadas al backend
+├── hooks/            # useFetch.js para cargar datos
+└── data/             # siteData.js — contenido estático sin endpoint (noticias)
+```
+
+### Páginas del frontend
+
+| Ruta | Descripción |
+|------|-------------|
+| `/` | Home con hero, servicios, "Por qué elegirnos", aseguradoras, noticias |
+| `/nosotros` | Página institucional con misión, cultura, valores |
+| `/seguros` | Catálogo de seguros (carga desde API `/seguros/`) con filtro por categoría |
+| `/cotizador` | Formulario de cotización (POST a API `/cotizaciones/`) |
+| `/contacto` | Formulario de contacto (POST a API `/contacto/`) |
+| `/clientes` | Login del portal con RUT, tipo_cliente, password |
+| `/clientes/dashboard` | Portal cliente autenticado (requiere JWT): mis cotizaciones, mis pólizas |
+
+### Integraciones externas (sin formulario propio)
+
+- **RCI Argentina** → cotizador BCI (link externo)
+- **Asistencia en Viaje** → `viajes.prietocorreaseguros.cl` (link externo)
+- **Seguro de Mascotas** → cotizador BCI (link externo)
 
 ## Base de datos
 

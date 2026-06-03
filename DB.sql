@@ -6,6 +6,7 @@ CREATE TABLE `web_seguros_catalogo` (
   `permite_tradicional` boolean DEFAULT true,
   `url_externa` varchar(500),
   `seguro_activo` boolean DEFAULT true,
+  `categoria` varchar(50) NOT NULL DEFAULT 'Otros',
   `orden_display` integer DEFAULT 0
 );
 
@@ -94,3 +95,14 @@ ALTER TABLE `web_polizas` ADD FOREIGN KEY (`seguro_id`) REFERENCES `web_seguros_
 ALTER TABLE `web_polizas` ADD FOREIGN KEY (`cotizacion_id`) REFERENCES `web_cotizaciones` (`id_cotizacion`);
 
 ALTER TABLE `web_poliza_beneficiarios` ADD FOREIGN KEY (`poliza_id`) REFERENCES `web_polizas` (`id_poliza`);
+
+INSERT INTO `web_seguros_catalogo` (`nombre`, `categoria`, `descripcion`, `permite_digital`, `permite_tradicional`, `url_externa`, `seguro_activo`, `orden_display`) VALUES
+('Seguro de Autos', 'Vehículos', 'Cobertura completa para tu vehículo ante accidentes, robo, daños materiales y responsabilidad civil. Incluye vehículo de reemplazo y robo de accesorios.', false, true, NULL, true, 1),
+('RCI Argentina', 'Vehículos', 'Seguro de Responsabilidad Civil Internacional para vehículos que ingresan a Argentina. Cobertura de 0,17 UF por día. Obligatorio para cruzar la frontera.', true, true, 'https://rcionline.bciseguros.cl/Seguro-Obligatorio-Argentina/Tarifa.aspx?r=NwA4ADQANAA3ADEAMQAxAA==&co=cAByAGkAbQBhAHIAeQA%3D', true, 2),
+('SOAP', 'Vehículos', 'Seguro Obligatorio de Accidentes Personales causados por vehículos motorizados. Cubre lesiones y muerte de conductores, pasajeros y peatones.', false, true, NULL, true, 3),
+('Seguro de Hogar', 'Personas', 'Protege tu vivienda ante incendio, sismo y daños en estructura y contenido. Incluye asistencias técnicas de cerrajería, cristalería, gasfitería y electricidad.', false, true, NULL, true, 4),
+('Mujer Segura', 'Personas', 'Seguro de accidentes personales para mujeres de 18 a 80 años. Cubre muerte accidental, incapacidad total y permanente, desmembramiento y gastos de sepelio. Valor: 0,33 UF anual.', false, true, NULL, true, 5),
+('Seguro de Accidentes Personales', 'Personas', 'Cobertura ante lesiones, invalidez o fallecimiento causados por accidentes. Protección para personas naturales con o sin actividad laboral.', false, true, NULL, true, 6),
+('Asistencia en Viaje', 'Personas', 'Asistencia médica integral para viajes internacionales: hospitalización, repatriación, pérdida de equipaje y cancelación de viaje. Valor: 0,32 UF anual.', true, true, 'https://viajes.prietocorreaseguros.cl/', true, 7),
+('Seguro de Mascotas', 'Personas', 'Cobertura veterinaria para perros y gatos ante accidentes y enfermedades. Planes Básico (0,15 UF/mes), Medio (0,26 UF/mes) y Full (0,40 UF/mes).', true, true, 'https://cotizadormascotas.bciseguros.cl/inicio/26C75F16605805356643A23BCAED180E', true, 8),
+('Seguro de Garantías', 'Empresas y otros', 'Asegura el cumplimiento contractual de tus compromisos con terceros en obras y licitaciones. Cubre seriedad de oferta, fiel cumplimiento, ejecución de obras y más.', false, true, NULL, true, 9);
