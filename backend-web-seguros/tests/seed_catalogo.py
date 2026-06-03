@@ -4,6 +4,7 @@ from models.catalogo import SeguroCatalogo
 SEGUROS = [
     {
         "nombre": "Seguro de Autos",
+        "categoria": "Vehículos",
         "descripcion": (
             "Cobertura completa para tu vehículo ante accidentes, robo, daños materiales y responsabilidad civil. "
             "Incluye vehículo de reemplazo y robo de accesorios."
@@ -16,6 +17,7 @@ SEGUROS = [
     },
     {
         "nombre": "RCI Argentina",
+        "categoria": "Vehículos",
         "descripcion": (
             "Seguro de Responsabilidad Civil Internacional para vehículos que ingresan a Argentina. "
             "Cobertura de 0,17 UF por día. Obligatorio para cruzar la frontera."
@@ -27,10 +29,11 @@ SEGUROS = [
         "orden_display": 2,
     },
     {
-        "nombre": "Seguro de Hogar",
+        "nombre": "SOAP",
+        "categoria": "Vehículos",
         "descripcion": (
-            "Protege tu vivienda ante incendio, sismo y daños en estructura y contenido. "
-            "Incluye asistencias técnicas de cerrajería, cristalería, gasfitería y electricidad."
+            "Seguro Obligatorio de Accidentes Personales causados por vehículos motorizados. "
+            "Cubre lesiones y muerte de conductores, pasajeros y peatones."
         ),
         "permite_digital": False,
         "permite_tradicional": True,
@@ -39,10 +42,11 @@ SEGUROS = [
         "orden_display": 3,
     },
     {
-        "nombre": "Seguro de Garantías",
+        "nombre": "Seguro de Hogar",
+        "categoria": "Personas",
         "descripcion": (
-            "Asegura el cumplimiento contractual de tus compromisos con terceros en obras y licitaciones. "
-            "Cubre seriedad de oferta, fiel cumplimiento, ejecución de obras y más."
+            "Protege tu vivienda ante incendio, sismo y daños en estructura y contenido. "
+            "Incluye asistencias técnicas de cerrajería, cristalería, gasfitería y electricidad."
         ),
         "permite_digital": False,
         "permite_tradicional": True,
@@ -52,6 +56,7 @@ SEGUROS = [
     },
     {
         "nombre": "Mujer Segura",
+        "categoria": "Personas",
         "descripcion": (
             "Seguro de accidentes personales para mujeres de 18 a 80 años. "
             "Cubre muerte accidental, incapacidad total y permanente, desmembramiento y gastos de sepelio. "
@@ -65,6 +70,7 @@ SEGUROS = [
     },
     {
         "nombre": "Seguro de Accidentes Personales",
+        "categoria": "Personas",
         "descripcion": (
             "Cobertura ante lesiones, invalidez o fallecimiento causados por accidentes. "
             "Protección para personas naturales con o sin actividad laboral."
@@ -77,6 +83,7 @@ SEGUROS = [
     },
     {
         "nombre": "Asistencia en Viaje",
+        "categoria": "Personas",
         "descripcion": (
             "Asistencia médica integral para viajes internacionales: hospitalización, repatriación, "
             "pérdida de equipaje y cancelación de viaje. Valor: 0,32 UF anual."
@@ -89,6 +96,7 @@ SEGUROS = [
     },
     {
         "nombre": "Seguro de Mascotas",
+        "categoria": "Personas",
         "descripcion": (
             "Cobertura veterinaria para perros y gatos ante accidentes y enfermedades. "
             "Planes Básico (0,15 UF/mes), Medio (0,26 UF/mes) y Full (0,40 UF/mes)."
@@ -98,6 +106,19 @@ SEGUROS = [
         "url_externa": "https://cotizadormascotas.bciseguros.cl/inicio/26C75F16605805356643A23BCAED180E",
         "seguro_activo": True,
         "orden_display": 8,
+    },
+    {
+        "nombre": "Seguro de Garantías",
+        "categoria": "Empresas y otros",
+        "descripcion": (
+            "Asegura el cumplimiento contractual de tus compromisos con terceros en obras y licitaciones. "
+            "Cubre seriedad de oferta, fiel cumplimiento, ejecución de obras y más."
+        ),
+        "permite_digital": False,
+        "permite_tradicional": True,
+        "url_externa": None,
+        "seguro_activo": True,
+        "orden_display": 9,
     },
 ]
 

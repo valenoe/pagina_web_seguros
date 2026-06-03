@@ -13,6 +13,7 @@ class SeguroCatalogo(Base):
     permite_tradicional = Column(Boolean, default=True)
     url_externa = Column(String(500))
     seguro_activo = Column(Boolean, default=True)
+    categoria = Column(String(50), nullable=False, default="Otros")
     orden_display = Column(Integer, default=0)
 
     cotizaciones = relationship("Cotizacion", back_populates="seguro")

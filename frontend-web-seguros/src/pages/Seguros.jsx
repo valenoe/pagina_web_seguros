@@ -5,42 +5,20 @@ import Footer from "../components/Footer";
 import useFetch from "../hooks/useFetch";
 import { obtenerSeguros } from "../services/api";
 
-const CATEGORIAS = {
-  "Seguro de Auto": "Vehículos",
-  SOAP: "Vehículos",
-  Mascotas: "Personas",
-  Hogar: "Personas",
-  "Mujer Segura": "Personas",
-  "Accidentes Personales": "Personas",
-  "Asistencia en Viaje": "Personas",
-  Garantías: "Empresas",
-  "Responsabilidad Civil": "Empresas",
-};
-
 const ICONOS = {
-  "Seguro de Auto": "🚗",
+  "Seguro de Autos": "🚗",
   SOAP: "🧾",
-  Hogar: "🏠",
-  "Accidentes Personales": "🛡️",
+  "Seguro de Hogar": "🏠",
+  "Seguro de Accidentes Personales": "🛡️",
   "Asistencia en Viaje": "✈️",
-  "Responsabilidad Civil": "🏢",
-  Garantías: "📄",
+  "Seguro de Garantías": "📄",
   "Mujer Segura": "✨",
-  Mascotas: "🐾",
+  "Seguro de Mascotas": "🐾",
+  "RCI Argentina": "🌎",
 };
-
-function getCategoria(nombre) {
-  for (const [key, cat] of Object.entries(CATEGORIAS)) {
-    if (nombre.toLowerCase().includes(key.toLowerCase())) return cat;
-  }
-  return "Otros";
-}
 
 function getIcono(nombre) {
-  for (const [key, icono] of Object.entries(ICONOS)) {
-    if (nombre.toLowerCase().includes(key.toLowerCase())) return icono;
-  }
-  return "📋";
+  return ICONOS[nombre] ?? "📋";
 }
 
 function Seguros() {
@@ -48,12 +26,12 @@ function Seguros() {
   const { data: seguros, loading } = useFetch(obtenerSeguros);
   const [filtro, setFiltro] = useState("Todos");
 
-  const categorias = ["Todos", "Vehículos", "Personas", "Empresas"];
+  const categorias = ["Todos", "Vehículos", "Personas", "Empresas y otros"];
 
   const segurosFiltrados =
     filtro === "Todos"
       ? seguros
-      : seguros.filter((s) => getCategoria(s.nombre) === filtro);
+      : seguros.filter((s) => s.categoria === filtro);
 
   return (
     <>
@@ -89,7 +67,7 @@ function Seguros() {
               <article className="seguro-premium-card" key={seguro.id_seguro}>
                 <div className="seguro-premium-top">
                   <div className="seguro-premium-icon">{getIcono(seguro.nombre)}</div>
-                  <span>{getCategoria(seguro.nombre)}</span>
+                  <span>{seguro.categoria}</span>
                 </div>
 
                 <h2>{seguro.nombre}</h2>

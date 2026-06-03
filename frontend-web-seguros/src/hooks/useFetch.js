@@ -1,43 +1,25 @@
-import {
-useEffect,
-useState
-}
-from "react";
+import { useEffect, useState } from "react";
 
-function useFetch(fn){
+function useFetch(fn) {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-const[
-data,
-setData
-]=useState([]);
+  useEffect(() => {
+    async function load() {
+      try {
+        const result = await fn();
+        setData(result);
+      } catch (e) {
+        setError(e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
-const[
-loading,
-setLoading
-]=useState(true);
-
-useEffect(()=>{
-
-async function load(){
-
-const result =
-await fn();
-
-setData(result);
-
-setLoading(false);
-
-}
-
-load();
-
-},[]);
-
-return{
-data,
-loading
-};
-
+  return { data, loading, error };
 }
 
 export default useFetch;
