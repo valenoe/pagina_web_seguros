@@ -1,7 +1,41 @@
 import { Link } from "react-router-dom";
-import { segurosMenu } from "../data/siteData";
+import useFetch from "../hooks/useFetch";
+import { obtenerSeguros } from "../services/api";
+
+const CATEGORIAS = {
+  "Seguro de Auto": "Vehículos",
+  SOAP: "Vehículos",
+  Mascotas: "Personas",
+  Hogar: "Personas",
+  "Mujer Segura": "Personas",
+  "Accidentes Personales": "Personas",
+  "Asistencia en Viaje": "Personas",
+  Garantías: "Empresas y otros",
+  "Responsabilidad Civil": "Empresas y otros",
+};
+
+function getCategoria(nombre) {
+  for (const [key, cat] of Object.entries(CATEGORIAS)) {
+    if (nombre.toLowerCase().includes(key.toLowerCase())) return cat;
+  }
+  return "Otros";
+}
+
+function agruparPorCategoria(seguros) {
+  const orden = ["Vehículos", "Personas", "Empresas y otros"];
+  const grupos = {};
+  for (const s of seguros) {
+    const cat = getCategoria(s.nombre);
+    if (!grupos[cat]) grupos[cat] = [];
+    grupos[cat].push(s);
+  }
+  return orden.filter((c) => grupos[c]).map((c) => ({ categoria: c, items: grupos[c] }));
+}
 
 function Header() {
+  const { data: seguros } = useFetch(obtenerSeguros);
+  const grupos = agruparPorCategoria(seguros);
+
   return (
     <header className="header">
       <div className="header-logo">
@@ -20,13 +54,12 @@ function Header() {
           </button>
 
           <div className="mega-menu">
-            {segurosMenu.map((grupo) => (
+            {grupos.map((grupo) => (
               <div className="mega-column" key={grupo.categoria}>
                 <h3>{grupo.categoria}</h3>
-
-                {grupo.items.map((item) => (
-                  <Link to="/seguros" key={item}>
-                    {item}
+                {grupo.items.map((seguro) => (
+                  <Link to="/seguros" key={seguro.id_seguro}>
+                    {seguro.nombre}
                   </Link>
                 ))}
               </div>
