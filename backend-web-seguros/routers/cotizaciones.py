@@ -20,6 +20,8 @@ def crear_cotizacion(datos: CotizacionIn, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Seguro no encontrado o inactivo")
 
     payload = datos.model_dump()
+    payload["seguro_id"] = payload.pop("id_seguro")
+
     if payload["datos_adicionales"] is not None:
         payload["datos_adicionales"] = json.dumps(payload["datos_adicionales"], ensure_ascii=False)
 
