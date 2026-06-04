@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from routers import seguros, contacto, cotizaciones, auth, portal
+from routers import seguros, contacto, cotizaciones, auth, portal, interno
 
 load_dotenv()
 
@@ -22,6 +22,7 @@ app.include_router(contacto.router)
 app.include_router(cotizaciones.router)
 app.include_router(auth.router)
 app.include_router(portal.router)
+app.include_router(interno.router)
 
 
 @app.get("/")
