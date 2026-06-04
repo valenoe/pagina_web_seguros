@@ -3,13 +3,18 @@ const API_URL = "http://127.0.0.1:8000";
 async function request(endpoint, options = {}) {
   const token = localStorage.getItem("token");
 
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+
+  if (token && token !== "undefined" && token !== "null") {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    },
+    headers,
   });
 
   const data = await response.json().catch(() => null);
@@ -43,19 +48,31 @@ export function enviarCotizacion(data) {
   });
 }
 
-export function loginCliente(data) {
+export function login(data) {
   return request("/auth/login", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-export function obtenerMisCotizaciones() {
+export function loginCliente(data) {
+  return login(data);
+}
+
+export function getMisCotizaciones() {
   return request("/portal/mis-cotizaciones");
 }
 
-export function obtenerMisPolizas() {
+export function getMisPolizas() {
   return request("/portal/mis-polizas");
+}
+
+export function obtenerMisCotizaciones() {
+  return getMisCotizaciones();
+}
+
+export function obtenerMisPolizas() {
+  return getMisPolizas();
 }
 
 export function obtenerDetallePoliza(idPoliza) {

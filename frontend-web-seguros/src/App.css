@@ -2533,15 +2533,306 @@ color:#f47c20;
 
 }
 
+/* ==========================
+DASHBOARD PRIVADO CLIENTES
+========================== */
+
+.dashboard.privado {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  background: #f5f7fb;
+}
+
+.dashboard.privado .dashboard-sidebar {
+  background: #07195a;
+  color: white;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-logo {
+  background: white;
+  width: 170px;
+  height: 120px;
+  margin: 0 auto 24px;
+  border-radius: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, .08);
+  transition: .25s;
+}
+
+.dashboard-logo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 35px rgba(0, 0, 0, .12);
+}
+
+.dashboard-logo img {
+  width: 120px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.dashboard.privado .dashboard-sidebar h2 {
+  font-size: 24px;
+  margin-bottom: 28px;
+}
+
+.dashboard.privado .dashboard-sidebar button {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  padding: 15px 14px;
+  border-radius: 14px;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.dashboard.privado .dashboard-sidebar button:hover,
+.dashboard.privado .dashboard-sidebar button.activo {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.dashboard-logout {
+  margin-top: auto;
+  color: #ffb27a !important;
+}
+
+.dashboard.privado .dashboard-main {
+  padding: 36px 46px;
+}
+
+.dashboard-topbar {
+  background: white;
+  border-radius: 24px;
+  padding: 22px 30px;
+  margin-bottom: 28px;
+}
+
+.dashboard-topbar span {
+  color: #f47c20;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.dashboard-topbar h1 {
+  color: #07195a;
+  font-size: 32px;
+  margin-top: 6px;
+}
+
+.dashboard-topbar button {
+  display: none;
+}
+
+.dashboard.privado .dashboard-banner {
+  background: white;
+  padding: 34px 40px;
+  border-radius: 26px;
+  margin-bottom: 26px;
+}
+
+.dashboard.privado .dashboard-banner span {
+  color: #f47c20;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.dashboard.privado .dashboard-banner h1 {
+  font-size: 42px;
+  color: #07195a;
+  margin: 10px 0;
+}
+
+.dashboard.privado .dashboard-banner p {
+  color: #07195a;
+}
+
+.dashboard.privado .dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+
+.dashboard.privado .dashboard-card {
+  background: white;
+  border-radius: 24px;
+  padding: 30px;
+}
+
+.dashboard.privado .dashboard-card h2 {
+  font-size: 42px;
+  color: #f47c20;
+}
+
+.dashboard-lista {
+  background: white;
+  border-radius: 26px;
+  padding: 34px;
+}
+
+.dashboard-lista h2 {
+  color: #07195a;
+  font-size: 30px;
+  margin-bottom: 24px;
+}
+
+.dashboard-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid #e8ebf2;
+  align-items: center;
+}
+
+.dashboard-item strong {
+  color: #07195a;
+}
+
+.dashboard-item span {
+  color: #56637a;
+}
+
+@media (max-width: 900px) {
+  .dashboard.privado {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard.privado .dashboard-main {
+    padding: 28px;
+  }
+
+  .dashboard-topbar,
+  .dashboard.privado .dashboard-grid,
+  .dashboard-item {
+    grid-template-columns: 1fr;
+  }
+} 
+.dashboard-resumen-extra {
+  margin-top: 26px;
+}
+
+.dashboard-alerta {
+  display: grid;
+  gap: 10px;
+  color: #07195a;
+}
+
+.dashboard-alerta strong {
+  font-size: 20px;
+}
+
+.dashboard-item-poliza {
+  grid-template-columns: 2fr 1.2fr 1.2fr 1.4fr 1fr auto;
+}
+
+.dashboard-item-cotizacion {
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+}
+
+.dashboard-item small {
+  display: block;
+  margin-top: 6px;
+  color: #6b7280;
+}
+
+.estado {
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.estado-vigente,
+.estado-activa {
+  color: #16a34a !important;
+}
+
+.estado-por.vencer,
+.estado-por\ vencer {
+  color: #f47c20 !important;
+}
+
+.estado-caducada,
+.estado-vencida {
+  color: #dc2626 !important;
+}
+
+.dashboard-detail-button,
+.dashboard-back-button {
+  border: none;
+  background: #07195a;
+  color: white;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dashboard-detail-button:hover,
+.dashboard-back-button:hover {
+  background: #f47c20;
+}
+
+.dashboard-back-button {
+  margin-bottom: 24px;
+}
+
+.detalle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.detalle-grid div {
+  background: #f6f7fb;
+  padding: 22px;
+  border-radius: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.detalle-grid strong,
+.detalle-section h3 {
+  color: #07195a;
+}
+
+.detalle-grid span {
+  color: #56637a;
+}
+
+.detalle-section {
+  margin-top: 34px;
+}
+
+.beneficiario-item {
+  margin-top: 12px;
+  background: #f6f7fb;
+  border-radius: 16px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 14px;
+}
 .forgot-password {
   display: block;
-  margin: 0 0 20px auto;
-  background: none;
+  margin: 0 0 18px auto;
+  background: transparent;
   border: none;
   color: #07195a;
-  font-weight: 700;
-  cursor: pointer;
   font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .forgot-password:hover {

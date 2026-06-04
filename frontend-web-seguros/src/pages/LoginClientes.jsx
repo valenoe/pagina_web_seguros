@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { login } from "../services/api";
 import "../App.css";
 
 function LoginClientes() {
-  const navigate = useNavigate();
-
   const [mostrarPassword, setMostrarPassword] = useState(false);
   const [recordarCuenta, setRecordarCuenta] = useState(false);
 
@@ -24,27 +22,20 @@ function LoginClientes() {
     const cuentaGuardada = localStorage.getItem("cuenta_recordada");
 
     if (cuentaGuardada) {
-      const cuenta = JSON.parse(cuentaGuardada);
+      try {
+        const cuenta = JSON.parse(cuentaGuardada);
 
-      setFormulario({
-        rut: cuenta.rut || "",
-        tipo_cliente: cuenta.tipo_cliente || "persona",
-        password: "",
-      });
+        setFormulario({
+          rut: cuenta.rut || "",
+          tipo_cliente: cuenta.tipo_cliente || "persona",
+          password: "",
+        });
 
-      setRecordarCuenta(true);
-    } else {
-      setFormulario({
-        rut: "",
-        tipo_cliente: "persona",
-        password: "",
-      });
-
-      setRecordarCuenta(false);
+        setRecordarCuenta(true);
+      } catch {
+        localStorage.removeItem("cuenta_recordada");
+      }
     }
-
-    setMostrarPassword(false);
-    setError("");
   }, []);
 
   function cambiarDato(e) {
@@ -62,12 +53,7 @@ function LoginClientes() {
   }
 
   function cambiarRecordarCuenta() {
-    const nuevoValor = !recordarCuenta;
-    setRecordarCuenta(nuevoValor);
-
-    if (!nuevoValor) {
-      localStorage.removeItem("cuenta_recordada");
-    }
+    setRecordarCuenta(!recordarCuenta);
   }
 
   async function ingresar(e) {
@@ -79,7 +65,19 @@ function LoginClientes() {
     try {
       const data = await login(formulario);
 
-      localStorage.setItem("token", data.access_token);
+      console.log("DATA LOGIN:", data);
+
+      const token = data?.access_token;
+
+      console.log("TOKEN RECIBIDO:", token);
+
+      if (!token) {
+        throw new Error("No se recibió token desde el backend");
+      }
+
+      localStorage.setItem("token", token);
+
+      console.log("TOKEN GUARDADO:", localStorage.getItem("token"));
 
       if (recordarCuenta) {
         localStorage.setItem(
@@ -93,9 +91,10 @@ function LoginClientes() {
         localStorage.removeItem("cuenta_recordada");
       }
 
-      navigate("/clientes/dashboard");
+      window.location.href = "/clientes/dashboard";
     } catch (error) {
-      console.error(error);
+      console.error("ERROR LOGIN:", error);
+      localStorage.removeItem("token");
       setError("RUT o contraseña incorrectos.");
     } finally {
       setCargando(false);
@@ -120,8 +119,7 @@ function LoginClientes() {
           </h1>
 
           <p>
-            Accede a tus pólizas, documentos y estado
-            de solicitudes.
+            Accede a tus pólizas, documentos y estado de solicitudes.
           </p>
         </div>
 
@@ -146,11 +144,7 @@ function LoginClientes() {
             <div className="tipo-cliente-tabs">
               <button
                 type="button"
-                className={
-                  formulario.tipo_cliente === "persona"
-                    ? "active"
-                    : ""
-                }
+                className={formulario.tipo_cliente === "persona" ? "active" : ""}
                 onClick={() => cambiarTipoCliente("persona")}
               >
                 Persona
@@ -158,11 +152,7 @@ function LoginClientes() {
 
               <button
                 type="button"
-                className={
-                  formulario.tipo_cliente === "empresa"
-                    ? "active"
-                    : ""
-                }
+                className={formulario.tipo_cliente === "empresa" ? "active" : ""}
                 onClick={() => cambiarTipoCliente("empresa")}
               >
                 Empresa
