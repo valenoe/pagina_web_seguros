@@ -7,6 +7,7 @@ class UsuarioInterno(Base):
     __tablename__ = "web_usuarios_internos"
 
     id_usuario = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(50), unique=True, nullable=False)
     nombre = Column(String(200), nullable=False)
     email = Column(String(100), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)

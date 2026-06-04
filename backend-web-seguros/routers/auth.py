@@ -7,7 +7,9 @@ from jose import jwt
 from dotenv import load_dotenv
 from database import get_db
 from models.cliente import Cliente, PortalAcceso
+from models.usuario_interno import UsuarioInterno
 from schemas.auth import LoginIn, TokenOut
+from schemas.usuario_interno import LoginInterno
 
 load_dotenv()
 
@@ -43,6 +45,31 @@ def login(datos: LoginIn, db: Session = Depends(get_db)):
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     token = jwt.encode(
         {"sub": str(cliente.id_cliente), "rut": cliente.rut, "exp": expire},
+        SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+    return {"access_token": token, "token_type": "bearer"}
+
+
+@router.post("/admin/login", response_model=TokenOut)
+def login_admin(datos: LoginInterno, db: Session = Depends(get_db)):
+    from sqlalchemy import or_
+    usuario = db.query(UsuarioInterno).filter(
+        or_(UsuarioInterno.username == datos.login, UsuarioInterno.email == datos.login),
+        UsuarioInterno.activo == True,
+    ).first()
+    if not usuario:
+        raise _CREDENCIALES_INVALIDAS
+
+    if not bcrypt.checkpw(datos.password.encode(), usuario.password_hash.encode()):
+        raise _CREDENCIALES_INVALIDAS
+
+    usuario.ultimo_ingreso = datetime.now(timezone.utc)
+    db.commit()
+
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    token = jwt.encode(
+        {"sub": str(usuario.id_usuario), "email": usuario.email, "rol": usuario.rol, "tipo": "interno", "exp": expire},
         SECRET_KEY,
         algorithm=ALGORITHM,
     )

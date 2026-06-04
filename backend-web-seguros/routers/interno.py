@@ -49,8 +49,9 @@ def get_current_interno(
 
 @router.post("/auth/login", response_model=TokenInterno)
 def login_interno(datos: LoginInterno, db: Session = Depends(get_db)):
+    from sqlalchemy import or_
     usuario = db.query(UsuarioInterno).filter(
-        UsuarioInterno.email == datos.email,
+        or_(UsuarioInterno.username == datos.login, UsuarioInterno.email == datos.login),
         UsuarioInterno.activo == True,
     ).first()
     if not usuario:

@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class LoginInterno(BaseModel):
-    email: str
+    login: str  # acepta username o email
     password: str
 
 

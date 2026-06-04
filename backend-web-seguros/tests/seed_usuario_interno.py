@@ -25,7 +25,7 @@ def seed():
             return
 
         password_hash = bcrypt.hashpw(PASSWORD_PRUEBA.encode(), bcrypt.gensalt()).decode()
-        usuario = UsuarioInterno(**USUARIO, password_hash=password_hash)
+        usuario = UsuarioInterno(**USUARIO, username="admin2024", password_hash=password_hash)
         db.add(usuario)
         db.commit()
 
