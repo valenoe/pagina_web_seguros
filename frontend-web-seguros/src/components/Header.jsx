@@ -3,31 +3,22 @@ import { Link, useNavigate } from "react-router-dom";
 import useFetch from "../hooks/useFetch";
 import { obtenerSeguros } from "../services/api";
 
-function agruparPorCategoria(seguros) {
-  const orden = ["Vehículos", "Personas", "Empresas y otros"];
-  const grupos = {};
-  for (const s of seguros) {
-    const cat = s.categoria ?? "Otros";
-    if (!grupos[cat]) grupos[cat] = [];
-    grupos[cat].push(s);
-  }
-  return orden
-    .filter((c) => grupos[c])
-    .map((c) => ({ categoria: c, items: grupos[c] }));
-}
-
 function Header() {
   const navigate = useNavigate();
-  const { data: seguros } = useFetch(obtenerSeguros);
 
-  const grupos = agruparPorCategoria(seguros);
+  const { data: seguros = [] } = useFetch(obtenerSeguros);
 
   const [openSearch, setOpenSearch] = useState(false);
   const [query, setQuery] = useState("");
 
   const resultados = seguros
-    .filter((s) => s.nombre.toLowerCase().includes(query.toLowerCase()))
-    .map((s) => ({ texto: s.nombre, ruta: "/seguros" }));
+    .filter((s) =>
+      s.nombre.toLowerCase().includes(query.toLowerCase())
+    )
+    .map((s) => ({
+      texto: s.nombre,
+      ruta: "/seguros",
+    }));
 
   function irA(ruta) {
     setOpenSearch(false);
@@ -39,7 +30,10 @@ function Header() {
     <header className="header">
       <div className="header-logo">
         <Link to="/">
-          <img src="/Logo Prieto.png" alt="Prieto & Correa Seguros" />
+          <img
+            src="/Logo Prieto.png"
+            alt="Prieto & Correa Seguros"
+          />
         </Link>
       </div>
 
@@ -48,27 +42,7 @@ function Header() {
 
         <Link to="/nosotros">Nosotros</Link>
 
-        <div className="mega-dropdown">
-          <button className="mega-button">
-            Seguros <span>▼</span>
-          </button>
-
-          <div className="mega-menu">
-            {grupos.map((grupo) => (
-              <div className="mega-column" key={grupo.categoria}>
-                <h3>{grupo.categoria}</h3>
-                {grupo.items.map((item) => {
-                  const nombre = typeof item === "string" ? item : item.nombre;
-                  return (
-                    <Link to="/seguros" key={nombre}>
-                      {nombre}
-                    </Link>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
+        <Link to="/seguros">Seguros</Link>
 
         <Link to="/contacto">Contacto</Link>
 
@@ -77,7 +51,7 @@ function Header() {
             className="search-button"
             onClick={() => setOpenSearch(!openSearch)}
           >
-            <span className="search-icon"></span>
+            <span className="search-icon" />
           </button>
 
           {openSearch && (
@@ -92,9 +66,12 @@ function Header() {
 
               {query && (
                 <div className="search-results">
-                  {resultados.length > 0 ? (
+                  {resultados.length ? (
                     resultados.map((item) => (
-                      <button key={item.texto} onClick={() => irA(item.ruta)}>
+                      <button
+                        key={item.texto}
+                        onClick={() => irA(item.ruta)}
+                      >
                         {item.texto}
                       </button>
                     ))
@@ -108,9 +85,21 @@ function Header() {
         </div>
       </nav>
 
-      <Link to="/clientes">
-        <button className="header-button">Clientes</button>
-      </Link>
+      <div className="header-login">
+        <button className="header-button">
+          Inicio de sesión
+        </button>
+
+        <div className="header-login-menu">
+          <Link to="/login-interno">
+            Ejecutivo Comercial
+          </Link>
+
+          <Link to="/login-clientes">
+            Clientes
+          </Link>
+        </div>
+      </div>
     </header>
   );
 }

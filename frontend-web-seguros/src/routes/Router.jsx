@@ -5,6 +5,7 @@ import Nosotros from "../pages/Nosotros";
 import Seguros from "../pages/Seguros";
 import Contacto from "../pages/Contacto";
 import Clientes from "../pages/Clientes";
+import LoginClientes from "../pages/LoginClientes";
 import Dashboard from "../pages/Dashboard";
 import Cotizador from "../pages/Cotizador";
 import CotizacionExitosa from "../pages/CotizacionExitosa";
@@ -13,6 +14,7 @@ function Router() {
   return (
     <BrowserRouter>
       <Routes>
+
         <Route path="/" element={<Home />} />
 
         <Route path="/nosotros" element={<Nosotros />} />
@@ -23,7 +25,15 @@ function Router() {
 
         <Route path="/clientes" element={<Clientes />} />
 
-        <Route path="/clientes/dashboard" element={<Dashboard />} />
+        <Route
+          path="/login-clientes"
+          element={<LoginClientes />}
+        />
+
+        <Route
+          path="/clientes/dashboard"
+          element={<Dashboard />}
+        />
 
         <Route path="/cotizador" element={<Cotizador />} />
 
@@ -31,6 +41,7 @@ function Router() {
           path="/cotizacion-exitosa"
           element={<CotizacionExitosa />}
         />
+
       </Routes>
     </BrowserRouter>
   );
