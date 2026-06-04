@@ -18,7 +18,7 @@ class CotizacionIn(BaseModel):
 
 class CotizacionOut(BaseModel):
     id_cotizacion: int
-    id_seguro: int
+    seguro_id: int
     cliente_id: int | None
     nombre: str
     rut: str
