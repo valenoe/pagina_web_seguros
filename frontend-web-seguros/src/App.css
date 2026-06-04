@@ -90,25 +90,6 @@ HEADER
   width: 100%;
 }
 
-.header-button {
-  background: #07195a;
-  color: white;
-  border: none;
-  padding: 15px 30px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 900;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: 0.25s ease;
-}
-
-.header-button:hover {
-  background: #f47c20;
-  transform: translateY(-2px);
-}
-
 /* ==========================
 BUSCADOR HEADER
 ========================== */
@@ -209,97 +190,6 @@ BUSCADOR HEADER
 .search-results span {
   padding: 12px;
   color: gray;
-}
-
-/* ==========================
-MEGA MENU
-========================== */
-
-.mega-button {
-  background: none;
-  border: none;
-  font-family: "Montserrat", sans-serif;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 1.6px;
-  text-transform: uppercase;
-  color: #07195a;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 7px;
-  transition: 0.25s ease;
-}
-
-.mega-button:hover {
-  color: #f47c20;
-}
-
-.mega-dropdown {
-  position: relative;
-  height: 95px;
-  display: flex;
-  align-items: center;
-}
-
-.mega-dropdown::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: -280px;
-  width: 850px;
-  height: 40px;
-}
-
-.mega-menu {
-  position: absolute;
-  top: 95px;
-  left: -280px;
-  width: 850px;
-  background: #07195a;
-  padding: 45px;
-  display: none;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
-  border-radius: 0 0 28px 28px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
-  z-index: 9999;
-}
-
-.mega-dropdown:hover .mega-menu,
-.mega-menu:hover {
-  display: grid;
-}
-
-.mega-column {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.mega-column h3 {
-  color: #f47c20;
-  font-size: 18px;
-  margin-bottom: 10px;
-}
-
-.mega-column a {
-  color: white;
-  font-size: 17px;
-  font-weight: 700;
-  text-transform: none;
-  letter-spacing: 0;
-  padding-bottom: 0;
-}
-
-.mega-column a::after {
-  display: none;
-}
-
-.mega-column a:hover {
-  color: #f47c20;
-  padding-left: 8px;
 }
 
 /* ==========================
@@ -1207,11 +1097,49 @@ CONTACTO
   color: #1a7a3e;
 }
 
-.form-error {
-  color: #d93025;
-  font-size: 14px;
-  font-weight: 700;
+/* ====================== */
+/* MENSAJE ERROR LOGIN */
+/* ====================== */
+
+.form-error{
+
+margin-top:18px;
+
+margin-bottom:26px;
+
+padding:14px 18px;
+
+background:
+
+rgba(
+239,
+68,
+68,
+0.08
+);
+
+border:
+
+1px solid
+rgba(
+239,
+68,
+68,
+0.18
+);
+
+border-radius:14px;
+
+color:#dc2626;
+
+font-size:14px;
+
+font-weight:700;
+
+text-align:center;
+
 }
+
 
 /* ==========================
 COTIZACION EXITOSA
@@ -2070,4 +1998,552 @@ RESPONSIVE
   .whatsapp-float strong {
     display: none;
   }
+}
+
+.clientes-panel{
+
+min-height:100vh;
+
+background:
+linear-gradient(
+rgba(4,18,68,.65),
+rgba(4,18,68,.78)
+),
+url("/Fondo-login.png");
+
+background-size:cover;
+
+background-position:center;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+padding:80px 20px;
+
+}
+
+
+.clientes-logo{
+
+width:150px;
+
+margin-bottom:25px;
+
+}
+
+
+.clientes-content{
+
+width:100%;
+
+max-width:1200px;
+
+text-align:center;
+
+}
+
+
+.clientes-content h1{
+
+font-size:64px;
+
+color:white;
+
+margin-bottom:10px;
+
+}
+
+
+.clientes-subtitle{
+
+color:#ff7a1a;
+
+font-size:22px;
+
+margin-bottom:70px;
+
+}
+
+
+.clientes-cards{
+
+display:grid;
+
+grid-template-columns:1fr 1fr;
+
+gap:30px;
+
+}
+
+
+.cliente-card{
+
+background:white;
+
+padding:40px;
+
+border-radius:22px;
+
+display:flex;
+
+gap:25px;
+
+text-decoration:none;
+
+text-align:left;
+
+transition:.25s;
+
+}
+
+
+.cliente-card:hover{
+
+transform:translateY(-10px);
+
+}
+
+
+.cliente-icon{
+
+width:90px;
+
+height:90px;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+flex-shrink:0;
+
+background:transparent;
+
+border:none;
+
+padding:0;
+
+box-shadow:none;
+
+overflow:hidden;
+
+}
+
+
+.cliente-icon img{
+
+width:100%;
+
+height:100%;
+
+object-fit:contain;
+
+display:block;
+
+mix-blend-mode:multiply;
+
+filter:
+brightness(.98)
+contrast(1.05);
+
+}
+
+
+.cliente-card h2{
+
+font-size:34px;
+
+color:#071b64;
+
+margin-bottom:8px;
+
+}
+
+
+.cliente-card span{
+
+display:block;
+
+color:#6b7280;
+
+margin-bottom:18px;
+
+}
+
+
+.cliente-card p{
+
+color:#4b5563;
+
+line-height:1.7;
+
+}
+
+
+@media(max-width:900px){
+
+.clientes-cards{
+
+grid-template-columns:1fr;
+
+}
+
+}
+
+/*LOGIN CLIENTES*/
+.login-clientes-page {
+  min-height: calc(100vh - 95px);
+  background:
+    linear-gradient(
+      rgba(4, 18, 68, 0.58),
+      rgba(4, 18, 68, 0.72)
+    ),
+    url("/Fondo-login.png");
+  background-size: cover;
+  background-position: center;
+  display: grid;
+  grid-template-columns: 1fr 460px;
+  gap: 55px;
+  align-items: center;
+  padding: 45px 9%;
+}
+
+.login-clientes-left {
+  color: white;
+  max-width: 540px;
+}
+
+.login-clientes-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+  font-weight: 700;
+  margin-bottom: 25px;
+}
+
+.login-clientes-badge span {
+  width: 28px;
+  height: 28px;
+  background: #ff7a1a;
+  color: white;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.login-clientes-left h1 {
+  font-size: 50px;
+  line-height: 1.05;
+  margin-bottom: 22px;
+}
+
+.login-clientes-left p {
+  font-size: 19px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.login-clientes-card {
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 24px;
+  padding: 30px 38px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(12px);
+}
+
+.login-volver {
+  display: inline-block;
+  color: #31415f;
+  text-decoration: none;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.login-logo {
+  display: block;
+  width: 90px;
+  margin: 0 auto 22px;
+}
+
+.login-clientes-card h2 {
+  color: #07195a;
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  text-align: center;
+  color: #56637a;
+  margin-bottom: 26px;
+}
+
+.login-field {
+  height: 54px;
+  border: 1px solid #d9deea;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 18px;
+  margin-bottom: 14px;
+  background: white;
+}
+
+.login-field span {
+  font-size: 20px;
+}
+
+.login-field input,
+.login-field select {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 16px;
+  color: #07195a;
+  background: transparent;
+}
+
+.login-submit {
+  width: 100%;
+  height: 54px;
+  border: none;
+  border-radius: 14px;
+  background: #07195a;
+  color: white;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.login-submit:hover {
+  background: #ff7a1a;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(255, 122, 26, 0.28);
+}
+
+@media (max-width: 1000px) {
+  .login-clientes-page {
+    grid-template-columns: 1fr;
+    padding: 70px 24px;
+  }
+
+  .login-clientes-left {
+    text-align: center;
+    margin: auto;
+  }
+
+  .login-clientes-left h1 {
+    font-size: 42px;
+  }
+
+  .login-clientes-card {
+    max-width: 520px;
+    width: 100%;
+    margin: auto;
+  }
+}
+.tipo-cliente-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tipo-cliente-tabs button {
+  height: 48px;
+  border: 1px solid #d9deea;
+  border-radius: 12px;
+  background: white;
+  color: #07195a;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.tipo-cliente-tabs button.active {
+  background: #07195a;
+  color: white;
+  border-color: #07195a;
+}
+
+.tipo-cliente-tabs button:hover {
+  border-color: #ff7a1a;
+}
+
+/* ======================
+ACCESOS HEADER
+====================== */
+
+.header-login {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.header-button {
+  height: 54px;
+  padding: 0 34px;
+  border: none;
+  border-radius: 18px;
+  background: #07195a;
+  color: white;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 30px rgba(7, 25, 90, 0.18);
+}
+
+.header-button:hover,
+.header-button:active,
+.header-button:focus {
+  transform: none;
+  box-shadow: 0 12px 30px rgba(7, 25, 90, 0.18);
+  outline: none;
+}
+
+.header-login-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 290px;
+  margin-top: 8px;
+  background: white;
+  border-radius: 20px;
+  padding: 14px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.18);
+  z-index: 99999;
+}
+
+.header-login:hover .header-login-menu {
+  display: flex;
+}
+
+.header-login::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 18px;
+}
+
+.header-login-menu a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 16px;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 800;
+  color: #07195a;
+  transition: 0.2s ease;
+}
+
+.header-login-menu a:hover {
+  background: #f6f8fb;
+  color: #f47c20;
+}
+
+/* ===================== */
+/* OPCIONES LOGIN */
+/* ===================== */
+
+.login-options{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+margin-top:14px;
+
+margin-bottom:20px;
+
+}
+
+
+.mostrar-password{
+
+display:flex;
+
+align-items:center;
+
+gap:8px;
+
+font-size:14px;
+
+color:#6b7280;
+
+cursor:pointer;
+
+}
+
+
+.mostrar-password input{
+
+width:18px;
+
+height:18px;
+
+accent-color:#07195a;
+
+cursor:pointer;
+
+}
+
+
+.login-options button{
+
+background:none;
+
+border:none;
+
+color:#07195a;
+
+font-weight:700;
+
+cursor:pointer;
+
+font-size:14px;
+
+}
+
+
+.login-options button:hover{
+
+color:#f47c20;
+
+}
+
+.forgot-password {
+  display: block;
+  margin: 0 0 20px auto;
+  background: none;
+  border: none;
+  color: #07195a;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.forgot-password:hover {
+  color: #f47c20;
 }

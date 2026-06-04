@@ -1,85 +1,100 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { login } from "../services/api";
 
 function Clientes() {
-  const navigate = useNavigate();
-
-  const [formulario, setFormulario] = useState({
-    rut: "",
-    tipo_cliente: "persona",
-    password: "",
-  });
-  const [cargando, setCargando] = useState(false);
-  const [error, setError] = useState("");
-
-  function cambiarDato(e) {
-    setFormulario({ ...formulario, [e.target.name]: e.target.value });
-  }
-
-  async function ingresar(e) {
-    e.preventDefault();
-    setError("");
-    setCargando(true);
-    try {
-      const data = await login(formulario);
-      localStorage.setItem("token", data.access_token);
-      navigate("/clientes/dashboard");
-    } catch {
-      setError("RUT o contraseña incorrectos.");
-    } finally {
-      setCargando(false);
-    }
-  }
-
   return (
     <>
       <Header />
 
-      <section className="clientes">
-        <div className="clientes-box">
-          <h1>Acceso Clientes</h1>
-          <p>Ingresa al portal con tu RUT y contraseña.</p>
+      <section className="clientes-panel">
 
-          <form onSubmit={ingresar}>
-            <input
-              name="rut"
-              required
-              value={formulario.rut}
-              onChange={cambiarDato}
-              placeholder="RUT (ej: 12.345.678-9)"
-            />
+        <div className="clientes-content">
 
-            <select
-              name="tipo_cliente"
-              value={formulario.tipo_cliente}
-              onChange={cambiarDato}
+          <h1>
+            Sistema de Gestión de Seguros
+          </h1>
+
+          <p className="clientes-subtitle">
+            Prieto & Correa Seguros
+          </p>
+
+          <div className="clientes-cards">
+
+            <Link
+              to="/login-interno"
+              className="cliente-card"
             >
-              <option value="persona">Persona natural</option>
-              <option value="empresa">Empresa</option>
-            </select>
 
-            <input
-              name="password"
-              type="password"
-              required
-              value={formulario.password}
-              onChange={cambiarDato}
-              placeholder="Contraseña"
-            />
+              <div className="cliente-icon">
 
-            {error && <p className="form-error">{error}</p>}
+                <img
+                  src="/icon-edificio.png"
+                  alt="Panel Corporativo"
+                />
 
-            <button type="submit" disabled={cargando}>
-              {cargando ? "Ingresando..." : "Ingresar"}
-            </button>
-          </form>
+              </div>
+
+              <div>
+
+                <h2>
+                  Panel Corporativo
+                </h2>
+
+                <span>
+                  Gestión interna de la corredora
+                </span>
+
+                <p>
+                  Acceso exclusivo para colaboradores,
+                  ejecutivos y administración.
+                </p>
+
+              </div>
+
+            </Link>
+
+            <Link
+              to="/login-clientes"
+              className="cliente-card"
+            >
+
+              <div className="cliente-icon">
+
+                <img
+                  src="/icon-usuario.png"
+                  alt="Portal Clientes"
+                />
+
+              </div>
+
+              <div>
+
+                <h2>
+                  Mi Portal de Seguros
+                </h2>
+
+                <span>
+                  Accede a tus pólizas y servicios
+                </span>
+
+                <p>
+                  Consulta pólizas, documentos
+                  y seguimiento de solicitudes.
+                </p>
+
+              </div>
+
+            </Link>
+
+          </div>
+
         </div>
+
       </section>
 
       <Footer />
+
     </>
   );
 }
