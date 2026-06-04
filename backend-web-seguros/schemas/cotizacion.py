@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from typing import Literal
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class CotizacionIn(BaseModel):
@@ -18,7 +18,7 @@ class CotizacionIn(BaseModel):
 
 class CotizacionOut(BaseModel):
     id_cotizacion: int
-    id_seguro: int
+    id_seguro: int = Field(alias="seguro_id")
     cliente_id: int | None
     nombre: str
     rut: str
@@ -31,7 +31,7 @@ class CotizacionOut(BaseModel):
     estado: str
     fecha_solicitud: datetime
 
-    model_config = {"from_attributes": True}
+    model_config = {"from_attributes": True, "populate_by_name": True}
 
     @field_validator("datos_adicionales", mode="before")
     @classmethod

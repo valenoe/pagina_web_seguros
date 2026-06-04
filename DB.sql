@@ -82,6 +82,28 @@ CREATE TABLE `web_poliza_beneficiarios` (
   `relacion` varchar(50)
 );
 
+CREATE TABLE `web_imagenes` (
+  `id_imagen` integer PRIMARY KEY AUTO_INCREMENT,
+  `nombre` varchar(200) NOT NULL,
+  `url` varchar(500) NOT NULL,
+  `descripcion` varchar(500),
+  `seccion` varchar(100),
+  `activo` boolean DEFAULT true,
+  `fecha_creacion` timestamp DEFAULT (now())
+);
+
+CREATE TABLE `web_usuarios_internos` (
+  `id_usuario` integer PRIMARY KEY AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL UNIQUE,
+  `nombre` varchar(200) NOT NULL,
+  `email` varchar(100) NOT NULL UNIQUE,
+  `password_hash` varchar(255) NOT NULL,
+  `rol` varchar(50) NOT NULL DEFAULT 'agente',
+  `activo` boolean DEFAULT true,
+  `fecha_creacion` timestamp DEFAULT (now()),
+  `ultimo_ingreso` timestamp
+);
+
 ALTER TABLE `web_cotizaciones` ADD FOREIGN KEY (`seguro_id`) REFERENCES `web_seguros_catalogo` (`id_seguro`);
 
 ALTER TABLE `web_cotizaciones` ADD FOREIGN KEY (`cliente_id`) REFERENCES `web_clientes` (`id_cliente`);
