@@ -1,9 +1,15 @@
+import { Link } from "react-router-dom";
+
 function Footer() {
   return (
     <footer className="footer">
       <div className="footer-grid">
+
         <div className="footer-brand">
-          <img src="/Logo Prieto.png" alt="Prieto & Correa Seguros" />
+          <img
+            src="/Logo Prieto.png"
+            alt="Prieto & Correa Seguros"
+          />
 
           <p>
             Más que seguros, construimos relaciones de confianza mediante
@@ -12,42 +18,112 @@ function Footer() {
           </p>
         </div>
 
-        <div>
+        <div className="footer-column">
           <h3>Seguros</h3>
-          <a href="#">Seguro de Auto</a>
-          <a href="#">SOAP</a>
-          <a href="#">Seguro de Hogar</a>
-          <a href="#">Mascotas</a>
-          <a href="#">Asistencia en Viaje</a>
+
+          <Link to="/seguros">Seguro de Auto</Link>
+
+          <Link to="/seguros">SOAP</Link>
+
+          <Link to="/seguros">Seguro de Hogar</Link>
+
+          <Link to="/seguros">Mascotas</Link>
+
+          <Link to="/seguros">Asistencia en Viaje</Link>
         </div>
 
-        <div>
+        <div className="footer-column">
           <h3>Empresa</h3>
-          <a href="#">Nosotros</a>
-          <a href="#">Seguros</a>
-          <a href="#">Clientes</a>
-          <a href="#">Contacto</a>
+
+          <Link to="/nosotros">Nosotros</Link>
+
+          <Link to="/seguros">Seguros</Link>
+
+          <Link to="/clientes">Clientes</Link>
+
+          <Link to="/contacto">Contacto</Link>
         </div>
 
-        <div>
+        <div className="footer-column">
           <h3>Contacto</h3>
-          <span>Pje. Uno y Medio Nte. 4035</span>
-          <span>Talca · Región del Maule</span>
+
+          <a
+          href="https://maps.google.com/?q=Pje.+Uno+y+Medio+Nte.+4035+Talca+Chile"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          📍 Pje. Uno y Medio Nte. 4035
+        </a>
+
+        <a
+          href="https://maps.google.com/?q=Pje.+Uno+y+Medio+Nte.+4035+Talca+Chile"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Talca · Región del Maule
+        </a>
 
           <a href="mailto:amorales@prietocorrea.cl">
-            amorales@prietocorrea.cl
+            ✉️ amorales@prietocorrea.cl
           </a>
 
           <a href="tel:+56966541939">
-            +56 9 6654 1939
+            📞 +56 9 6654 1939
           </a>
+
+          <div className="footer-social">
+
+            <a
+              href="https://web.facebook.com/prietocorreaseguros?locale=es_LA"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook"
+            >
+              <img
+                src="/facebook.png"
+                alt="Facebook"
+              />
+            </a>
+
+            <a
+              href="https://www.instagram.com/prietocorreaseguros/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+            >
+              <img
+                src="/instagram.png"
+                alt="Instagram"
+              />
+            </a>
+
+            <a
+              href="https://www.linkedin.com/company/prieto-correa-corredora-de-seguro/?viewAsMember=true"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+            >
+              <img
+                src="/linkedin.png"
+                alt="LinkedIn"
+              />
+            </a>
+
+          </div>
         </div>
+
       </div>
 
       <div className="footer-bottom">
+
         <span>
-          © 2026 Prieto & Correa Seguros · Todos los derechos reservados
+          © 2026 Prieto & Correa Seguros
         </span>
+
+        <span>
+          Todos los derechos reservados
+        </span>
+
       </div>
     </footer>
   );

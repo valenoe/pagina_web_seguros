@@ -1,59 +1,139 @@
+import { useEffect, useRef } from "react";
+
 const razones = [
   {
-    icono: "🛡️",
+    numero: "01",
     titulo: "Asesoría personalizada",
     descripcion:
-      "Analizamos tus necesidades y te ayudamos a elegir una alternativa adecuada.",
+      "Analizamos cada necesidad para recomendar alternativas alineadas al perfil de cada cliente.",
   },
+
   {
-    icono: "⚡",
-    titulo: "Respuesta rápida",
+    numero: "02",
+    titulo: "Respuesta ágil",
     descripcion:
-      "Gestionamos solicitudes y entregamos acompañamiento oportuno.",
+      "Gestionamos cada una de las solicitudes entregando respuestas oportunas y acompañamiento permanente.",
   },
+
   {
-    icono: "🤝",
-    titulo: "Experiencia y confianza",
+    numero: "03",
+    titulo: "Experiencia y respaldo",
     descripcion:
-      "Más de 30 años acompañando personas, familias y empresas.",
+      "Acompañamos a las personas y empresas entregando confianza y asesoría profesional.",
   },
+
   {
-    icono: "🏆",
+    numero: "04",
     titulo: "Comparación de alternativas",
     descripcion:
-      "Trabajamos con distintas compañías para encontrar mejores opciones.",
+      "Evaluamos distintas opciones para encontrar coberturas acordes a cada necesidad.",
   },
 ];
 
 function WhyChooseUs() {
+
+  const sectionRef = useRef(null);
+
+  useEffect(() => {
+
+    const observer = new IntersectionObserver(
+
+      ([entry]) => {
+
+        if (entry.isIntersecting) {
+
+          entry.target.classList.add("visible");
+
+        }
+
+      },
+
+      {
+        threshold: 0.25,
+      }
+
+    );
+
+    if (sectionRef.current) {
+
+      observer.observe(sectionRef.current);
+
+    }
+
+    return () => {
+
+      observer.disconnect();
+
+    };
+
+  }, []);
+
   return (
-    <section className="why-section">
+
+    <section
+      ref={sectionRef}
+      className="why-section"
+    >
+
       <div className="why-header">
-        <span>Por qué elegirnos</span>
+
+        <span>
+          Por qué elegirnos
+        </span>
 
         <h2>
-          Más que vender seguros, te ayudamos a decidir mejor
+          Más que vender seguros,
+          <br />
+          entregamos respaldo
         </h2>
 
         <p>
-          Nuestro trabajo es acompañarte, comparar alternativas y ayudarte a
-          tomar decisiones con respaldo profesional.
+          Nuestro trabajo es acompañarte y ayudarte a tomar decisiones
+          con información clara y respaldo profesional.
         </p>
+
       </div>
 
       <div className="why-grid">
-        {razones.map((item) => (
-          <article className="why-card" key={item.titulo}>
-            <div className="why-icon">{item.icono}</div>
 
-            <h3>{item.titulo}</h3>
+        {razones.map((item, index) => (
 
-            <p>{item.descripcion}</p>
+          <article
+            className="why-card"
+            key={item.titulo}
+            style={{
+              transitionDelay: `${index * 0.15}s`,
+            }}
+          >
+
+            <div className="why-number">
+
+              {item.numero}
+
+            </div>
+
+            <h3>
+
+              {item.titulo}
+
+            </h3>
+
+            <p>
+
+              {item.descripcion}
+
+            </p>
+
           </article>
+
         ))}
+
       </div>
+
     </section>
+
   );
+
 }
 
 export default WhyChooseUs;
