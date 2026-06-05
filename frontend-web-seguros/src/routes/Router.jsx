@@ -6,6 +6,7 @@ import Seguros from "../pages/Seguros";
 import Contacto from "../pages/Contacto";
 import Clientes from "../pages/Clientes";
 import LoginClientes from "../pages/LoginClientes";
+import RegistroClientes from "../pages/RegistroClientes";
 import Dashboard from "../pages/Dashboard";
 import DetalleSeguro from "../pages/DetalleSeguro";
 import Cotizador from "../pages/Cotizador";
@@ -27,9 +28,12 @@ function Router() {
 
         <Route path="/login-clientes" element={<LoginClientes />} />
 
+        <Route path="/registro-clientes" element={<RegistroClientes />} />
+
         <Route path="/clientes/dashboard" element={<Dashboard />} />
 
         <Route path="/clientes/seguro/:id" element={<DetalleSeguro />} />
+        <Route path="/registro-clientes" element={<RegistroClientes />} />
 
         <Route path="/cotizador" element={<Cotizador />} />
 

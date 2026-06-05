@@ -127,10 +127,6 @@ function LoginClientes() {
         </div>
 
         <div className="login-clientes-card">
-          <Link to="/clientes" className="login-volver">
-            ← Volver
-          </Link>
-
           <img
             src="/Logo Prieto.png"
             alt="Prieto & Correa"
@@ -220,6 +216,11 @@ function LoginClientes() {
             <button type="submit" className="login-submit" disabled={cargando}>
               {cargando ? "Ingresando..." : "Ingresar"}
             </button>
+
+            <div className="registro-login-link">
+              ¿No tienes cuenta?{" "}
+              <Link to="/registro-clientes">Crear cuenta</Link>
+            </div>
           </form>
         </div>
       </section>

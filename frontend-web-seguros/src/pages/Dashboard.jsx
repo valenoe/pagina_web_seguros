@@ -2,14 +2,73 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMisCotizaciones, getMisPolizas } from "../services/api";
 
+function PerfilCliente() {
+  const nombreCliente = localStorage.getItem("nombre_cliente") || "Cliente";
+
+  const perfil = {
+    nombre: nombreCliente,
+    rut: localStorage.getItem("rut_cliente") || "12.456.789-3",
+    correo: localStorage.getItem("correo_cliente") || "correo@cliente.cl",
+    telefono: localStorage.getItem("telefono_cliente") || "+56 9 0000 0000",
+    tipoCliente: localStorage.getItem("tipo_cliente") || "Persona natural",
+  };
+
+  function cambiarPassword() {
+    alert("Función pendiente de conectar con backend.");
+  }
+
+  return (
+    <div className="perfil-cliente">
+      <div className="perfil-cliente-header">
+        <span>Perfil cliente</span>
+        <h2>Hola, {perfil.nombre} 👋</h2>
+        <p>
+          Revisa tus datos de contacto y la información asociada a tu cuenta.
+        </p>
+      </div>
+
+      <div className="perfil-cliente-grid">
+        <div className="perfil-cliente-card">
+          <small>RUT</small>
+          <strong>{perfil.rut}</strong>
+        </div>
+
+        <div className="perfil-cliente-card">
+          <small>Correo</small>
+          <strong>{perfil.correo}</strong>
+        </div>
+
+        <div className="perfil-cliente-card">
+          <small>Teléfono</small>
+          <strong>{perfil.telefono}</strong>
+        </div>
+
+        <div className="perfil-cliente-card">
+          <small>Tipo cliente</small>
+          <strong>{perfil.tipoCliente}</strong>
+        </div>
+      </div>
+
+      <div className="perfil-cliente-security">
+        <div>
+          <span>Seguridad</span>
+          <h3>Cambiar contraseña</h3>
+          <p>
+            Próximamente podrás actualizar tu contraseña directamente desde el
+            portal.
+          </p>
+        </div>
+
+        <button onClick={cambiarPassword}>Cambiar contraseña</button>
+      </div>
+    </div>
+  );
+}
+
 function Dashboard() {
   const navigate = useNavigate();
 
-  const WHATSAPP_EJECUTIVO = "56966541939";
-
-const nombreCliente =
-  localStorage.getItem("nombre_cliente") ||
-  "Cliente";
+  const nombreCliente = localStorage.getItem("nombre_cliente") || "Cliente";
 
   const segurosDisponibles = [
     {
@@ -171,10 +230,7 @@ const nombreCliente =
   function claseEstadoCotizacion(estado) {
     if (!estado) return "pendiente";
 
-    return estado
-      .toLowerCase()
-      .replaceAll(" ", "-")
-      .replaceAll("_", "-");
+    return estado.toLowerCase().replaceAll(" ", "-").replaceAll("_", "-");
   }
 
   function logoCompania(compania) {
@@ -218,17 +274,22 @@ const nombreCliente =
         </div>
 
         <div className="sidebar-cliente">
-       <h2>Portal Clientes</h2>
-
-        <small>
-       {nombreCliente}
-        </small>
+          <h2>Portal Clientes</h2>
+          <small>{nombreCliente}</small>
         </div>
+
         <button
           className={vista === "resumen" ? "activo" : ""}
           onClick={() => setVista("resumen")}
         >
           Resumen
+        </button>
+
+        <button
+          className={vista === "perfil" ? "activo" : ""}
+          onClick={() => setVista("perfil")}
+        >
+          Perfil Cliente
         </button>
 
         <button
@@ -272,17 +333,19 @@ const nombreCliente =
         >
           Pagos y cuotas
         </button>
+
         <button
-        className={vista === "documentos" ? "activo" : ""}
-        onClick={() => setVista("documentos")}
+          className={vista === "documentos" ? "activo" : ""}
+          onClick={() => setVista("documentos")}
         >
-        Documentos
+          Documentos
         </button>
+
         <button
-        className={vista === "siniestro" ? "activo" : ""}
-        onClick={() => setVista("siniestro")}
+          className={vista === "siniestro" ? "activo" : ""}
+          onClick={() => setVista("siniestro")}
         >
-        Reportar siniestro
+          Reportar siniestro
         </button>
 
         <button className="dashboard-logout" onClick={cerrarSesion}>
@@ -309,16 +372,12 @@ const nombreCliente =
             {vista === "resumen" && (
               <>
                 <div className="dashboard-banner">
-  <span>Bienvenido</span>
-
-  <h1>
-    Hola, {nombreCliente}
-  </h1>
-
-  <p>
-    Consulta tus seguros, solicitudes y próximos movimientos.
-  </p>
-</div>
+                  <span>Bienvenido</span>
+                  <h1>Hola, {nombreCliente}</h1>
+                  <p>
+                    Consulta tus seguros, solicitudes y próximos movimientos.
+                  </p>
+                </div>
 
                 <div className="dashboard-grid dashboard-grid-resumen">
                   <div className="dashboard-card">
@@ -352,7 +411,6 @@ const nombreCliente =
                         <strong>Pólizas</strong>
                         <span>{polizas.length}</span>
                       </div>
-
                       <div className="barra">
                         <div
                           style={{
@@ -367,7 +425,6 @@ const nombreCliente =
                         <strong>Cotizaciones</strong>
                         <span>{cotizaciones.length}</span>
                       </div>
-
                       <div className="barra">
                         <div
                           style={{
@@ -382,7 +439,6 @@ const nombreCliente =
                         <strong>Compañías</strong>
                         <span>{companiasAsociadas}</span>
                       </div>
-
                       <div className="barra">
                         <div
                           style={{
@@ -425,6 +481,12 @@ const nombreCliente =
               </>
             )}
 
+            {vista === "perfil" && (
+              <div className="dashboard-lista">
+                <PerfilCliente />
+              </div>
+            )}
+
             {vista === "polizas" && (
               <div className="dashboard-lista">
                 <h2>Mis pólizas</h2>
@@ -432,7 +494,6 @@ const nombreCliente =
                 {polizas.length === 0 ? (
                   <div className="empty-polizas">
                     <h3>🛡 No tienes pólizas registradas</h3>
-
                     <p>Todavía no existen seguros asociados a esta cuenta.</p>
 
                     <ul className="empty-polizas-list">
@@ -637,232 +698,121 @@ const nombreCliente =
                 </div>
               </div>
             )}
+
             {vista === "documentos" && (
-              
-          <div className="dashboard-lista">
-
-          <h2>Centro de documentos</h2>
-
-          <div className="documentos-grid">
-
-          <div className="documento-card">
-          <div className="documento-icono">
-          📄
-          </div>
-
-          <h3>Pólizas</h3>
-
-          <p>
-          Visualiza y descarga tus pólizas.
-          </p>
-
-          <button>
-          Ver documentos
-          </button>
-          </div>
-
-          <div className="documento-card">
-
-          <div className="documento-icono">
-          🧾
-          </div>
-
-          <h3>Certificados</h3>
-
-          <p>
-          Accede a certificados disponibles.
-          </p>
-
-          <button>
-          Descargar
-          </button>
-
-          </div>
-
-          <div className="documento-card">
-
-          <div className="documento-icono">
-          🚗
-          </div>
-
-          <h3>SOAP</h3>
-
-          <p>
-          Consulta y descarga tu SOAP.
-          </p>
-
-          <button>
-          Ver SOAP
-          </button>
-
-          </div>
-
-          <div className="documento-card">
-
-          <div className="documento-icono">
-          🕓
-          </div>
-
-          <h3>Historial</h3>
-
-          <p>
-          Revisa documentos anteriores.
-          </p>
-
-          <button>
-          Abrir historial
-          </button>
-
-          </div>
-
-          </div>
-
-          </div>
-          )}
-          {vista === "siniestro" && (
-          <div className="dashboard-lista">
-
-          <h2>Reportar siniestro</h2>
-
-          <p className="subtitulo-panel">
-          Selecciona una póliza para iniciar el reporte.
-          </p>
-
-          {polizas.length === 0 ? (
-
-          <div className="empty-polizas">
-
-          <h3>
-          No existen seguros disponibles para reportar
-          </h3>
-
-          <p>
-          Cuando contrates una póliza con Prieto & Correa podrás gestionar siniestros y recibir apoyo directo desde este portal.
-          </p>
-
-          </div>
-
-          ) : (
-
-          <div className="siniestro-polizas">
-
-          {polizas.map((p) => (
-
-          <div
-          className="siniestro-poliza-card"
-          key={p.id_poliza}
-          >
-
-          <div className="siniestro-poliza-top">
-
-          <div>
-
-          <h3>
-
-          {p.seguro?.nombre ||
-          "Seguro"}
-
-          </h3>
-
-          <span>
-
-          {p.compania ||
-          "Prieto & Correa"}
-
-          </span>
-
-          </div>
-
-          <div
-          className={`estado-badge ${calcularEstado(p)}`}
-          >
-
-          {textoEstado(
-          calcularEstado(p)
-          )}
-
-          </div>
-
-          </div>
-
-          <div className="siniestro-info">
-
-          <div>
-
-          <label>
-          N° póliza
-          </label>
-
-          <strong>
-
-          {p.numero_poliza ||
-          "Sin número"}
-
-          </strong>
-
-          </div>
-
-          <div>
-
-          <label>
-          Vencimiento
-          </label>
-
-          <strong>
-
-          {formatearFecha(
-          p.fecha_vencimiento
-          )}
-
-          </strong>
-
-          </div>
-
-          </div>
-
-          <button
-          className="reportar-btn"
-          onClick={() => {
-
-          const mensaje =
-          `Hola.
-          Soy cliente del portal.
-
-          Quiero reportar un siniestro.
-
-          Seguro:
-          ${p.seguro?.nombre}
-
-          Compañía:
-          ${p.compania}
-
-          Póliza:
-          ${p.numero_poliza}`;
-
-          window.open(
-          `https://wa.me/56966541939?text=${encodeURIComponent(
-          mensaje
-          )}`
-          );
-
-          }}
-
-          >
-
-          Reportar siniestro
-
-          </button>
-
-          </div>
-
-          ))}
-
-          </div>
-
-          )}
-
-          </div>
-          )}
+              <div className="dashboard-lista">
+                <h2>Centro de documentos</h2>
+
+                <div className="documentos-grid">
+                  <div className="documento-card">
+                    <div className="documento-icono">📄</div>
+                    <h3>Pólizas</h3>
+                    <p>Visualiza y descarga tus pólizas.</p>
+                    <button>Ver documentos</button>
+                  </div>
+
+                  <div className="documento-card">
+                    <div className="documento-icono">🧾</div>
+                    <h3>Certificados</h3>
+                    <p>Accede a certificados disponibles.</p>
+                    <button>Descargar</button>
+                  </div>
+
+                  <div className="documento-card">
+                    <div className="documento-icono">🚗</div>
+                    <h3>SOAP</h3>
+                    <p>Consulta y descarga tu SOAP.</p>
+                    <button>Ver SOAP</button>
+                  </div>
+
+                  <div className="documento-card">
+                    <div className="documento-icono">🕓</div>
+                    <h3>Historial</h3>
+                    <p>Revisa documentos anteriores.</p>
+                    <button>Abrir historial</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {vista === "siniestro" && (
+              <div className="dashboard-lista">
+                <h2>Reportar siniestro</h2>
+
+                <p className="subtitulo-panel">
+                  Selecciona una póliza para iniciar el reporte.
+                </p>
+
+                {polizas.length === 0 ? (
+                  <div className="empty-polizas">
+                    <h3>No existen seguros disponibles para reportar</h3>
+                    <p>
+                      Cuando contrates una póliza con Prieto & Correa podrás
+                      gestionar siniestros y recibir apoyo directo desde este
+                      portal.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="siniestro-polizas">
+                    {polizas.map((p) => (
+                      <div className="siniestro-poliza-card" key={p.id_poliza}>
+                        <div className="siniestro-poliza-top">
+                          <div>
+                            <h3>{p.seguro?.nombre || "Seguro"}</h3>
+                            <span>{p.compania || "Prieto & Correa"}</span>
+                          </div>
+
+                          <div className={`estado-badge ${calcularEstado(p)}`}>
+                            {textoEstado(calcularEstado(p))}
+                          </div>
+                        </div>
+
+                        <div className="siniestro-info">
+                          <div>
+                            <label>N° póliza</label>
+                            <strong>{p.numero_poliza || "Sin número"}</strong>
+                          </div>
+
+                          <div>
+                            <label>Vencimiento</label>
+                            <strong>
+                              {formatearFecha(p.fecha_vencimiento)}
+                            </strong>
+                          </div>
+                        </div>
+
+                        <button
+                          className="reportar-btn"
+                          onClick={() => {
+                            const mensaje = `Hola.
+Soy cliente del portal.
+
+Quiero reportar un siniestro.
+
+Seguro:
+${p.seguro?.nombre || "Seguro"}
+
+Compañía:
+${p.compania || "Sin compañía"}
+
+Póliza:
+${p.numero_poliza || "Sin número"}`;
+
+                            window.open(
+                              `https://wa.me/56966541939?text=${encodeURIComponent(
+                                mensaje
+                              )}`
+                            );
+                          }}
+                        >
+                          Reportar siniestro
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </main>
