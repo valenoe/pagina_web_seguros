@@ -11,13 +11,14 @@ from models.cliente import Cliente
 from models.contacto import LeadContacto
 from models.cotizacion import Cotizacion
 from models.imagen import Imagen
-from models.poliza import Poliza
+from models.poliza import Poliza, PolizaPago
 from models.usuario_interno import UsuarioInterno
 from services.username import generar_username
 from schemas.admin import (
     SeguroIn, SeguroAdminOut,
     ClienteIn, ClienteAdminOut,
     PolizaIn, PolizaAdminOut,
+    PagoIn, PagoAdminOut,
     ImagenIn, ImagenOut,
     UsuarioInternoIn, UsuarioInternoUpdate, UsuarioInternoAdminOut,
     LeadAdminOut, CotizacionAdminOut,
@@ -200,6 +201,36 @@ def eliminar_poliza(id_poliza: int, db: Session = Depends(get_db), _=Depends(sol
         raise HTTPException(status_code=404, detail="No encontrada")
     db.delete(obj)
     db.commit()
+
+
+# ── Pagos de pólizas ──────────────────────────────────────────────────────────
+
+@router.get("/polizas/{id_poliza}/pagos", response_model=list[PagoAdminOut])
+def listar_pagos(id_poliza: int, db: Session = Depends(get_db), _=Depends(get_usuario_activo)):
+    if not db.query(Poliza).filter(Poliza.id_poliza == id_poliza).first():
+        raise HTTPException(status_code=404, detail="Póliza no encontrada")
+    return db.query(PolizaPago).filter(PolizaPago.poliza_id == id_poliza).order_by(PolizaPago.numero_cuota).all()
+
+@router.post("/polizas/{id_poliza}/pagos", response_model=PagoAdminOut, status_code=201)
+def crear_pago(id_poliza: int, datos: PagoIn, db: Session = Depends(get_db), _=Depends(solo_admin)):
+    if not db.query(Poliza).filter(Poliza.id_poliza == id_poliza).first():
+        raise HTTPException(status_code=404, detail="Póliza no encontrada")
+    obj = PolizaPago(poliza_id=id_poliza, **datos.model_dump())
+    db.add(obj)
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+@router.put("/pagos/{id_pago}", response_model=PagoAdminOut)
+def actualizar_pago(id_pago: int, datos: PagoIn, db: Session = Depends(get_db), _=Depends(solo_admin)):
+    obj = db.query(PolizaPago).filter(PolizaPago.id_pago == id_pago).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Pago no encontrado")
+    for k, v in datos.model_dump().items():
+        setattr(obj, k, v)
+    db.commit()
+    db.refresh(obj)
+    return obj
 
 
 # ── Imágenes ──────────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime
 from typing import Literal
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -14,6 +15,16 @@ class CotizacionIn(BaseModel):
     canal: Literal["digital", "tradicional"]
     mensaje: str | None = None
     datos_adicionales: dict | None = None
+
+    @field_validator("telefono", mode="before")
+    @classmethod
+    def validar_telefono(cls, v):
+        if not v:
+            raise ValueError("El teléfono es requerido")
+        v = re.sub(r"\s+", "", v)
+        if not re.match(r"^\+\d{7,15}$", v):
+            raise ValueError("Debe incluir código de país y solo dígitos (ej: +56912345678)")
+        return v
 
 
 class CotizacionOut(BaseModel):

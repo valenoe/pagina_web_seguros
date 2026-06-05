@@ -41,5 +41,17 @@ class PolizaPortalOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PagoPortalOut(BaseModel):
+    id_pago: int
+    numero_cuota: int
+    monto: Decimal
+    fecha_vencimiento: date
+    fecha_pago: date | None
+    estado: str
+
+    model_config = {"from_attributes": True}
+
+
 class PolizaDetalleOut(PolizaPortalOut):
     beneficiarios: list[BeneficiarioOut]
+    pagos: list[PagoPortalOut]
