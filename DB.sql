@@ -71,7 +71,11 @@ CREATE TABLE `web_polizas` (
   `fecha_vencimiento` date,
   `prima` decimal(12,2),
   `estado` varchar(20) DEFAULT 'activa',
-  `origen` varchar(20) NOT NULL
+  `origen` varchar(20) NOT NULL,
+  `frecuencia_pago` varchar(20) DEFAULT NULL,
+  `num_cuotas` integer DEFAULT NULL,
+  `monto_cuota` decimal(12,2) DEFAULT NULL,
+  `fecha_proximo_pago` date DEFAULT NULL
 );
 
 CREATE TABLE `web_poliza_beneficiarios` (
@@ -80,6 +84,19 @@ CREATE TABLE `web_poliza_beneficiarios` (
   `nombre` varchar(100) NOT NULL,
   `rut` varchar(20),
   `relacion` varchar(50)
+);
+
+CREATE TABLE `web_poliza_pagos` (
+  `id_pago` integer PRIMARY KEY AUTO_INCREMENT,
+  `poliza_id` integer NOT NULL,
+  `numero_cuota` integer NOT NULL,
+  `monto` decimal(12,2) NOT NULL,
+  `fecha_vencimiento` date NOT NULL,
+  `fecha_pago` date DEFAULT NULL,
+  `estado` varchar(20) NOT NULL DEFAULT 'pendiente',
+  `metodo_pago` varchar(50) DEFAULT NULL,
+  `referencia_transaccion` varchar(100) DEFAULT NULL,
+  `fecha_registro` timestamp DEFAULT (now())
 );
 
 CREATE TABLE `web_imagenes` (
@@ -117,6 +134,8 @@ ALTER TABLE `web_polizas` ADD FOREIGN KEY (`seguro_id`) REFERENCES `web_seguros_
 ALTER TABLE `web_polizas` ADD FOREIGN KEY (`cotizacion_id`) REFERENCES `web_cotizaciones` (`id_cotizacion`);
 
 ALTER TABLE `web_poliza_beneficiarios` ADD FOREIGN KEY (`poliza_id`) REFERENCES `web_polizas` (`id_poliza`);
+
+ALTER TABLE `web_poliza_pagos` ADD FOREIGN KEY (`poliza_id`) REFERENCES `web_polizas` (`id_poliza`);
 
 INSERT INTO `web_seguros_catalogo` (`nombre`, `categoria`, `descripcion`, `permite_digital`, `permite_tradicional`, `url_externa`, `seguro_activo`, `orden_display`) VALUES
 ('Seguro de Autos', 'Vehículos', 'Cobertura completa para tu vehículo ante accidentes, robo, daños materiales y responsabilidad civil. Incluye vehículo de reemplazo y robo de accesorios.', false, true, NULL, true, 1),
