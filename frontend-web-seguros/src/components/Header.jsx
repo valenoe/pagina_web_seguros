@@ -4,216 +4,208 @@ import useFetch from "../hooks/useFetch";
 import { obtenerSeguros } from "../services/api";
 
 function Header() {
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
-const { data: seguros = [] } =
-useFetch(obtenerSeguros);
+  const { data: seguros = [] } =
+    useFetch(obtenerSeguros);
 
-const [openSearch, setOpenSearch] =
-useState(false);
+  const [openSearch, setOpenSearch] =
+    useState(false);
 
-const [query, setQuery] =
-useState("");
+  const [query, setQuery] =
+    useState("");
 
-const resultados = seguros
-.filter((s) =>
-s.nombre
-.toLowerCase()
-.includes(
-query.toLowerCase()
-)
-)
-.map((s) => ({
-texto: s.nombre,
-ruta: "/seguros",
-}));
+  const resultados = seguros
+    .filter((s) =>
+      s.nombre
+        .toLowerCase()
+        .includes(query.toLowerCase())
+    )
+    .map((s) => ({
+      texto: s.nombre,
+      ruta: "/seguros",
+    }));
 
-function irA(ruta) {
-setOpenSearch(false);
+  function irA(ruta) {
+    setOpenSearch(false);
+    setQuery("");
+    navigate(ruta);
+  }
 
-```
-setQuery("");
+  return (
+    <header className="header">
 
-navigate(ruta);
-```
+      <div className="header-logo">
 
-}
+        <Link to="/">
 
-return (
+          <img
+            src="/Logo Prieto.png"
+            alt="Prieto & Correa Seguros"
+          />
 
-<header className="header">
+        </Link>
 
-<div className="header-logo">
+      </div>
 
-<Link to="/">
+      <nav className="header-nav">
 
-<img
-src="/Logo Prieto.png"
-alt="Prieto & Correa Seguros"
-/>
+        <Link to="/">
+          Inicio
+        </Link>
 
-</Link>
+        <Link to="/nosotros">
+          Nosotros
+        </Link>
 
-</div>
+        <Link to="/seguros">
+          Seguros
+        </Link>
 
-<nav className="header-nav">
+        <Link to="/contacto">
+          Contacto
+        </Link>
 
-<Link to="/">
-Inicio
-</Link>
+        <div className="header-search">
 
-<Link to="/nosotros">
-Nosotros
-</Link>
+          <button
+            className="search-button"
+            onClick={() =>
+              setOpenSearch(!openSearch)
+            }
+          >
 
-<Link to="/seguros">
-Seguros
-</Link>
+            <span className="search-icon" />
 
-<Link to="/contacto">
-Contacto
-</Link>
+          </button>
 
-<div className="header-search">
+          {openSearch && (
 
-<button
-className="search-button"
-onClick={() =>
-setOpenSearch(
-!openSearch
-)
-}
+            <div className="search-box">
 
->
+              <input
+                type="text"
+                autoFocus
+                placeholder="Buscar seguro..."
+                value={query}
+                onChange={(e) =>
+                  setQuery(e.target.value)
+                }
+              />
 
-<span className="search-icon" />
+              {query && (
 
-</button>
+                <div className="search-results">
 
-{openSearch && (
+                  {resultados.length ? (
 
-<div className="search-box">
+                    resultados.map(
+                      (item) => (
 
-<input
-type="text"
-autoFocus
-placeholder="Buscar seguro..."
-value={query}
-onChange={(e) =>
-setQuery(
-e.target.value
-)
-}
-/>
+                        <button
+                          key={item.texto}
+                          onClick={() =>
+                            irA(item.ruta)
+                          }
+                        >
 
-{query && (
+                          {item.texto}
 
-<div className="search-results">
+                        </button>
 
-{resultados.length ? (
+                      )
+                    )
 
-resultados.map(
-(item) => (
+                  ) : (
 
-<button
-key={
-item.texto
-}
-onClick={() =>
-irA(
-item.ruta
-)
-}
+                    <span>
 
->
+                      No encontramos resultados
 
-{
-item.texto
-}
+                    </span>
 
-</button>
+                  )}
 
-)
-)
+                </div>
 
-) : (
+              )}
 
-<span>
+            </div>
 
-No encontramos resultados
+          )}
 
-</span>
+        </div>
 
-)}
+      </nav>
 
-</div>
+      <div className="header-login">
 
-)}
+        <button className="header-button">
 
-</div>
+          <div className="header-user">
 
-)}
+            <img
+              src="/icon-mi-sucursal.png"
+              alt="Mi Sucursal"
+              className="header-user-image"
+            />
 
-</div>
+            <span>
 
-</nav>
+              Mi Sucursal
 
-<div className="header-login">
+            </span>
 
-<button className="header-button">
+          </div>
 
-Inicio de sesión
+        </button>
 
-</button>
+        <div className="header-login-menu">
 
-<div className="header-login-menu">
+          <Link
+            to="/login-interno"
+            className="login-item"
+          >
 
-<Link
-to="/login-interno"
-className="login-item"
->
+            <img
+              src="/icon-edificio.png"
+              alt="Ejecutivo"
+              className="login-icon"
+            />
 
-<img
-src="/icon-edificio.png"
-alt="Ejecutivo"
-className="login-icon"
-/>
+            <span>
 
-<span>
+              Ejecutivo Comercial
 
-Ejecutivo Comercial
+            </span>
 
-</span>
+          </Link>
 
-</Link>
+          <Link
+            to="/login-clientes"
+            className="login-item"
+          >
 
-<Link
-to="/login-clientes"
-className="login-item"
->
+            <img
+              src="/icon-usuario.png"
+              alt="Cliente"
+              className="login-icon"
+            />
 
-<img
-src="/icon-usuario.png"
-alt="Cliente"
-className="login-icon"
-/>
+            <span>
 
-<span>
+              Clientes
 
-Clientes
+            </span>
 
-</span>
+          </Link>
 
-</Link>
+        </div>
 
-</div>
+      </div>
 
-</div>
-
-</header>
-
-);
-
+    </header>
+  );
 }
 
 export default Header;
