@@ -65,11 +65,7 @@ function LoginClientes() {
     try {
       const data = await login(formulario);
 
-      console.log("DATA LOGIN:", data);
-
       const token = data?.access_token;
-
-      console.log("TOKEN RECIBIDO:", token);
 
       if (!token) {
         throw new Error("No se recibió token desde el backend");
@@ -77,7 +73,15 @@ function LoginClientes() {
 
       localStorage.setItem("token", token);
 
-      console.log("TOKEN GUARDADO:", localStorage.getItem("token"));
+      const nombreCliente =
+        data?.nombre_o_razon_social ||
+        data?.nombre ||
+        data?.cliente?.nombre_o_razon_social ||
+        data?.cliente?.nombre ||
+        formulario.rut ||
+        "Cliente";
+
+      localStorage.setItem("nombre_cliente", nombreCliente);
 
       if (recordarCuenta) {
         localStorage.setItem(
@@ -95,6 +99,7 @@ function LoginClientes() {
     } catch (error) {
       console.error("ERROR LOGIN:", error);
       localStorage.removeItem("token");
+      localStorage.removeItem("nombre_cliente");
       setError("RUT o contraseña incorrectos.");
     } finally {
       setCargando(false);
@@ -118,9 +123,7 @@ function LoginClientes() {
             siempre contigo
           </h1>
 
-          <p>
-            Accede a tus pólizas, documentos y estado de solicitudes.
-          </p>
+          <p>Accede a tus pólizas, documentos y estado de solicitudes.</p>
         </div>
 
         <div className="login-clientes-card">
@@ -136,9 +139,7 @@ function LoginClientes() {
 
           <h2>Mi Portal de Seguros</h2>
 
-          <p className="login-subtitle">
-            Ingresa con tus credenciales
-          </p>
+          <p className="login-subtitle">Ingresa con tus credenciales</p>
 
           <form onSubmit={ingresar} autoComplete="off">
             <div className="tipo-cliente-tabs">
@@ -216,11 +217,7 @@ function LoginClientes() {
 
             {error && <p className="form-error">{error}</p>}
 
-            <button
-              type="submit"
-              className="login-submit"
-              disabled={cargando}
-            >
+            <button type="submit" className="login-submit" disabled={cargando}>
               {cargando ? "Ingresando..." : "Ingresar"}
             </button>
           </form>

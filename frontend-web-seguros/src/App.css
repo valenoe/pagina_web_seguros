@@ -2838,3 +2838,1294 @@ DASHBOARD PRIVADO CLIENTES
 .forgot-password:hover {
   color: #f47c20;
 }
+/* ==========================
+MEJORA MIS PÓLIZAS CLIENTE
+========================== */
+
+
+.empty-polizas {
+  background: linear-gradient(
+    135deg,
+    #f8f9ff,
+    #eef2ff
+  );
+
+  border: 1px solid #dbe3f7;
+
+  border-radius: 28px;
+
+  padding: 42px;
+
+  margin-top: 22px;
+
+  position: relative;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 14px 40px rgba(7, 25, 90, 0.05);
+
+  transition: 0.25s ease;
+}
+
+.empty-polizas:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 20px 50px rgba(7, 25, 90, 0.08);
+}
+
+.empty-polizas::before {
+  content: "🛡";
+
+  position: absolute;
+
+  right: 28px;
+
+  top: 20px;
+
+  font-size: 52px;
+
+  opacity: 0.08;
+}
+
+.empty-polizas h3 {
+  color: #07195a;
+
+  font-size: 38px;
+
+  line-height: 1.1;
+
+  margin-bottom: 18px;
+
+  max-width: 720px;
+
+  font-weight: 900;
+}
+
+.empty-polizas p {
+  color: #56637a;
+
+  font-size: 18px;
+
+  line-height: 1.8;
+
+  max-width: 760px;
+
+  margin-bottom: 28px;
+}
+
+.empty-polizas ul {
+  margin-top: 18px;
+
+  padding-left: 0;
+
+  list-style: none;
+}
+
+.empty-polizas li {
+  color: #07195a;
+
+  margin-bottom: 12px;
+
+  font-weight: 700;
+}
+
+.empty-polizas li::before {
+  content: "✓";
+
+  color: #f47c20;
+
+  margin-right: 12px;
+
+  font-weight: 900;
+}
+
+.empty-polizas .empty-action {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  background: #f47c20;
+
+  color: white;
+
+  border: none;
+
+  padding: 14px 24px;
+
+  border-radius: 999px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition: 0.25s ease;
+}
+
+.empty-polizas .empty-action:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 14px 30px rgba(244, 124, 32, 0.35);
+}
+
+.polizas-header,
+.poliza-card-row {
+  display: grid;
+  grid-template-columns: 2fr 1.3fr 1.2fr 1fr 1.2fr;
+  gap: 18px;
+  align-items: center;
+}
+
+.polizas-header {
+  background: #f6f7fb;
+  color: #07195a;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  padding: 16px 20px;
+  border-radius: 16px;
+  margin-bottom: 14px;
+}
+
+.poliza-card-row {
+  padding: 20px;
+  border: 1px solid #e8ebf2;
+  border-radius: 18px;
+  margin-bottom: 12px;
+  background: white;
+  transition: 0.2s ease;
+}
+
+.poliza-card-row:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 35px rgba(7, 25, 90, 0.08);
+}
+
+.poliza-card-row strong {
+  color: #07195a;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.poliza-card-row small {
+  color: #6b7280;
+}
+
+.poliza-card-row span {
+  color: #56637a;
+  font-weight: 700;
+}
+
+.estado-badge {
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.estado-badge.vigente,
+.estado-badge.activa {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+}
+
+.estado-badge.por-vencer {
+  background: rgba(244, 124, 32, 0.14);
+  color: #f47c20;
+}
+
+.estado-badge.caducada,
+.estado-badge.vencida {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+}
+
+@media (max-width: 1000px) {
+  .polizas-header {
+    display: none;
+  }
+
+  .poliza-card-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+/* ==========================
+RESUMEN VISUAL DASHBOARD
+========================== */
+
+.dashboard-visual {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+.dashboard-visual-card {
+  background: white;
+  border-radius: 26px;
+  padding: 34px;
+}
+
+.dashboard-visual-card h2 {
+  color: #07195a;
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.dashboard-visual-card p {
+  color: #56637a;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.barra-item {
+  margin-top: 22px;
+}
+
+.barra-item > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.barra-item strong {
+  color: #07195a;
+}
+
+.barra-item span {
+  color: #f47c20;
+  font-weight: 900;
+}
+
+.barra {
+  width: 100%;
+  height: 14px;
+  background: #edf0f7;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.barra div {
+  height: 100%;
+  background: linear-gradient(90deg, #07195a, #f47c20);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.estado-portal {
+  background:
+    radial-gradient(circle at top right, rgba(244, 124, 32, 0.14), transparent 35%),
+    #07195a;
+  color: white;
+}
+
+.estado-portal h2 {
+  color: white;
+}
+
+.estado-portal p {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+@media (max-width: 1000px) {
+  .dashboard-visual {
+    grid-template-columns: 1fr;
+  }
+}
+/* ==========================
+AJUSTES RESUMEN PORTAL CLIENTE
+========================== */
+
+.dashboard-grid-resumen {
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+
+.estado-portal {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 260px;
+}
+
+.estado-portal-tag {
+  width: fit-content;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffb27a;
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.estado-portal-btn {
+  width: fit-content;
+  margin-top: 18px;
+  border: none;
+  border-radius: 999px;
+  background: #f47c20;
+  color: white;
+  padding: 14px 22px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.estado-portal-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(244, 124, 32, 0.28);
+}
+
+@media (max-width: 1200px) {
+  .dashboard-grid-resumen {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .dashboard-grid-resumen {
+    grid-template-columns: 1fr !important;
+  }
+}
+/* ==========================
+LOGOS COMPAÑÍAS EN PÓLIZAS
+========================== */
+
+.polizas-header-logo,
+.poliza-card-row-logo {
+  grid-template-columns: 2.2fr 1.2fr 1.2fr 1fr 1.2fr !important;
+}
+
+.poliza-seguro-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.poliza-compania-logo {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  background: white;
+  border-radius: 14px;
+  padding: 8px;
+  border: 1px solid #e4eaf4;
+  box-shadow: 0 8px 20px rgba(7, 25, 90, 0.06);
+  flex-shrink: 0;
+}
+
+@media (max-width: 1000px) {
+  .polizas-header-logo,
+  .poliza-card-row-logo {
+    grid-template-columns: 1fr !important;
+  }
+
+  .poliza-seguro-info {
+    align-items: flex-start;
+  }
+}
+/* ==========================
+COTIZACIONES PORTAL CLIENTE
+========================== */
+
+.cotizaciones-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.cotizacion-card-portal {
+  background: white;
+  border: 1px solid #e8ebf2;
+  border-radius: 22px;
+  padding: 26px;
+  transition: 0.25s ease;
+  box-shadow: 0 10px 30px rgba(7, 25, 90, 0.04);
+}
+
+.cotizacion-card-portal:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 45px rgba(7, 25, 90, 0.08);
+}
+
+.cotizacion-card-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.cotizacion-icono {
+  width: 54px;
+  height: 54px;
+  background: rgba(244, 124, 32, 0.12);
+  color: #f47c20;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.cotizacion-card-top strong {
+  display: block;
+  color: #07195a;
+  font-size: 19px;
+  margin-bottom: 5px;
+}
+
+.cotizacion-card-top span {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.cotizacion-card-info {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.cotizacion-card-info div {
+  background: #f6f7fb;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.cotizacion-card-info small {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.cotizacion-card-info strong {
+  color: #07195a;
+}
+
+.cotizacion-estado {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.cotizacion-estado.pendiente {
+  background: rgba(244, 124, 32, 0.14);
+  color: #f47c20;
+}
+
+.cotizacion-estado.aprobada,
+.cotizacion-estado.emitida {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+}
+
+.cotizacion-estado.rechazada {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+}
+
+.cotizacion-estado.en-revision {
+  background: rgba(7, 25, 90, 0.12);
+  color: #07195a;
+}
+
+.cotizacion-card-button {
+  width: 100%;
+  border: none;
+  background: #07195a;
+  color: white;
+  padding: 14px;
+  border-radius: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.cotizacion-card-button:hover {
+  background: #f47c20;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 1000px) {
+  .cotizaciones-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* ==========================
+COTIZAR POR WHATSAPP DESDE PORTAL
+========================== */
+
+.cotizar-whatsapp-section {
+  margin-top: 30px;
+}
+
+.cotizar-whatsapp-header {
+  background:
+    radial-gradient(circle at top right, rgba(244, 124, 32, 0.12), transparent 35%),
+    #f6f7fb;
+  border-radius: 24px;
+  padding: 30px;
+  margin-bottom: 24px;
+}
+
+.cotizar-whatsapp-header span {
+  color: #f47c20;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.cotizar-whatsapp-header h2 {
+  color: #07195a;
+  font-size: 32px;
+  margin: 10px 0;
+}
+
+.cotizar-whatsapp-header p {
+  color: #56637a;
+  line-height: 1.7;
+  max-width: 780px;
+}
+
+.seguros-whatsapp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.seguro-whatsapp-card {
+  background: white;
+  border: 1px solid #e8ebf2;
+  border-radius: 24px;
+  padding: 26px;
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 18px;
+  align-items: flex-start;
+  transition: 0.25s ease;
+}
+
+.seguro-whatsapp-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 45px rgba(7, 25, 90, 0.08);
+}
+
+.seguro-whatsapp-icono {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: rgba(244, 124, 32, 0.12);
+  color: #f47c20;
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+}
+
+.seguro-whatsapp-card span {
+  color: #f47c20;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.seguro-whatsapp-card h3 {
+  color: #07195a;
+  font-size: 22px;
+  margin: 8px 0;
+}
+
+.seguro-whatsapp-card p {
+  color: #56637a;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.seguro-whatsapp-button {
+  grid-column: 1 / 3;
+  border: none;
+  background: #25d366;
+  color: white;
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.seguro-whatsapp-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(37, 211, 102, 0.28);
+}
+
+@media (max-width: 1000px) {
+  .seguros-whatsapp-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* ==========================
+DETALLE SEGURO PORTAL CLIENTE
+========================== */
+
+.detalle-seguro-page {
+  min-height: 100vh;
+  background: #f5f7fb;
+  padding: 50px 7%;
+}
+
+.detalle-seguro-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.detalle-seguro-volver {
+  border: none;
+  background: white;
+  color: #07195a;
+  padding: 14px 22px;
+  border-radius: 999px;
+  font-weight: 900;
+  cursor: pointer;
+  margin-bottom: 28px;
+  box-shadow: 0 10px 30px rgba(7, 25, 90, 0.06);
+  transition: 0.25s ease;
+}
+
+.detalle-seguro-volver:hover {
+  transform: translateY(-2px);
+  color: #f47c20;
+}
+
+.detalle-seguro-hero {
+  background:
+    radial-gradient(circle at top right, rgba(244, 124, 32, 0.14), transparent 35%),
+    white;
+  border-radius: 34px;
+  padding: 48px;
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.detalle-seguro-icono {
+  width: 95px;
+  height: 95px;
+  background: rgba(244, 124, 32, 0.13);
+  border-radius: 28px;
+  display: grid;
+  place-items: center;
+  font-size: 46px;
+  flex-shrink: 0;
+}
+
+.detalle-seguro-hero span,
+.detalle-seguro-cta span {
+  color: #f47c20;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.detalle-seguro-hero h1 {
+  color: #07195a;
+  font-size: 54px;
+  margin: 10px 0 14px;
+}
+
+.detalle-seguro-hero p {
+  color: #56637a;
+  font-size: 19px;
+  line-height: 1.7;
+  max-width: 950px;
+}
+
+.detalle-seguro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.detalle-seguro-card {
+  background: white;
+  border-radius: 28px;
+  padding: 34px;
+  box-shadow: 0 12px 35px rgba(7, 25, 90, 0.04);
+}
+
+.detalle-seguro-card h2 {
+  color: #07195a;
+  font-size: 28px;
+  margin-bottom: 24px;
+}
+
+.detalle-seguro-card ul {
+  list-style: none;
+  padding: 0;
+}
+
+.detalle-seguro-card li {
+  color: #56637a;
+  line-height: 1.6;
+  margin-bottom: 14px;
+  font-weight: 700;
+}
+
+.detalle-seguro-card li::before {
+  content: "✓";
+  color: #f47c20;
+  font-weight: 900;
+  margin-right: 10px;
+}
+
+.detalle-seguro-cta {
+  background: linear-gradient(135deg, #07195a, #0b1640);
+  color: white;
+  border-radius: 34px;
+  padding: 44px;
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  align-items: center;
+}
+
+.detalle-seguro-cta h2 {
+  font-size: 38px;
+  margin: 10px 0 14px;
+}
+
+.detalle-seguro-cta p {
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.7;
+  max-width: 760px;
+}
+
+.detalle-seguro-cta button {
+  border: none;
+  background: #25d366;
+  color: white;
+  padding: 18px 28px;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.25s ease;
+}
+
+.detalle-seguro-cta button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(37, 211, 102, 0.3);
+}
+
+@media (max-width: 1000px) {
+  .detalle-seguro-hero,
+  .detalle-seguro-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .detalle-seguro-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detalle-seguro-hero h1 {
+    font-size: 38px;
+  }
+}
+/* ==========================
+BOTÓN VER DETALLE SEGUROS PORTAL
+========================== */
+
+.seguro-whatsapp-actions {
+  grid-column: 1 / 3;
+  display: flex;
+  margin-top: 18px;
+}
+
+.detalle-seguro-btn {
+  width: 100%;
+  height: 56px;
+  border: none;
+  background: #07195a;
+  color: white;
+  font-size: 16px;
+  font-weight: 900;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.detalle-seguro-btn:hover {
+  background: #0d2d8b;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(7, 25, 90, 0.18);
+}
+
+.detalle-seguro-btn.full {
+  width: 100%;
+}
+
+@media (max-width: 700px) {
+  .seguro-whatsapp-actions {
+    grid-column: 1;
+  }
+}
+/* ==========================
+CLIENTE PORTAL
+========================== */
+
+.sidebar-cliente{
+display:flex;
+
+flex-direction:column;
+
+align-items:center;
+
+gap:8px;
+
+margin-bottom:20px;
+}
+
+.sidebar-cliente h2{
+margin:0;
+}
+
+.sidebar-cliente small{
+color:#aab4d2;
+
+font-size:13px;
+
+font-weight:700;
+
+background:rgba(255,255,255,.08);
+
+padding:8px 14px;
+
+border-radius:999px;
+}
+
+.dashboard-banner h1{
+line-height:1.1;
+}
+/* ==========================
+AJUSTE COMPACTO COTIZACIONES PORTAL
+========================== */
+
+.dashboard-main {
+  padding-top: 24px;
+}
+
+.dashboard-topbar {
+  padding: 24px 30px;
+  margin-bottom: 24px;
+}
+
+.dashboard-lista {
+  padding: 28px;
+}
+
+.cotizar-whatsapp-section {
+  margin-top: 20px;
+}
+
+.cotizar-whatsapp-header {
+  padding: 24px 28px;
+  margin-bottom: 20px;
+  border-radius: 22px;
+}
+
+.cotizar-whatsapp-header h2 {
+  font-size: 28px;
+  margin: 8px 0;
+}
+
+.cotizar-whatsapp-header p {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.seguros-whatsapp-grid {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.seguro-whatsapp-card {
+  padding: 20px;
+  min-height: 230px;
+  grid-template-columns: 54px 1fr;
+  gap: 14px;
+  border-radius: 20px;
+}
+
+.seguro-whatsapp-icono {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  font-size: 25px;
+}
+
+.seguro-whatsapp-card h3 {
+  font-size: 19px;
+  margin: 5px 0;
+}
+
+.seguro-whatsapp-card{
+background:white;
+
+border:1px solid #e6eaf4;
+
+border-radius:22px;
+
+padding:24px;
+
+display:grid;
+
+grid-template-columns:60px 1fr;
+
+grid-template-rows:auto 1fr auto;
+
+column-gap:18px;
+
+row-gap:10px;
+
+min-height:280px;
+
+height:100%;
+}
+
+.seguro-whatsapp-card p{
+min-height:72px;
+
+margin-bottom:0;
+
+line-height:1.55;
+}
+
+.seguro-whatsapp-actions{
+grid-column:1 / -1;
+
+align-self:end;
+
+margin-top:auto;
+}
+
+.seguro-whatsapp-actions button{
+height:52px;
+}
+
+.seguro-whatsapp-actions {
+  margin-top: 10px;
+}
+
+.detalle-seguro-btn {
+  height: 48px;
+  font-size: 14px;
+  border-radius: 14px;
+}
+
+@media (max-width: 1450px) {
+  .seguros-whatsapp-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1150px) {
+  .seguros-whatsapp-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+/* =======================
+DOCUMENTOS
+======================= */
+
+.documentos-grid{
+
+display:grid;
+
+grid-template-columns:
+repeat(
+auto-fit,
+minmax(260px,1fr)
+);
+
+gap:22px;
+
+margin-top:25px;
+
+}
+
+.documento-card{
+
+background:white;
+
+padding:28px;
+
+border-radius:24px;
+
+border:1px solid #edf0f8;
+
+box-shadow:
+0 10px 30px
+rgba(0,0,0,.04);
+
+display:flex;
+
+flex-direction:column;
+
+}
+
+.documento-icono{
+
+font-size:42px;
+
+margin-bottom:18px;
+
+}
+
+.documento-card h3{
+
+margin-bottom:10px;
+
+color:#07195a;
+
+}
+
+.documento-card p{
+
+color:#6b7487;
+
+line-height:1.5;
+
+flex:1;
+
+}
+
+.documento-card button{
+
+margin-top:20px;
+
+height:50px;
+
+border:none;
+
+border-radius:14px;
+
+background:#07195a;
+
+color:white;
+
+font-weight:700;
+
+cursor:pointer;
+
+}
+
+.documento-card:hover{
+
+transform:translateY(-3px);
+
+transition:.25s;
+
+}
+/* =====================
+SINIESTROS
+===================== */
+
+.siniestro-grid{
+
+display:grid;
+
+grid-template-columns:
+repeat(
+auto-fit,
+minmax(260px,1fr)
+);
+
+gap:22px;
+
+margin-top:24px;
+
+}
+
+.siniestro-card{
+
+background:white;
+
+padding:28px;
+
+border-radius:24px;
+
+border:1px solid #edf0f8;
+
+text-align:center;
+
+}
+
+.siniestro-icono{
+
+font-size:48px;
+
+margin-bottom:20px;
+
+}
+
+.siniestro-card p{
+
+margin:14px 0;
+
+color:#66728a;
+
+}
+
+.siniestro-card button{
+
+width:100%;
+
+height:52px;
+
+border:none;
+
+border-radius:14px;
+
+background:#07195a;
+
+color:white;
+
+font-weight:800;
+
+cursor:pointer;
+
+}
+
+.siniestro-card:hover{
+
+transform:translateY(-3px);
+
+transition:.25s;
+
+}
+/* =====================
+SINIESTROS REALES
+===================== */
+
+.siniestro-polizas{
+
+display:grid;
+
+grid-template-columns:
+repeat(
+auto-fit,
+minmax(340px,1fr)
+);
+
+gap:22px;
+
+margin-top:25px;
+
+}
+
+.siniestro-poliza-card{
+
+background:white;
+
+padding:28px;
+
+border-radius:24px;
+
+border:1px solid #edf0f8;
+
+}
+
+.siniestro-poliza-top{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+margin-bottom:24px;
+
+}
+
+.siniestro-poliza-top h3{
+
+margin-bottom:6px;
+
+}
+
+.siniestro-poliza-top span{
+
+color:#68758c;
+
+}
+
+.siniestro-info{
+
+display:grid;
+
+grid-template-columns:1fr 1fr;
+
+gap:16px;
+
+margin-bottom:24px;
+
+}
+
+.siniestro-info label{
+
+display:block;
+
+font-size:13px;
+
+color:#7b8495;
+
+margin-bottom:6px;
+
+}
+
+.reportar-btn{
+
+width:100%;
+
+height:54px;
+
+border:none;
+
+border-radius:14px;
+
+background:#07195a;
+
+color:white;
+
+font-weight:800;
+
+cursor:pointer;
+
+}
+
+.reportar-btn:hover{
+
+transform:translateY(-2px);
+
+transition:.25s;
+
+}
