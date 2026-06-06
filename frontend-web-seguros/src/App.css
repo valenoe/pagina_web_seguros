@@ -1783,10 +1783,24 @@ DASHBOARD
   background: #f6f7fb;
 }
 
-.dashboard-sidebar {
-  background: #07195a;
-  color: white;
-  padding: 50px 35px;
+.dashboard-sidebar{
+width:270px;
+
+background:#06195b;
+
+padding:32px;
+
+display:flex;
+
+flex-direction:column;
+
+gap:12px;
+
+min-height:100vh;
+
+position:sticky;
+
+top:0;
 }
 
 .dashboard-sidebar h2 {
@@ -2607,9 +2621,26 @@ DASHBOARD PRIVADO CLIENTES
   color: white;
 }
 
-.dashboard-logout {
-  margin-top: auto;
-  color: #ffb27a !important;
+.dashboard-logout{
+
+margin-top:40px;
+
+border:none;
+
+background:transparent;
+
+color:#ff8c2f;
+
+font-size:28px;
+
+font-weight:800;
+
+cursor:pointer;
+
+text-align:left;
+
+padding:18px 0;
+
 }
 
 .dashboard.privado .dashboard-main {
@@ -5880,4 +5911,40 @@ COTIZADOR
   .cotizador-form {
     grid-template-columns: 1fr;
   }
+}
+/* ==========================
+SEGUROS PORTAL CLIENTE
+MISMO ESTILO QUE /SEGUROS
+========================== */
+
+.portal-seguros-bloques {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 12px 0 20px;
+}
+/* Sidebar fijo en Portal Cliente */
+
+.dashboard.privado {
+  align-items: start;
+}
+
+.dashboard.privado .dashboard-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.dashboard.privado .dashboard-main {
+  min-height: 100vh;
+}
+/* Color cerrar sesión sidebar */
+
+.dashboard.privado .dashboard-sidebar .dashboard-logout {
+  color: #ff8c2f !important;
+}
+
+.dashboard.privado .dashboard-sidebar .dashboard-logout:hover {
+  color: #ff6b00 !important;
+  transform: translateX(6px);
 }

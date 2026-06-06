@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const WHATSAPP_EJECUTIVO = "56966541939";
@@ -48,11 +49,7 @@ const segurosDetalle = {
       "Contratación rápida",
       "Cobertura legal exigida en Chile",
     ],
-    requisitos: [
-      "Patente del vehículo",
-      "Tipo de vehículo",
-      "Datos del propietario",
-    ],
+    requisitos: ["Patente del vehículo", "Tipo de vehículo", "Datos del propietario"],
   },
 
   "rci-argentina": {
@@ -195,13 +192,61 @@ function DetalleSeguro() {
 
   const seguro = segurosDetalle[id] || segurosDetalle.autos;
 
-  function cotizarWhatsapp() {
-    const mensaje = `Hola, soy cliente de Prieto & Correa Seguros. Quiero solicitar una cotización para ${seguro.nombre}.`;
-    const url = `https://wa.me/${WHATSAPP_EJECUTIVO}?text=${encodeURIComponent(
-      mensaje
-    )}`;
+  const nombreCliente = localStorage.getItem("nombre_cliente") || "";
+  const rutCliente = localStorage.getItem("rut_cliente") || "";
+  const correoCliente = localStorage.getItem("correo_cliente") || "";
+  const telefonoCliente = localStorage.getItem("telefono_cliente") || "";
 
-    window.open(url, "_blank", "noopener,noreferrer");
+  const [mostrarCotizador, setMostrarCotizador] = useState(false);
+
+  const [formulario, setFormulario] = useState({
+    nombre: nombreCliente,
+    rut: rutCliente,
+    correo: correoCliente,
+    telefono: telefonoCliente,
+    detalle: "",
+    comentario: "",
+  });
+
+  function actualizarFormulario(e) {
+    const { name, value } = e.target;
+
+    setFormulario((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
+  function enviarSolicitud(e) {
+    e.preventDefault();
+
+    const mensaje = `Hola, soy cliente de Prieto & Correa Seguros.
+
+Quiero solicitar una cotización desde el portal cliente.
+
+Seguro solicitado:
+${seguro.nombre}
+
+Categoría:
+${seguro.categoria}
+
+Datos del cliente:
+Nombre: ${formulario.nombre || "No informado"}
+RUT: ${formulario.rut || "No informado"}
+Correo: ${formulario.correo || "No informado"}
+Teléfono: ${formulario.telefono || "No informado"}
+
+Detalle de la solicitud:
+${formulario.detalle || "No informado"}
+
+Comentario adicional:
+${formulario.comentario || "Sin comentario adicional"}`;
+
+    window.open(
+      `https://wa.me/${WHATSAPP_EJECUTIVO}?text=${encodeURIComponent(mensaje)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
   }
 
   return (
@@ -258,16 +303,113 @@ function DetalleSeguro() {
 
         <div className="detalle-seguro-cta">
           <div>
-            <span>Asesoría personalizada</span>
-            <h2>Solicita esta cotización con un ejecutivo</h2>
+            <span>Cotizador interno</span>
+            <h2>Solicita esta cotización desde tu portal</h2>
             <p>
-              Un ejecutivo de Prieto & Correa Seguros podrá orientarte y revisar
-              las alternativas disponibles según tu necesidad.
+              Completa los datos necesarios y un ejecutivo recibirá tu solicitud
+              para gestionar la cotización.
             </p>
           </div>
 
-          <button onClick={cotizarWhatsapp}>Cotizar por WhatsApp</button>
+          <button onClick={() => setMostrarCotizador(true)}>
+            Solicitar cotización
+          </button>
         </div>
+
+        {mostrarCotizador && (
+          <div className="cotizador-interno">
+            <div className="cotizador-interno-header">
+              <span>Solicitud de cotización</span>
+              <h2>{seguro.nombre}</h2>
+              <p>
+                Estos datos serán enviados al ejecutivo para iniciar la gestión.
+              </p>
+            </div>
+
+            <form className="cotizador-interno-form" onSubmit={enviarSolicitud}>
+              <div className="cotizador-form-grid">
+                <label>
+                  Nombre completo
+                  <input
+                    type="text"
+                    name="nombre"
+                    value={formulario.nombre}
+                    onChange={actualizarFormulario}
+                    required
+                  />
+                </label>
+
+                <label>
+                  RUT
+                  <input
+                    type="text"
+                    name="rut"
+                    value={formulario.rut}
+                    onChange={actualizarFormulario}
+                    required
+                  />
+                </label>
+
+                <label>
+                  Correo
+                  <input
+                    type="email"
+                    name="correo"
+                    value={formulario.correo}
+                    onChange={actualizarFormulario}
+                    required
+                  />
+                </label>
+
+                <label>
+                  Teléfono
+                  <input
+                    type="text"
+                    name="telefono"
+                    value={formulario.telefono}
+                    onChange={actualizarFormulario}
+                    required
+                  />
+                </label>
+              </div>
+
+              <label>
+                Datos principales para cotizar
+                <textarea
+                  name="detalle"
+                  value={formulario.detalle}
+                  onChange={actualizarFormulario}
+                  placeholder="Ejemplo: patente, dirección, destino del viaje, datos de mascota, monto requerido, etc."
+                  required
+                />
+              </label>
+
+              <label>
+                Comentario adicional
+                <textarea
+                  name="comentario"
+                  value={formulario.comentario}
+                  onChange={actualizarFormulario}
+                  placeholder="Agrega cualquier información adicional que ayude al ejecutivo."
+                />
+              </label>
+
+              <div className="cotizador-interno-actions">
+                <button
+                  type="button"
+                  className="cotizador-cancelar"
+                  onClick={() => setMostrarCotizador(false)}
+                >
+                  Cancelar
+                </button>
+
+                <button type="submit" className="cotizador-enviar">
+                  Enviar solicitud
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -22,9 +22,7 @@ function PerfilCliente() {
       <div className="perfil-cliente-header">
         <span>Perfil cliente</span>
         <h2>Hola, {perfil.nombre} 👋</h2>
-        <p>
-          Revisa tus datos de contacto y la información asociada a tu cuenta.
-        </p>
+        <p>Revisa tus datos de contacto y la información asociada a tu cuenta.</p>
       </div>
 
       <div className="perfil-cliente-grid">
@@ -54,8 +52,7 @@ function PerfilCliente() {
           <span>Seguridad</span>
           <h3>Cambiar contraseña</h3>
           <p>
-            Próximamente podrás actualizar tu contraseña directamente desde el
-            portal.
+            Próximamente podrás actualizar tu contraseña directamente desde el portal.
           </p>
         </div>
 
@@ -77,7 +74,20 @@ function Dashboard() {
       categoria: "Vehículos",
       descripcion:
         "Cobertura para accidentes, daños materiales, robo y responsabilidad civil.",
-      icono: "🚗",
+      foto: "/foto-seguro-auto.png",
+      precioUf: "Desde 2,45 UF / mes",
+      precioClp: "Aprox. $95.130 CLP / mes",
+      cubre: ["Robo", "Accidentes", "Daños materiales", "Responsabilidad civil"],
+    },
+    {
+      id: "rci-argentina",
+      nombre: "Responsabilidad Civil Internacional",
+      categoria: "Vehículos",
+      descripcion: "Seguro obligatorio para vehículos que cruzan hacia Argentina.",
+      foto: "/foto-RCI.png",
+      precioUf: "Desde 0,17 UF / día",
+      precioClp: "Valor referencial según UF diaria",
+      cubre: ["Daños a terceros", "Ingreso a Argentina", "Cobertura internacional"],
     },
     {
       id: "soap",
@@ -85,15 +95,10 @@ function Dashboard() {
       categoria: "Vehículos",
       descripcion:
         "Seguro obligatorio para accidentes personales causados por vehículos motorizados.",
-      icono: "🛡",
-    },
-    {
-      id: "rci-argentina",
-      nombre: "RCI Argentina",
-      categoria: "Vehículos",
-      descripcion:
-        "Seguro obligatorio para vehículos que cruzan hacia Argentina.",
-      icono: "🌎",
+      foto: "/foto-soap.png",
+      precioUf: "Valor anual",
+      precioClp: "Según tipo de vehículo",
+      cubre: ["Muerte accidental", "Gastos médicos", "Incapacidad"],
     },
     {
       id: "hogar",
@@ -101,7 +106,10 @@ function Dashboard() {
       categoria: "Personas",
       descripcion:
         "Protección para vivienda, incendio, sismo, daños y asistencias del hogar.",
-      icono: "🏠",
+      foto: "/foto-hogar.png",
+      precioUf: "Cotización personalizada",
+      precioClp: "Según características del hogar",
+      cubre: ["Incendio", "Sismo", "Robo", "Daños en estructura"],
     },
     {
       id: "mascotas",
@@ -109,7 +117,10 @@ function Dashboard() {
       categoria: "Personas",
       descripcion:
         "Cobertura veterinaria para perros y gatos ante accidentes y enfermedades.",
-      icono: "🐾",
+      foto: "/foto-mascota.png",
+      precioUf: "Desde 0,15 UF / mes",
+      precioClp: "Según plan contratado",
+      cubre: ["Accidentes", "Enfermedades", "Atención veterinaria"],
     },
     {
       id: "viaje",
@@ -117,14 +128,20 @@ function Dashboard() {
       categoria: "Personas",
       descripcion:
         "Asistencia médica, hospitalización, repatriación y apoyo en viajes internacionales.",
-      icono: "✈️",
+      foto: "/foto-asistencia-viaje-foto.png",
+      precioUf: "Desde 0,32 UF / año",
+      precioClp: "Valor referencial anual",
+      cubre: ["Asistencia médica", "Repatriación", "Pérdida de equipaje"],
     },
     {
       id: "mujer",
       nombre: "Mujer Segura",
       categoria: "Personas",
       descripcion: "Seguro de accidentes personales orientado a mujeres.",
-      icono: "👩",
+      foto: "/foto-mujer-segura.png",
+      precioUf: "0,33 UF / año",
+      precioClp: "Valor referencial anual",
+      cubre: ["Muerte accidental", "Incapacidad", "Desmembramiento"],
     },
     {
       id: "garantias",
@@ -132,7 +149,10 @@ function Dashboard() {
       categoria: "Empresas y otros",
       descripcion:
         "Cubre compromisos contractuales, licitaciones, obras y obligaciones con terceros.",
-      icono: "📄",
+      foto: "/foto-garantia.png",
+      precioUf: "Según evaluación",
+      precioClp: "Cotización personalizada",
+      cubre: ["Fiel cumplimiento", "Licitaciones", "Seriedad de oferta"],
     },
   ];
 
@@ -229,7 +249,6 @@ function Dashboard() {
 
   function claseEstadoCotizacion(estado) {
     if (!estado) return "pendiente";
-
     return estado.toLowerCase().replaceAll(" ", "-").replaceAll("_", "-");
   }
 
@@ -374,9 +393,7 @@ function Dashboard() {
                 <div className="dashboard-banner">
                   <span>Bienvenido</span>
                   <h1>Hola, {nombreCliente}</h1>
-                  <p>
-                    Consulta tus seguros, solicitudes y próximos movimientos.
-                  </p>
+                  <p>Consulta tus seguros, solicitudes y próximos movimientos.</p>
                 </div>
 
                 <div className="dashboard-grid dashboard-grid-resumen">
@@ -411,6 +428,7 @@ function Dashboard() {
                         <strong>Pólizas</strong>
                         <span>{polizas.length}</span>
                       </div>
+
                       <div className="barra">
                         <div
                           style={{
@@ -425,6 +443,7 @@ function Dashboard() {
                         <strong>Cotizaciones</strong>
                         <span>{cotizaciones.length}</span>
                       </div>
+
                       <div className="barra">
                         <div
                           style={{
@@ -439,6 +458,7 @@ function Dashboard() {
                         <strong>Compañías</strong>
                         <span>{companiasAsociadas}</span>
                       </div>
+
                       <div className="barra">
                         <div
                           style={{
@@ -451,9 +471,7 @@ function Dashboard() {
 
                   <div className="dashboard-visual-card estado-portal">
                     <span className="estado-portal-tag">
-                      {polizas.length === 0
-                        ? "Sin seguros activos"
-                        : "Portal activo"}
+                      {polizas.length === 0 ? "Sin seguros activos" : "Portal activo"}
                     </span>
 
                     <h2>Estado del portal</h2>
@@ -582,6 +600,7 @@ function Dashboard() {
                           <div className="cotizacion-card-info">
                             <div>
                               <small>Estado</small>
+
                               <span
                                 className={`cotizacion-estado ${estadoCotizacion}`}
                               >
@@ -614,35 +633,57 @@ function Dashboard() {
                     <span>Nueva cotización</span>
                     <h2>Seguros disponibles para cotizar</h2>
                     <p>
-                      Revisa los seguros disponibles, entra al detalle de cada
-                      producto y solicita atención directa con un ejecutivo.
+                      Revisa los seguros disponibles, entra al detalle de cada producto
+                      y solicita atención directa con un ejecutivo.
                     </p>
                   </div>
 
-                  <div className="seguros-whatsapp-grid">
-                    {segurosDisponibles.map((seguro) => (
-                      <article className="seguro-whatsapp-card" key={seguro.id}>
-                        <div className="seguro-whatsapp-icono">
-                          {seguro.icono}
+                  <section className="seguros-bloques portal-seguros-bloques">
+                    {segurosDisponibles.map((seguro, index) => (
+                      <article
+                        className={`seguro-bloque ${
+                          index % 2 !== 0 ? "reverse" : ""
+                        }`}
+                        key={seguro.id}
+                      >
+                        <div className="seguro-bloque-imagen">
+                          <img src={seguro.foto} alt={seguro.nombre} />
                         </div>
 
-                        <div>
+                        <div className="seguro-bloque-info">
                           <span>{seguro.categoria}</span>
-                          <h3>{seguro.nombre}</h3>
-                          <p>{seguro.descripcion}</p>
-                        </div>
 
-                        <div className="seguro-whatsapp-actions">
-                          <button
-                            className="detalle-seguro-btn full"
-                            onClick={() => verDetalleSeguro(seguro.id)}
-                          >
-                            Ver detalle →
-                          </button>
+                          <h2>{seguro.nombre}</h2>
+
+                          <p>{seguro.descripcion}</p>
+
+                          <div className="seguro-precios">
+                            <div>
+                              <small>Valor UF</small>
+                              <strong>{seguro.precioUf}</strong>
+                            </div>
+
+                            <div>
+                              <small>Valor CLP</small>
+                              <strong>{seguro.precioClp}</strong>
+                            </div>
+                          </div>
+
+                          <div className="seguro-mini-coberturas">
+                            {seguro.cubre.slice(0, 4).map((item) => (
+                              <span key={item}>{item}</span>
+                            ))}
+                          </div>
+
+                          <div className="seguro-bloque-actions">
+                            <button onClick={() => verDetalleSeguro(seguro.id)}>
+                              Ver coberturas
+                            </button>
+                          </div>
                         </div>
                       </article>
                     ))}
-                  </div>
+                  </section>
                 </div>
               </div>
             )}
@@ -650,11 +691,12 @@ function Dashboard() {
             {vista === "beneficiarios" && (
               <div className="dashboard-lista">
                 <h2>Beneficiarios</h2>
+
                 <div className="empty-polizas">
                   <h3>Sin beneficiarios visibles por ahora</h3>
                   <p>
-                    Cuando se conecte el detalle de cada póliza, aquí se
-                    mostrarán los beneficiarios asociados a tus seguros.
+                    Cuando se conecte el detalle de cada póliza, aquí se mostrarán los
+                    beneficiarios asociados a tus seguros.
                   </p>
                 </div>
               </div>
@@ -663,6 +705,7 @@ function Dashboard() {
             {vista === "coberturas" && (
               <div className="dashboard-lista">
                 <h2>Coberturas</h2>
+
                 <div className="empty-polizas">
                   <h3>Coberturas en preparación</h3>
                   <p>
@@ -676,6 +719,7 @@ function Dashboard() {
             {vista === "vencimientos" && (
               <div className="dashboard-lista">
                 <h2>Vencimientos</h2>
+
                 <div className="empty-polizas">
                   <h3>No tienes vencimientos próximos</h3>
                   <p>
@@ -689,11 +733,12 @@ function Dashboard() {
             {vista === "cuotas" && (
               <div className="dashboard-lista">
                 <h2>Pagos y cuotas</h2>
+
                 <div className="empty-polizas">
                   <h3>Información de pagos no disponible todavía</h3>
                   <p>
-                    En esta sección se mostrarán cuotas pendientes, fechas de
-                    pago y estado de cada compromiso asociado a tus seguros.
+                    En esta sección se mostrarán cuotas pendientes, fechas de pago y
+                    estado de cada compromiso asociado a tus seguros.
                   </p>
                 </div>
               </div>
@@ -748,8 +793,7 @@ function Dashboard() {
                     <h3>No existen seguros disponibles para reportar</h3>
                     <p>
                       Cuando contrates una póliza con Prieto & Correa podrás
-                      gestionar siniestros y recibir apoyo directo desde este
-                      portal.
+                      gestionar siniestros y recibir apoyo directo desde este portal.
                     </p>
                   </div>
                 ) : (
@@ -775,9 +819,7 @@ function Dashboard() {
 
                           <div>
                             <label>Vencimiento</label>
-                            <strong>
-                              {formatearFecha(p.fecha_vencimiento)}
-                            </strong>
+                            <strong>{formatearFecha(p.fecha_vencimiento)}</strong>
                           </div>
                         </div>
 
