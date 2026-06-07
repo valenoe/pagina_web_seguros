@@ -23,6 +23,14 @@ export async function obtenerSeguros() {
   return apiFetch("/seguros/");
 }
 
+export async function obtenerSeguro(id) {
+  return apiFetch(`/seguros/${id}`);
+}
+
+export async function registroCliente(data) {
+  return apiPost("/auth/registro", data);
+}
+
 // Contacto — { nombre, email, telefono?, mensaje? }
 export async function enviarContacto(data) {
   return apiPost("/contacto/", data);
@@ -49,4 +57,8 @@ export async function getMisPolizas(token) {
 
 export async function getDetallePoliza(token, id) {
   return apiFetch(`/portal/mis-polizas/${id}`, { headers: authHeaders(token) });
+}
+
+export async function getMiPerfil(token) {
+  return apiFetch("/portal/perfil", { headers: authHeaders(token) });
 }

@@ -5,9 +5,14 @@ from dependencies import get_current_user
 from models.cliente import Cliente
 from models.cotizacion import Cotizacion
 from models.poliza import Poliza, PolizaPago
-from schemas.portal import CotizacionPortalOut, PolizaPortalOut, PolizaDetalleOut, PagoPortalOut
+from schemas.portal import CotizacionPortalOut, PolizaPortalOut, PolizaDetalleOut, PagoPortalOut, ClientePerfilOut
 
 router = APIRouter(prefix="/portal", tags=["Portal"])
+
+
+@router.get("/perfil", response_model=ClientePerfilOut)
+def mi_perfil(cliente: Cliente = Depends(get_current_user)):
+    return cliente
 
 
 @router.get("/mis-cotizaciones", response_model=list[CotizacionPortalOut])

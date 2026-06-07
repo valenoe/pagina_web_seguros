@@ -1,13 +1,27 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { login } from "../services/api";
 import "../App.css";
 
-function LoginClientes() {
-  const navigate = useNavigate();
+function esRutValido(rut) {
+  const limpio = rut.replace(/\./g, "").replace(/-/g, "").trim().toUpperCase();
+  if (!/^\d{7,8}[0-9K]$/.test(limpio)) return false;
+  const cuerpo = limpio.slice(0, -1);
+  const dv = limpio.slice(-1);
+  let suma = 0;
+  let mult = 2;
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += Number(cuerpo[i]) * mult;
+    mult = mult === 7 ? 2 : mult + 1;
+  }
+  const resto = suma % 11;
+  const dvEsperado = resto === 1 ? "K" : String(resto === 0 ? 0 : 11 - resto);
+  return dv === dvEsperado;
+}
 
+function LoginClientes() {
   const [mostrarPassword, setMostrarPassword] = useState(false);
   const [recordarCuenta, setRecordarCuenta] = useState(false);
 
@@ -24,27 +38,20 @@ function LoginClientes() {
     const cuentaGuardada = localStorage.getItem("cuenta_recordada");
 
     if (cuentaGuardada) {
-      const cuenta = JSON.parse(cuentaGuardada);
+      try {
+        const cuenta = JSON.parse(cuentaGuardada);
 
-      setFormulario({
-        rut: cuenta.rut || "",
-        tipo_cliente: cuenta.tipo_cliente || "persona",
-        password: "",
-      });
+        setFormulario({
+          rut: cuenta.rut || "",
+          tipo_cliente: cuenta.tipo_cliente || "persona",
+          password: "",
+        });
 
-      setRecordarCuenta(true);
-    } else {
-      setFormulario({
-        rut: "",
-        tipo_cliente: "persona",
-        password: "",
-      });
-
-      setRecordarCuenta(false);
+        setRecordarCuenta(true);
+      } catch {
+        localStorage.removeItem("cuenta_recordada");
+      }
     }
-
-    setMostrarPassword(false);
-    setError("");
   }, []);
 
   function cambiarDato(e) {
@@ -62,24 +69,41 @@ function LoginClientes() {
   }
 
   function cambiarRecordarCuenta() {
-    const nuevoValor = !recordarCuenta;
-    setRecordarCuenta(nuevoValor);
-
-    if (!nuevoValor) {
-      localStorage.removeItem("cuenta_recordada");
-    }
+    setRecordarCuenta(!recordarCuenta);
   }
 
   async function ingresar(e) {
     e.preventDefault();
 
     setError("");
+
+    if (!esRutValido(formulario.rut)) {
+      setError("El RUT ingresado no es válido. Ej: 12.345.678-9");
+      return;
+    }
+
     setCargando(true);
 
     try {
       const data = await login(formulario);
 
-      localStorage.setItem("token", data.access_token);
+      const token = data?.access_token;
+
+      if (!token) {
+        throw new Error("No se recibió token desde el backend");
+      }
+
+      localStorage.setItem("token", token);
+
+      const nombreCliente =
+        data?.nombre_o_razon_social ||
+        data?.nombre ||
+        data?.cliente?.nombre_o_razon_social ||
+        data?.cliente?.nombre ||
+        formulario.rut ||
+        "Cliente";
+
+      localStorage.setItem("nombre_cliente", nombreCliente);
 
       if (recordarCuenta) {
         localStorage.setItem(
@@ -93,9 +117,11 @@ function LoginClientes() {
         localStorage.removeItem("cuenta_recordada");
       }
 
-      navigate("/clientes/dashboard");
+      window.location.href = "/clientes/dashboard";
     } catch (error) {
-      console.error(error);
+      console.error("ERROR LOGIN:", error);
+      localStorage.removeItem("token");
+      localStorage.removeItem("nombre_cliente");
       setError("RUT o contraseña incorrectos.");
     } finally {
       setCargando(false);
@@ -119,17 +145,10 @@ function LoginClientes() {
             siempre contigo
           </h1>
 
-          <p>
-            Accede a tus pólizas, documentos y estado
-            de solicitudes.
-          </p>
+          <p>Accede a tus pólizas, documentos y estado de solicitudes.</p>
         </div>
 
         <div className="login-clientes-card">
-          <Link to="/clientes" className="login-volver">
-            ← Volver
-          </Link>
-
           <img
             src="/Logo Prieto.png"
             alt="Prieto & Correa"
@@ -138,19 +157,13 @@ function LoginClientes() {
 
           <h2>Mi Portal de Seguros</h2>
 
-          <p className="login-subtitle">
-            Ingresa con tus credenciales
-          </p>
+          <p className="login-subtitle">Ingresa con tus credenciales</p>
 
           <form onSubmit={ingresar} autoComplete="off">
             <div className="tipo-cliente-tabs">
               <button
                 type="button"
-                className={
-                  formulario.tipo_cliente === "persona"
-                    ? "active"
-                    : ""
-                }
+                className={formulario.tipo_cliente === "persona" ? "active" : ""}
                 onClick={() => cambiarTipoCliente("persona")}
               >
                 Persona
@@ -158,11 +171,7 @@ function LoginClientes() {
 
               <button
                 type="button"
-                className={
-                  formulario.tipo_cliente === "empresa"
-                    ? "active"
-                    : ""
-                }
+                className={formulario.tipo_cliente === "empresa" ? "active" : ""}
                 onClick={() => cambiarTipoCliente("empresa")}
               >
                 Empresa
@@ -226,13 +235,14 @@ function LoginClientes() {
 
             {error && <p className="form-error">{error}</p>}
 
-            <button
-              type="submit"
-              className="login-submit"
-              disabled={cargando}
-            >
+            <button type="submit" className="login-submit" disabled={cargando}>
               {cargando ? "Ingresando..." : "Ingresar"}
             </button>
+
+            <div className="registro-login-link">
+              ¿No tienes cuenta?{" "}
+              <Link to="/registro-clientes">Crear cuenta</Link>
+            </div>
           </form>
         </div>
       </section>

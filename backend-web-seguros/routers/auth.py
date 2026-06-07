@@ -6,9 +6,9 @@ import bcrypt
 from jose import jwt
 from dotenv import load_dotenv
 from database import get_db
-from models.cliente import Cliente, PortalAcceso
+from models.cliente import Cliente, ClienteEmail, ClienteTelefono, PortalAcceso
 from models.usuario_interno import UsuarioInterno
-from schemas.auth import LoginIn, TokenOut
+from schemas.auth import LoginIn, TokenOut, RegistroIn
 from schemas.usuario_interno import LoginInterno
 
 load_dotenv()
@@ -20,6 +20,57 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 _CREDENCIALES_INVALIDAS = HTTPException(status_code=401, detail="Credenciales inválidas")
+
+
+@router.post("/registro", status_code=201)
+def registro(datos: RegistroIn, db: Session = Depends(get_db)):
+    cliente_existente = db.query(Cliente).filter(Cliente.rut == datos.rut).first()
+
+    if cliente_existente and cliente_existente.cliente_activo:
+        raise HTTPException(status_code=409, detail="El RUT ya está registrado")
+
+    ph = bcrypt.hashpw(datos.password.encode(), bcrypt.gensalt()).decode()
+
+    if cliente_existente:
+        # Reactivar cliente desactivado con datos nuevos
+        cliente = cliente_existente
+        cliente.nombre_o_razon_social = datos.nombre
+        cliente.tipo_cliente = datos.tipo_cliente
+        cliente.email = datos.email
+        cliente.telefono = datos.telefono
+        cliente.cliente_activo = True
+        db.flush()
+        acceso = db.query(PortalAcceso).filter(PortalAcceso.cliente_id == cliente.id_cliente).first()
+        if acceso:
+            acceso.password_hash = ph
+            acceso.portal_acceso_activo = True
+            acceso.tiene_cuenta = True
+        else:
+            db.add(PortalAcceso(cliente_id=cliente.id_cliente, tipo_acceso="web", pin_hash="", password_hash=ph, tiene_cuenta=True))
+    else:
+        cliente = Cliente(
+            rut=datos.rut,
+            tipo_cliente=datos.tipo_cliente,
+            nombre_o_razon_social=datos.nombre,
+            email=datos.email,
+            telefono=datos.telefono,
+        )
+        db.add(cliente)
+        db.flush()
+        db.add(PortalAcceso(cliente_id=cliente.id_cliente, tipo_acceso="web", pin_hash="", password_hash=ph, tiene_cuenta=True))
+
+    # Reemplazar teléfonos y emails auxiliares
+    db.query(ClienteTelefono).filter(ClienteTelefono.cliente_id == cliente.id_cliente).delete()
+    db.query(ClienteEmail).filter(ClienteEmail.cliente_id == cliente.id_cliente).delete()
+    if datos.telefono:
+        db.add(ClienteTelefono(cliente_id=cliente.id_cliente, telefono=datos.telefono, tipo="telefono"))
+    if datos.whatsapp:
+        db.add(ClienteTelefono(cliente_id=cliente.id_cliente, telefono=datos.whatsapp, tipo="whatsapp"))
+    if datos.email:
+        db.add(ClienteEmail(cliente_id=cliente.id_cliente, email=datos.email))
+
+    db.commit()
+    return {"mensaje": "Cuenta creada exitosamente"}
 
 
 @router.post("/login", response_model=TokenOut)

@@ -1,5 +1,15 @@
-from typing import Literal
+from typing import Literal, Optional
 from pydantic import BaseModel
+
+
+class RegistroIn(BaseModel):
+    tipo_cliente: Literal["persona", "empresa"]
+    nombre: str
+    rut: str
+    email: str
+    telefono: Optional[str] = None
+    whatsapp: Optional[str] = None
+    password: str
 
 
 class LoginIn(BaseModel):

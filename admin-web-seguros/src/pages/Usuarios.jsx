@@ -46,12 +46,15 @@ export default function Usuarios() {
       if (modal.mode === "create") {
         await usuariosApi.create(token, form);
       } else {
-        const payload = { nombre: form.nombre, email: form.email, rol: form.rol, activo: form.activo };
+        const payload = { nombre: form.nombre, email: form.email, username: form.username, rol: form.rol, activo: form.activo };
         if (form.password) payload.password = form.password;
         await usuariosApi.update(token, modal.item.id_usuario, payload);
       }
       setModal(null); cargar();
-    } catch (e) { alert(e.message); } finally { setLoading(false); }
+    } catch (e) {
+      alert(e.message);
+      setForm((f) => ({ ...f, password: "" }));
+    } finally { setLoading(false); }
   }
 
   return (

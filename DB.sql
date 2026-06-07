@@ -137,6 +137,21 @@ ALTER TABLE `web_poliza_beneficiarios` ADD FOREIGN KEY (`poliza_id`) REFERENCES 
 
 ALTER TABLE `web_poliza_pagos` ADD FOREIGN KEY (`poliza_id`) REFERENCES `web_polizas` (`id_poliza`);
 
+CREATE TABLE `web_cliente_telefonos` (
+  `id_telefono` integer PRIMARY KEY AUTO_INCREMENT,
+  `cliente_id` integer NOT NULL,
+  `telefono` varchar(20) NOT NULL,
+  `tipo` varchar(10) NOT NULL DEFAULT 'telefono',
+  FOREIGN KEY (`cliente_id`) REFERENCES `web_clientes` (`id_cliente`) ON DELETE CASCADE
+);
+
+CREATE TABLE `web_cliente_emails` (
+  `id_email` integer PRIMARY KEY AUTO_INCREMENT,
+  `cliente_id` integer NOT NULL,
+  `email` varchar(100) NOT NULL,
+  FOREIGN KEY (`cliente_id`) REFERENCES `web_clientes` (`id_cliente`) ON DELETE CASCADE
+);
+
 INSERT INTO `web_seguros_catalogo` (`nombre`, `categoria`, `descripcion`, `permite_digital`, `permite_tradicional`, `url_externa`, `seguro_activo`, `orden_display`) VALUES
 ('Seguro de Autos', 'Vehículos', 'Cobertura completa para tu vehículo ante accidentes, robo, daños materiales y responsabilidad civil. Incluye vehículo de reemplazo y robo de accesorios.', false, true, NULL, true, 1),
 ('RCI Argentina', 'Vehículos', 'Seguro de Responsabilidad Civil Internacional para vehículos que ingresan a Argentina. Cobertura de 0,17 UF por día. Obligatorio para cruzar la frontera.', true, true, 'https://rcionline.bciseguros.cl/Seguro-Obligatorio-Argentina/Tarifa.aspx?r=NwA4ADQANAA3ADEAMQAxAA==&co=cAByAGkAbQBhAHIAeQA%3D', true, 2),

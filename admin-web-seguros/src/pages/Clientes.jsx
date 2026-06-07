@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { clientesApi } from "../services/api";
 import DataTable from "../components/DataTable";
 import Modal, { Field, SelectField, CheckField, SubmitBtn } from "../components/Modal";
+import PhoneInput from "../components/PhoneInput";
 
 const EMPTY = { rut: "", tipo_cliente: "persona", nombre_o_razon_social: "", email: "", telefono: "", cliente_activo: true };
 
@@ -64,7 +65,7 @@ export default function Clientes() {
             <Field label="Nombre / Razón social" value={form.nombre_o_razon_social} onChange={set("nombre_o_razon_social")} required />
             <SelectField label="Tipo" value={form.tipo_cliente} onChange={set("tipo_cliente")} options={[{ value: "persona", label: "Persona" }, { value: "empresa", label: "Empresa" }]} />
             <Field label="Email" type="email" value={form.email} onChange={set("email")} />
-            <Field label="Teléfono" value={form.telefono} onChange={set("telefono")} />
+            <PhoneInput label="Teléfono" value={form.telefono} onChange={set("telefono")} />
             <CheckField label="Activo" checked={form.cliente_activo} onChange={set("cliente_activo")} />
             <SubmitBtn loading={loading} />
           </form>

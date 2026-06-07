@@ -1,6 +1,35 @@
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Optional
 from pydantic import BaseModel
+
+
+class TelefonoOut(BaseModel):
+    id_telefono: int
+    telefono: str
+    tipo: str
+
+    model_config = {"from_attributes": True}
+
+
+class EmailOut(BaseModel):
+    id_email: int
+    email: str
+
+    model_config = {"from_attributes": True}
+
+
+class ClientePerfilOut(BaseModel):
+    id_cliente: int
+    rut: str
+    tipo_cliente: str
+    nombre_o_razon_social: str
+    email: Optional[str]
+    telefono: Optional[str]
+    telefonos: list[TelefonoOut] = []
+    emails: list[EmailOut] = []
+
+    model_config = {"from_attributes": True}
 
 
 class SeguroResumen(BaseModel):
