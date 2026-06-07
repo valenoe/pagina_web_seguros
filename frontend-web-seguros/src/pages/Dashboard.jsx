@@ -49,6 +49,37 @@ function Dashboard() {
   });
 
   const [documentoSeleccionado, setDocumentoSeleccionado] = useState(null);
+  const [polizaReporteId, setPolizaReporteId] = useState("");
+  const [siniestroSeleccionadoId, setSiniestroSeleccionadoId] = useState("");
+  const [reporteSiniestroActivo, setReporteSiniestroActivo] = useState(false);
+  const [paginaSiniestros, setPaginaSiniestros] = useState(1);
+
+  const [avatarPerfil, setAvatarPerfil] = useState(
+    localStorage.getItem("avatar_cliente") || ""
+  );
+  const [editandoPerfil, setEditandoPerfil] = useState(false);
+  const [modalClaveAbierto, setModalClaveAbierto] = useState(false);
+  const [pasoClave, setPasoClave] = useState("inicio");
+  const [codigoSeguridad, setCodigoSeguridad] = useState("");
+  const [codigoIngresado, setCodigoIngresado] = useState("");
+  const [nuevaClave, setNuevaClave] = useState("");
+  const [confirmarClave, setConfirmarClave] = useState("");
+  const [mensajePerfil, setMensajePerfil] = useState("");
+  const [datosPerfil, setDatosPerfil] = useState(() => ({
+    nombre: localStorage.getItem("nombre_cliente") || "Cliente",
+    rut: localStorage.getItem("rut_cliente") || "",
+    correo: localStorage.getItem("correo_cliente") || "",
+    telefono: localStorage.getItem("telefono_cliente") || "",
+    direccion: localStorage.getItem("direccion_cliente") || "",
+  }));
+  const [preferenciasPerfil, setPreferenciasPerfil] = useState({
+    email: true,
+    whatsapp: true,
+    vencimientos: true,
+    documentos: true,
+    siniestros: true,
+    pagos: false,
+  });
 
   useEffect(() => {
     const vistaRuta = obtenerVistaDesdeRuta(location);
@@ -1058,7 +1089,7 @@ Estado: ${documento.estado}`);
                                 >
                                   <h3
                                     style={{
-                                      margin: "0 0 7px",
+                                      margin: "0 0 5px",
                                       color: "#07195a",
                                       fontSize: "14px",
                                     }}
@@ -1110,7 +1141,7 @@ Estado: ${documento.estado}`);
                               <h2
                                 style={{
                                   margin: "6px 0 6px",
-                                  fontSize: "24px",
+                                  fontSize: "19px",
                                   lineHeight: 1.1,
                                 }}
                               >
@@ -1385,7 +1416,7 @@ Estado: ${documento.estado}`);
                       height: "42px",
                       border: "1px solid #d9e1ec",
                       borderRadius: "12px",
-                      padding: "0 14px",
+                      padding: "0 10px",
                       outline: "none",
                     }}
                   />
@@ -1734,46 +1765,2096 @@ Estado: ${documento.estado}`);
             )}
 
             {vista === "perfil" && (
-              <div className="pc-panel pc-full-panel">
-                <h2>Perfil Cliente</h2>
+              <div
+                className="pc-panel pc-full-panel"
+                style={{
+                  width: "min(calc(100vw - 280px), 1660px)",
+                  maxWidth: "1660px",
+                  margin: "0 auto",
+                  padding: "16px 18px",
+                }}
+              >
+                {(() => {
+                  const rutCliente = datosPerfil.rut || localStorage.getItem("rut_cliente") || "—";
+                  const correoCliente =
+                    datosPerfil.correo || localStorage.getItem("correo_cliente") || "Sin correo registrado";
+                  const telefonoCliente =
+                    datosPerfil.telefono || localStorage.getItem("telefono_cliente") || "Sin teléfono registrado";
+                  const inicialCliente = (datosPerfil.nombre || nombreCliente || "C")
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase();
 
-                <div className="pc-profile-grid">
-                  <article>
-                    <small>Nombre</small>
-                    <strong>{nombreCliente}</strong>
-                  </article>
+                  const actualizarDatoPerfil = (campo, valor) => {
+                    setDatosPerfil((actual) => ({
+                      ...actual,
+                      [campo]: valor,
+                    }));
+                  };
 
-                  <article>
-                    <small>RUT</small>
-                    <strong>{localStorage.getItem("rut_cliente") || "—"}</strong>
-                  </article>
+                  const guardarPerfil = () => {
+                    localStorage.setItem("nombre_cliente", datosPerfil.nombre || "Cliente");
+                    localStorage.setItem("correo_cliente", datosPerfil.correo || "");
+                    localStorage.setItem("telefono_cliente", datosPerfil.telefono || "");
+                    localStorage.setItem("direccion_cliente", datosPerfil.direccion || "");
+                    setEditandoPerfil(false);
+                    setMensajePerfil(
+                      "Datos actualizados correctamente. Cuando conectes backend, este cambio quedará guardado en la cuenta."
+                    );
+                    setTimeout(() => setMensajePerfil(""), 4200);
+                  };
 
-                  <article>
-                    <small>Correo</small>
-                    <strong>
-                      {localStorage.getItem("correo_cliente") || "—"}
-                    </strong>
-                  </article>
+                  const manejarAvatar = (event) => {
+                    const archivo = event.target.files?.[0];
+                    if (!archivo) return;
 
-                  <article>
-                    <small>Teléfono</small>
-                    <strong>
-                      {localStorage.getItem("telefono_cliente") || "—"}
-                    </strong>
-                  </article>
-                </div>
+                    const lector = new FileReader();
+                    lector.onload = () => {
+                      const resultado = String(lector.result || "");
+                      setAvatarPerfil(resultado);
+                      localStorage.setItem("avatar_cliente", resultado);
+                      setMensajePerfil("Foto de perfil actualizada correctamente.");
+                      setTimeout(() => setMensajePerfil(""), 3600);
+                    };
+                    lector.readAsDataURL(archivo);
+                  };
+
+                  const limpiarAvatar = () => {
+                    setAvatarPerfil("");
+                    localStorage.removeItem("avatar_cliente");
+                    setMensajePerfil("Foto de perfil eliminada.");
+                    setTimeout(() => setMensajePerfil(""), 3200);
+                  };
+
+                  const generarCodigoSeguridad = () => {
+                    const codigo = String(Math.floor(100000 + Math.random() * 900000));
+                    setCodigoSeguridad(codigo);
+                    setCodigoIngresado("");
+                    setNuevaClave("");
+                    setConfirmarClave("");
+                    setPasoClave("codigo");
+                    setMensajePerfil(`Código de seguridad generado para prueba frontend: ${codigo}`);
+                    setTimeout(() => setMensajePerfil(""), 6500);
+                  };
+
+                  const validarCodigo = () => {
+                    if (codigoIngresado.trim() !== codigoSeguridad) {
+                      setMensajePerfil("El código ingresado no coincide.");
+                      setTimeout(() => setMensajePerfil(""), 3500);
+                      return;
+                    }
+
+                    setPasoClave("clave");
+                    setMensajePerfil("Código validado. Ingresa tu nueva contraseña.");
+                    setTimeout(() => setMensajePerfil(""), 3500);
+                  };
+
+                  const actualizarClave = () => {
+                    if (nuevaClave.length < 8) {
+                      setMensajePerfil("La contraseña debe tener al menos 8 caracteres.");
+                      setTimeout(() => setMensajePerfil(""), 3500);
+                      return;
+                    }
+
+                    if (nuevaClave !== confirmarClave) {
+                      setMensajePerfil("Las contraseñas no coinciden.");
+                      setTimeout(() => setMensajePerfil(""), 3500);
+                      return;
+                    }
+
+                    setModalClaveAbierto(false);
+                    setPasoClave("inicio");
+                    setCodigoSeguridad("");
+                    setCodigoIngresado("");
+                    setNuevaClave("");
+                    setConfirmarClave("");
+                    setMensajePerfil(
+                      "Contraseña actualizada en modo frontend. Después se conectará al backend con OTP real."
+                    );
+                    setTimeout(() => setMensajePerfil(""), 5000);
+                  };
+
+                  const alternarPreferencia = (clave) => {
+                    setPreferenciasPerfil((actual) => ({
+                      ...actual,
+                      [clave]: !actual[clave],
+                    }));
+                  };
+
+                  const inputPerfil = (label, campo, tipo = "text", bloqueado = false) => (
+                    <label
+                      style={{
+                        display: "grid",
+                        gap: "7px",
+                        background: "#f5f7fb",
+                        border: "1px solid rgba(7, 25, 90, 0.08)",
+                        borderRadius: "14px",
+                        padding: "11px 12px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#667085",
+                          fontSize: "10px",
+                          fontWeight: 950,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        {label}
+                      </span>
+
+                      {editandoPerfil && !bloqueado ? (
+                        <input
+                          type={tipo}
+                          value={datosPerfil[campo] || ""}
+                          onChange={(event) => actualizarDatoPerfil(campo, event.target.value)}
+                          style={{
+                            width: "100%",
+                            border: "1px solid #d9e2ef",
+                            background: "#ffffff",
+                            color: "#07195a",
+                            borderRadius: "10px",
+                            padding: "9px 10px",
+                            fontWeight: 900,
+                            outline: "none",
+                          }}
+                        />
+                      ) : (
+                        <strong
+                          style={{
+                            color: "#07195a",
+                            fontSize: "14px",
+                            fontWeight: 950,
+                            wordBreak: "break-word",
+                          }}
+                        >
+                          {datosPerfil[campo] || "Pendiente"}
+                        </strong>
+                      )}
+                    </label>
+                  );
+
+                  const switchPerfil = (clave, titulo, bajada) => (
+                    <button
+                      type="button"
+                      onClick={() => alternarPreferencia(clave)}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "12px",
+                        border: "none",
+                        background: "#f5f7fb",
+                        borderRadius: "13px",
+                        padding: "11px 12px",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <span>
+                        <strong
+                          style={{
+                            display: "block",
+                            color: "#07195a",
+                            fontSize: "12px",
+                            fontWeight: 950,
+                          }}
+                        >
+                          {titulo}
+                        </strong>
+                        <small
+                          style={{
+                            color: "#667085",
+                            fontSize: "11px",
+                            fontWeight: 750,
+                          }}
+                        >
+                          {bajada}
+                        </small>
+                      </span>
+
+                      <span
+                        style={{
+                          width: "42px",
+                          height: "24px",
+                          borderRadius: "999px",
+                          padding: "3px",
+                          background: preferenciasPerfil[clave] ? "#07195a" : "#d9e2ef",
+                          display: "flex",
+                          justifyContent: preferenciasPerfil[clave] ? "flex-end" : "flex-start",
+                          transition: "0.2s ease",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "999px",
+                            background: "#ffffff",
+                            display: "block",
+                          }}
+                        />
+                      </span>
+                    </button>
+                  );
+
+                  return (
+                    <div style={{ display: "grid", gap: "12px" }}>
+                      {mensajePerfil && (
+                        <div
+                          style={{
+                            background: "rgba(244, 124, 32, 0.12)",
+                            color: "#07195a",
+                            border: "1px solid rgba(244, 124, 32, 0.24)",
+                            borderRadius: "14px",
+                            padding: "10px 12px",
+                            fontSize: "12px",
+                            fontWeight: 850,
+                          }}
+                        >
+                          {mensajePerfil}
+                        </div>
+                      )}
+
+                      <section
+                        style={{
+                          background: "#07195a",
+                          borderRadius: "22px",
+                          padding: "18px",
+                          color: "#ffffff",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "18px",
+                          boxShadow: "0 18px 40px rgba(7, 25, 90, 0.18)",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                          <div
+                            style={{
+                              width: "82px",
+                              height: "82px",
+                              borderRadius: "22px",
+                              overflow: "hidden",
+                              background: "rgba(255,255,255,0.12)",
+                              border: "1px solid rgba(255,255,255,0.24)",
+                              display: "grid",
+                              placeItems: "center",
+                              flex: "0 0 auto",
+                            }}
+                          >
+                            {avatarPerfil ? (
+                              <img
+                                src={avatarPerfil}
+                                alt="Foto de perfil"
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              />
+                            ) : (
+                              <strong style={{ fontSize: "34px", fontWeight: 950 }}>{inicialCliente}</strong>
+                            )}
+                          </div>
+
+                          <div>
+                            <small style={{ fontSize: "12px", fontWeight: 850, opacity: 0.8 }}>
+                              Mi cuenta
+                            </small>
+                            <h2 style={{ margin: "4px 0 8px", fontSize: "28px", fontWeight: 950 }}>
+                              {datosPerfil.nombre || nombreCliente}
+                            </h2>
+                            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                              {[
+                                `RUT ${rutCliente}`,
+                                "Cliente activo",
+                                "Persona natural",
+                                "Backend ready",
+                              ].map((item) => (
+                                <span
+                                  key={item}
+                                  style={{
+                                    background: "rgba(255,255,255,0.14)",
+                                    border: "1px solid rgba(255,255,255,0.16)",
+                                    borderRadius: "999px",
+                                    padding: "6px 10px",
+                                    fontSize: "11px",
+                                    fontWeight: 900,
+                                  }}
+                                >
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                          <label
+                            style={{
+                              background: "#ffffff",
+                              color: "#07195a",
+                              borderRadius: "14px",
+                              padding: "11px 14px",
+                              fontSize: "12px",
+                              fontWeight: 950,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Subir foto
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={manejarAvatar}
+                              style={{ display: "none" }}
+                            />
+                          </label>
+
+                          {avatarPerfil && (
+                            <button
+                              type="button"
+                              onClick={limpiarAvatar}
+                              style={{
+                                border: "1px solid rgba(255,255,255,0.24)",
+                                background: "transparent",
+                                color: "#ffffff",
+                                borderRadius: "14px",
+                                padding: "11px 14px",
+                                fontSize: "12px",
+                                fontWeight: 950,
+                                cursor: "pointer",
+                              }}
+                            >
+                              Quitar foto
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => (editandoPerfil ? guardarPerfil() : setEditandoPerfil(true))}
+                            style={{
+                              border: "none",
+                              background: "#f47c20",
+                              color: "#ffffff",
+                              borderRadius: "14px",
+                              padding: "12px 16px",
+                              fontSize: "12px",
+                              fontWeight: 950,
+                              cursor: "pointer",
+                            }}
+                          >
+                            {editandoPerfil ? "Guardar cambios" : "Editar perfil"}
+                          </button>
+                        </div>
+                      </section>
+
+                      <section
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                          gap: "10px",
+                        }}
+                      >
+                        {[
+                          ["Último acceso", "Hoy", "Portal clientes"],
+                          ["Estado", "Activo", "Cliente Prieto & Correa"],
+                          ["Seguridad", "Protegida", "Código para cambios sensibles"],
+                          ["Notificaciones", "Activas", "Preferencias configurables"],
+                        ].map(([titulo, valor, bajada]) => (
+                          <article
+                            key={titulo}
+                            style={{
+                              background: "#ffffff",
+                              borderRadius: "17px",
+                              padding: "14px",
+                              border: "1px solid rgba(7, 25, 90, 0.08)",
+                            }}
+                          >
+                            <small
+                              style={{
+                                display: "block",
+                                color: "#667085",
+                                fontSize: "10px",
+                                fontWeight: 950,
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              {titulo}
+                            </small>
+                            <strong
+                              style={{
+                                display: "block",
+                                marginTop: "5px",
+                                color: valor === "Activo" ? "#15803d" : "#07195a",
+                                fontSize: "20px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              {valor}
+                            </strong>
+                            <span style={{ color: "#667085", fontSize: "11px", fontWeight: 750 }}>
+                              {bajada}
+                            </span>
+                          </article>
+                        ))}
+                      </section>
+
+                      <section
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1.55fr 0.95fr",
+                          gap: "12px",
+                          alignItems: "start",
+                        }}
+                      >
+                        <div style={{ display: "grid", gap: "12px" }}>
+                          <article
+                            style={{
+                              background: "#ffffff",
+                              borderRadius: "18px",
+                              padding: "16px",
+                              border: "1px solid rgba(7, 25, 90, 0.08)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                gap: "12px",
+                                alignItems: "center",
+                                marginBottom: "12px",
+                              }}
+                            >
+                              <div>
+                                <h3 style={{ margin: 0, color: "#07195a", fontSize: "19px", fontWeight: 950 }}>
+                                  Datos personales
+                                </h3>
+                                <p style={{ margin: "4px 0 0", color: "#667085", fontSize: "12px", fontWeight: 750 }}>
+                                  Edita tus datos y confirma cambios sensibles cuando se conecte el backend.
+                                </p>
+                              </div>
+
+                              {editandoPerfil && (
+                                <button
+                                  type="button"
+                                  onClick={() => setEditandoPerfil(false)}
+                                  style={{
+                                    border: "1px solid #d9e2ef",
+                                    background: "#ffffff",
+                                    color: "#07195a",
+                                    borderRadius: "12px",
+                                    padding: "9px 12px",
+                                    fontSize: "12px",
+                                    fontWeight: 950,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Cancelar
+                                </button>
+                              )}
+                            </div>
+
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                                gap: "10px",
+                              }}
+                            >
+                              {inputPerfil("Nombre / razón social", "nombre")}
+                              {inputPerfil("RUT", "rut", "text", true)}
+                              {inputPerfil("Correo", "correo", "email")}
+                              {inputPerfil("Teléfono", "telefono")}
+                              {inputPerfil("Dirección", "direccion")}
+                              <div
+                                style={{
+                                  background: "#f5f7fb",
+                                  border: "1px solid rgba(7, 25, 90, 0.08)",
+                                  borderRadius: "14px",
+                                  padding: "11px 12px",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    color: "#667085",
+                                    fontSize: "10px",
+                                    fontWeight: 950,
+                                    textTransform: "uppercase",
+                                  }}
+                                >
+                                  Tipo cliente
+                                </span>
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    marginTop: "7px",
+                                    color: "#07195a",
+                                    fontSize: "14px",
+                                    fontWeight: 950,
+                                  }}
+                                >
+                                  Persona natural
+                                </strong>
+                              </div>
+                            </div>
+                          </article>
+
+                          <article
+                            style={{
+                              background: "#ffffff",
+                              borderRadius: "18px",
+                              padding: "16px",
+                              border: "1px solid rgba(7, 25, 90, 0.08)",
+                            }}
+                          >
+                            <h3 style={{ margin: "0 0 12px", color: "#07195a", fontSize: "19px", fontWeight: 950 }}>
+                              Preferencias de notificación
+                            </h3>
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                                gap: "9px",
+                              }}
+                            >
+                              {switchPerfil("email", "Correo electrónico", "Avisos y comunicaciones generales")}
+                              {switchPerfil("whatsapp", "WhatsApp", "Recordatorios y asistencia")}
+                              {switchPerfil("vencimientos", "Vencimientos", "Alertas de pólizas y pagos")}
+                              {switchPerfil("documentos", "Documentos", "Aviso de documentos disponibles")}
+                              {switchPerfil("siniestros", "Siniestros", "Seguimiento de casos")}
+                              {switchPerfil("pagos", "Pagos", "Recordatorios de cuotas")}
+                            </div>
+                          </article>
+                        </div>
+
+                        <aside style={{ display: "grid", gap: "12px" }}>
+                          <article
+                            style={{
+                              background: "#07195a",
+                              color: "#ffffff",
+                              borderRadius: "18px",
+                              padding: "16px",
+                            }}
+                          >
+                            <h3 style={{ margin: "0 0 8px", fontSize: "18px", fontWeight: 950 }}>
+                              Seguridad de cuenta
+                            </h3>
+                            <p
+                              style={{
+                                margin: "0 0 12px",
+                                color: "rgba(255,255,255,0.78)",
+                                fontSize: "12px",
+                                lineHeight: 1.45,
+                                fontWeight: 750,
+                              }}
+                            >
+                              Cambia tu contraseña usando un código de seguridad. En backend se enviará por correo o SMS.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setModalClaveAbierto(true);
+                                setPasoClave("inicio");
+                              }}
+                              style={{
+                                width: "100%",
+                                border: "none",
+                                background: "#f47c20",
+                                color: "#ffffff",
+                                borderRadius: "13px",
+                                padding: "12px 14px",
+                                fontSize: "12px",
+                                fontWeight: 950,
+                                cursor: "pointer",
+                              }}
+                            >
+                              Cambiar contraseña
+                            </button>
+                          </article>
+
+                          <article
+                            style={{
+                              background: "#ffffff",
+                              borderRadius: "18px",
+                              padding: "16px",
+                              border: "1px solid rgba(7, 25, 90, 0.08)",
+                            }}
+                          >
+                            <h3 style={{ margin: "0 0 12px", color: "#07195a", fontSize: "18px", fontWeight: 950 }}>
+                              Sesiones y actividad
+                            </h3>
+
+                            {[
+                              ["Inicio de sesión", "Hoy · Portal clientes"],
+                              ["Actualización de perfil", "Pendiente backend"],
+                              ["Cambio de contraseña", "Requiere código"],
+                            ].map(([titulo, texto]) => (
+                              <div
+                                key={titulo}
+                                style={{
+                                  background: "#f5f7fb",
+                                  borderRadius: "13px",
+                                  padding: "10px 11px",
+                                  marginBottom: "8px",
+                                }}
+                              >
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    color: "#07195a",
+                                    fontSize: "12px",
+                                    fontWeight: 950,
+                                  }}
+                                >
+                                  {titulo}
+                                </strong>
+                                <span style={{ color: "#667085", fontSize: "11px", fontWeight: 750 }}>
+                                  {texto}
+                                </span>
+                              </div>
+                            ))}
+                          </article>
+
+                          <article
+                            style={{
+                              background: "#ffffff",
+                              borderRadius: "18px",
+                              padding: "16px",
+                              border: "1px solid rgba(7, 25, 90, 0.08)",
+                            }}
+                          >
+                            <h3 style={{ margin: "0 0 12px", color: "#07195a", fontSize: "18px", fontWeight: 950 }}>
+                              Privacidad y documentos
+                            </h3>
+                            {["Política de privacidad", "Términos del portal", "Consentimiento de datos"].map(
+                              (item) => (
+                                <div
+                                  key={item}
+                                  style={{
+                                    background: "#f5f7fb",
+                                    borderRadius: "13px",
+                                    padding: "10px 11px",
+                                    marginBottom: "8px",
+                                  }}
+                                >
+                                  <strong
+                                    style={{
+                                      display: "block",
+                                      color: "#07195a",
+                                      fontSize: "12px",
+                                      fontWeight: 950,
+                                    }}
+                                  >
+                                    {item}
+                                  </strong>
+                                  <span style={{ color: "#667085", fontSize: "11px", fontWeight: 750 }}>
+                                    Disponible próximamente
+                                  </span>
+                                </div>
+                              )
+                            )}
+                          </article>
+                        </aside>
+                      </section>
+
+                      {modalClaveAbierto && (
+                        <div
+                          style={{
+                            position: "fixed",
+                            inset: 0,
+                            background: "rgba(3, 19, 68, 0.55)",
+                            zIndex: 80,
+                            display: "grid",
+                            placeItems: "center",
+                            padding: "20px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "min(520px, 100%)",
+                              background: "#ffffff",
+                              borderRadius: "22px",
+                              padding: "22px",
+                              boxShadow: "0 24px 70px rgba(3, 19, 68, 0.25)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                gap: "16px",
+                                alignItems: "flex-start",
+                                marginBottom: "16px",
+                              }}
+                            >
+                              <div>
+                                <h3 style={{ margin: 0, color: "#07195a", fontSize: "22px", fontWeight: 950 }}>
+                                  Cambiar contraseña
+                                </h3>
+                                <p style={{ margin: "6px 0 0", color: "#667085", fontSize: "13px", fontWeight: 750 }}>
+                                  Flujo preparado para código de seguridad.
+                                </p>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => setModalClaveAbierto(false)}
+                                style={{
+                                  border: "none",
+                                  background: "#f5f7fb",
+                                  color: "#07195a",
+                                  borderRadius: "12px",
+                                  width: "36px",
+                                  height: "36px",
+                                  fontWeight: 950,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                ×
+                              </button>
+                            </div>
+
+                            {pasoClave === "inicio" && (
+                              <div>
+                                <p
+                                  style={{
+                                    margin: "0 0 14px",
+                                    color: "#667085",
+                                    fontSize: "13px",
+                                    lineHeight: 1.5,
+                                    fontWeight: 750,
+                                  }}
+                                >
+                                  Para proteger tu cuenta, primero se genera un código de seguridad.
+                                </p>
+
+                                <button
+                                  type="button"
+                                  onClick={generarCodigoSeguridad}
+                                  style={{
+                                    width: "100%",
+                                    border: "none",
+                                    background: "#f47c20",
+                                    color: "#ffffff",
+                                    borderRadius: "14px",
+                                    padding: "13px 16px",
+                                    fontWeight: 950,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Generar código de seguridad
+                                </button>
+                              </div>
+                            )}
+
+                            {pasoClave === "codigo" && (
+                              <div style={{ display: "grid", gap: "12px" }}>
+                                <label style={{ display: "grid", gap: "7px" }}>
+                                  <span style={{ color: "#07195a", fontSize: "12px", fontWeight: 950 }}>
+                                    Código de seguridad
+                                  </span>
+                                  <input
+                                    value={codigoIngresado}
+                                    onChange={(event) => setCodigoIngresado(event.target.value)}
+                                    placeholder="Ingresa el código de 6 dígitos"
+                                    style={{
+                                      border: "1px solid #d9e2ef",
+                                      borderRadius: "13px",
+                                      padding: "12px",
+                                      fontWeight: 900,
+                                      outline: "none",
+                                    }}
+                                  />
+                                </label>
+
+                                <button
+                                  type="button"
+                                  onClick={validarCodigo}
+                                  style={{
+                                    border: "none",
+                                    background: "#07195a",
+                                    color: "#ffffff",
+                                    borderRadius: "14px",
+                                    padding: "13px 16px",
+                                    fontWeight: 950,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Validar código
+                                </button>
+                              </div>
+                            )}
+
+                            {pasoClave === "clave" && (
+                              <div style={{ display: "grid", gap: "12px" }}>
+                                <label style={{ display: "grid", gap: "7px" }}>
+                                  <span style={{ color: "#07195a", fontSize: "12px", fontWeight: 950 }}>
+                                    Nueva contraseña
+                                  </span>
+                                  <input
+                                    type="password"
+                                    value={nuevaClave}
+                                    onChange={(event) => setNuevaClave(event.target.value)}
+                                    placeholder="Mínimo 8 caracteres"
+                                    style={{
+                                      border: "1px solid #d9e2ef",
+                                      borderRadius: "13px",
+                                      padding: "12px",
+                                      fontWeight: 900,
+                                      outline: "none",
+                                    }}
+                                  />
+                                </label>
+
+                                <label style={{ display: "grid", gap: "7px" }}>
+                                  <span style={{ color: "#07195a", fontSize: "12px", fontWeight: 950 }}>
+                                    Confirmar contraseña
+                                  </span>
+                                  <input
+                                    type="password"
+                                    value={confirmarClave}
+                                    onChange={(event) => setConfirmarClave(event.target.value)}
+                                    placeholder="Repite tu nueva contraseña"
+                                    style={{
+                                      border: "1px solid #d9e2ef",
+                                      borderRadius: "13px",
+                                      padding: "12px",
+                                      fontWeight: 900,
+                                      outline: "none",
+                                    }}
+                                  />
+                                </label>
+
+                                <button
+                                  type="button"
+                                  onClick={actualizarClave}
+                                  style={{
+                                    border: "none",
+                                    background: "#f47c20",
+                                    color: "#ffffff",
+                                    borderRadius: "14px",
+                                    padding: "13px 16px",
+                                    fontWeight: 950,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Actualizar contraseña
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
-            {["beneficiarios", "cuotas", "siniestro"].includes(
-              vista
-            ) && (
+            {vista === "siniestro" && (
+              <div
+                className="pc-panel pc-full-panel"
+                style={{
+                  width: "min(calc(100vw - 300px), 1600px)",
+                  maxWidth: "1600px",
+                  margin: "0 auto",
+                  padding: "18px 20px",
+                }}
+              >
+                {(() => {
+                  const ICONOS = {
+                    upload: "/subir-documento.png",
+                    tick: "/tick.png",
+                    reloj: "/reloj-de-arena.png",
+                    carpeta: "/carpeta.png",
+                    reporte: "/reportar-siniestro.png",
+                  };
+
+                  // Cuando se conecte el backend, este arreglo debe venir desde
+                  // GET /portal/mis-siniestros. Por ahora se mantiene vacío
+                  // para no mostrar casos inventados al cliente.
+                  const siniestrosBackend = [];
+
+                  const siniestrosCliente = siniestrosBackend;
+
+                  const CASOS_POR_PAGINA = 5;
+                  const totalSiniestros = siniestrosCliente.length;
+                  const totalPaginasSiniestros = Math.max(
+                    1,
+                    Math.ceil(totalSiniestros / CASOS_POR_PAGINA)
+                  );
+                  const paginaActualSiniestros = Math.min(
+                    paginaSiniestros,
+                    totalPaginasSiniestros
+                  );
+                  const indiceInicioSiniestros =
+                    (paginaActualSiniestros - 1) * CASOS_POR_PAGINA;
+                  const indiceFinSiniestros = indiceInicioSiniestros + CASOS_POR_PAGINA;
+                  const siniestrosPaginados = siniestrosCliente.slice(
+                    indiceInicioSiniestros,
+                    indiceFinSiniestros
+                  );
+                  const desdeSiniestro =
+                    totalSiniestros === 0 ? 0 : indiceInicioSiniestros + 1;
+                  const hastaSiniestro = Math.min(indiceFinSiniestros, totalSiniestros);
+
+                  const polizasReportables = polizas.map((poliza, index) => ({
+                    id: String(poliza.id_poliza || poliza.numero_poliza || index),
+                    nombre: poliza.seguro?.nombre || poliza.nombre || "Seguro contratado",
+                    categoria: poliza.seguro?.categoria || poliza.categoria || "Pólizas vigentes",
+                    poliza: poliza.numero_poliza || `Póliza ${index + 1}`,
+                  }));
+
+                  const polizaSeleccionada =
+                    polizasReportables.find((item) => item.id === polizaReporteId) ||
+                    polizasReportables[0];
+
+                  const siniestroPorPoliza = siniestrosCliente.find(
+                    (item) => item.poliza === polizaSeleccionada?.poliza
+                  );
+
+                  const siniestroSeleccionado =
+                    siniestrosCliente.find((item) => item.id === siniestroSeleccionadoId) ||
+                    siniestroPorPoliza ||
+                    null;
+
+                  const etapaActual = siniestroSeleccionado?.etapaActual || (reporteSiniestroActivo ? 1 : 0);
+
+                  const categoriasReportables = polizasReportables.reduce((acc, item) => {
+                    if (!acc[item.categoria]) acc[item.categoria] = [];
+                    acc[item.categoria].push(item);
+                    return acc;
+                  }, {});
+
+                  const seleccionarPoliza = (idPoliza) => {
+                    setPolizaReporteId(idPoliza);
+                    setReporteSiniestroActivo(false);
+                    setPaginaSiniestros(1);
+
+                    const nuevaPoliza = polizasReportables.find((item) => item.id === idPoliza);
+                    const caso = siniestrosCliente.find((item) => item.poliza === nuevaPoliza?.poliza);
+                    setSiniestroSeleccionadoId(caso?.id || "");
+                  };
+
+                  const seleccionarCaso = (caso) => {
+                    setSiniestroSeleccionadoId(caso.id);
+                    const polizaCaso = polizasReportables.find((item) => item.poliza === caso.poliza);
+                    if (polizaCaso) setPolizaReporteId(polizaCaso.id);
+                    setReporteSiniestroActivo(false);
+                  };
+
+                  const reportarSiniestro = () => {
+                    if (!polizaSeleccionada) return;
+                    setReporteSiniestroActivo(true);
+                    const caso = siniestrosCliente.find((item) => item.poliza === polizaSeleccionada.poliza);
+                    setSiniestroSeleccionadoId(caso?.id || "");
+                  };
+
+                  const casosActivos = siniestrosCliente.filter((item) => item.tipoEstado !== "cerrado").length;
+                  const enGestion = siniestrosCliente.filter((item) => item.tipoEstado === "gestion").length;
+                  const pendientes = siniestrosCliente.filter((item) => item.tipoEstado === "pendiente").length;
+                  const cerrados = siniestrosCliente.filter((item) => item.tipoEstado === "cerrado").length;
+
+                  const estadoMeta = (tipoEstado) => {
+                    if (tipoEstado === "gestion") {
+                      return {
+                        icono: ICONOS.reloj,
+                        texto: "En gestión",
+                        color: "#c2410c",
+                        background: "rgba(244, 124, 32, 0.12)",
+                        border: "rgba(244, 124, 32, 0.32)",
+                      };
+                    }
+
+                    if (tipoEstado === "pendiente") {
+                      return {
+                        icono: ICONOS.carpeta,
+                        texto: "Pendiente respaldo",
+                        color: "#07195a",
+                        background: "#eef4ff",
+                        border: "#cfddf8",
+                      };
+                    }
+
+                    return {
+                      icono: ICONOS.tick,
+                      texto: "Cerrado",
+                      color: "#067647",
+                      background: "#ecfdf3",
+                      border: "#bfead1",
+                    };
+                  };
+
+                  const kpisSiniestro = [
+                    {
+                      titulo: "Casos activos",
+                      valor: casosActivos,
+                      bajada: "Sin casos registrados",
+                      icono: ICONOS.reporte,
+                      fondo: "#eef4ff",
+                      color: "#07195a",
+                    },
+                    {
+                      titulo: "En gestión",
+                      valor: enGestion,
+                      bajada: "En revisión por la compañía",
+                      icono: ICONOS.reloj,
+                      fondo: "rgba(244, 124, 32, 0.14)",
+                      color: "#f47c20",
+                    },
+                    {
+                      titulo: "Pendiente documentos",
+                      valor: pendientes,
+                      bajada: "Requiere tu respaldo",
+                      icono: ICONOS.carpeta,
+                      fondo: "rgba(244, 174, 32, 0.16)",
+                      color: "#f47c20",
+                    },
+                    {
+                      titulo: "Cerrados",
+                      valor: cerrados,
+                      bajada: "Casos finalizados",
+                      icono: ICONOS.tick,
+                      fondo: "rgba(22, 163, 74, 0.14)",
+                      color: "#067647",
+                    },
+                  ];
+
+                  const pasosSiniestro = [
+                    { numero: 1, titulo: "Reportado", texto: "Caso ingresado" },
+                    { numero: 2, titulo: "En revisión", texto: "Evaluación inicial" },
+                    { numero: 3, titulo: "Documentación", texto: "Respaldo del cliente" },
+                    { numero: 4, titulo: "Resolución", texto: "Cierre del caso" },
+                  ].map((paso) => ({
+                    ...paso,
+                    estado:
+                      paso.numero < etapaActual
+                        ? "completado"
+                        : paso.numero === etapaActual
+                          ? "actual"
+                          : "pendiente",
+                  }));
+
+                  const fechaFormateada = (fecha) => {
+                    if (!fecha) return "—";
+                    const partes = String(fecha).split("-");
+                    if (partes.length !== 3) return fecha;
+                    return `${partes[2]}-${partes[1]}-${partes[0]}`;
+                  };
+
+                  const uploadRequerido = siniestroSeleccionado?.tipoEstado === "pendiente" || reporteSiniestroActivo;
+                  const estadoActual = siniestroSeleccionado
+                    ? estadoMeta(siniestroSeleccionado.tipoEstado)
+                    : { texto: reporteSiniestroActivo ? "Reporte iniciado" : "Sin caso activo" };
+
+                  return (
+                    <>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: "16px",
+                          alignItems: "center",
+                          marginBottom: "14px",
+                        }}
+                      >
+                        <div>
+                          <h2
+                            style={{
+                              margin: 0,
+                              color: "#07195a",
+                              fontSize: "23px",
+                              fontWeight: 950,
+                              letterSpacing: "-0.04em",
+                              lineHeight: 1,
+                            }}
+                          >
+                            Siniestros
+                          </h2>
+
+                          <p
+                            style={{
+                              margin: "6px 0 0",
+                              color: "#667085",
+                              fontSize: "13px",
+                              lineHeight: 1.45,
+                            }}
+                          >
+                            Reporta, revisa y da seguimiento a tus casos asociados a tus pólizas.
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={reportarSiniestro}
+                          disabled={!polizaSeleccionada}
+                          title={!polizaSeleccionada ? "Selecciona una póliza para reportar" : "Iniciar reporte para la póliza seleccionada"}
+                          style={{
+                            border: "none",
+                            borderRadius: "15px",
+                            background: polizaSeleccionada ? "#f47c20" : "#cbd5e1",
+                            color: "#ffffff",
+                            padding: "11px 18px",
+                            fontWeight: 950,
+                            cursor: polizaSeleccionada ? "pointer" : "not-allowed",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "9px",
+                            boxShadow: polizaSeleccionada ? "0 12px 30px rgba(244, 124, 32, 0.25)" : "none",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <span style={{ fontSize: "17px", lineHeight: 1 }}>+</span>
+                          <span>Reportar siniestro</span>
+                        </button>
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                          gap: "12px",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        {kpisSiniestro.map((kpi) => (
+                          <article
+                            key={kpi.titulo}
+                            style={{
+                              minHeight: "70px",
+                              border: "1px solid #e6ebf2",
+                              borderRadius: "16px",
+                              background: "#ffffff",
+                              padding: "12px 15px",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "14px",
+                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.05)",
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: "44px",
+                                height: "44px",
+                                borderRadius: "999px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                background: kpi.fondo,
+                                flex: "0 0 auto",
+                              }}
+                            >
+                              <img
+                                src={kpi.icono}
+                                alt=""
+                                style={{
+                                  width: "25px",
+                                  height: "25px",
+                                  objectFit: "contain",
+                                }}
+                              />
+                            </span>
+
+                            <span>
+                              <strong
+                                style={{
+                                  display: "block",
+                                  color: "#07195a",
+                                  fontSize: "19px",
+                                  lineHeight: 1,
+                                  fontWeight: 950,
+                                }}
+                              >
+                                {kpi.valor}
+                              </strong>
+
+                              <small
+                                style={{
+                                  display: "block",
+                                  marginTop: "4px",
+                                  color: "#07195a",
+                                  fontSize: "12px",
+                                  fontWeight: 950,
+                                }}
+                              >
+                                {kpi.titulo}
+                              </small>
+
+                              <small
+                                style={{
+                                  display: "block",
+                                  marginTop: "1px",
+                                  color: kpi.color,
+                                  fontSize: "11px",
+                                  fontWeight: 780,
+                                }}
+                              >
+                                {kpi.bajada}
+                              </small>
+                            </span>
+                          </article>
+                        ))}
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "2.18fr 0.82fr",
+                          gap: "12px",
+                          alignItems: "start",
+                        }}
+                      >
+                        <div style={{ display: "grid", gap: "10px" }}>
+                          <section
+                            style={{
+                              border: "1px solid #e6ebf2",
+                              borderRadius: "18px",
+                              background: "#ffffff",
+                              padding: "14px 16px 12px",
+                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.04)",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                margin: "0 0 12px",
+                                color: "#07195a",
+                                fontSize: "17px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              Seguimiento del proceso
+                            </h3>
+
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                                position: "relative",
+                                alignItems: "start",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  top: "23px",
+                                  left: "10%",
+                                  right: "10%",
+                                  height: "3px",
+                                  background: "#d9e2ef",
+                                  borderRadius: "99px",
+                                  overflow: "hidden",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    display: "block",
+                                    width: `${Math.max(0, Math.min(100, ((etapaActual - 1) / 3) * 100))}%`,
+                                    height: "100%",
+                                    background: etapaActual >= 3 ? "#f47c20" : "#07195a",
+                                  }}
+                                />
+                              </div>
+
+                              {pasosSiniestro.map((paso) => {
+                                const esActual = paso.estado === "actual";
+                                const completado = paso.estado === "completado";
+
+                                return (
+                                  <div
+                                    key={paso.numero}
+                                    style={{
+                                      position: "relative",
+                                      zIndex: 1,
+                                      textAlign: "center",
+                                      display: "grid",
+                                      justifyItems: "center",
+                                      gap: "7px",
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        width: esActual ? "48px" : "43px",
+                                        height: esActual ? "48px" : "43px",
+                                        borderRadius: "999px",
+                                        display: "grid",
+                                        placeItems: "center",
+                                        background: esActual ? "#f47c20" : completado ? "#07195a" : "#ffffff",
+                                        color: esActual || completado ? "#ffffff" : "#07195a",
+                                        border: esActual ? "2px solid #f47c20" : "2px solid #d9e2ef",
+                                        fontWeight: 950,
+                                        fontSize: "16px",
+                                        boxShadow: esActual ? "0 0 0 7px rgba(244, 124, 32, 0.12)" : "none",
+                                        position: "relative",
+                                      }}
+                                    >
+                                      {paso.numero}
+                                      {completado && (
+                                        <span
+                                          style={{
+                                            position: "absolute",
+                                            right: "-3px",
+                                            top: "-4px",
+                                            width: "14px",
+                                            height: "14px",
+                                            borderRadius: "999px",
+                                            background: "#22c55e",
+                                            border: "2px solid #ffffff",
+                                          }}
+                                        />
+                                      )}
+                                    </span>
+
+                                    <div
+                                      style={{
+                                        minWidth: "120px",
+                                        borderRadius: "12px",
+                                        padding: esActual ? "6px 8px" : "0",
+                                        background: esActual ? "rgba(244, 124, 32, 0.08)" : "transparent",
+                                      }}
+                                    >
+                                      <strong
+                                        style={{
+                                          display: "block",
+                                          color: "#07195a",
+                                          fontSize: "12px",
+                                          fontWeight: 950,
+                                        }}
+                                      >
+                                        {paso.titulo}
+                                      </strong>
+
+                                      <span
+                                        style={{
+                                          display: "block",
+                                          marginTop: "2px",
+                                          color: "#667085",
+                                          fontSize: "11px",
+                                          fontWeight: 750,
+                                        }}
+                                      >
+                                        {paso.texto}
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </section>
+
+                          <section
+                            style={{
+                              border: "1px solid #e6ebf2",
+                              borderRadius: "18px",
+                              background: "#ffffff",
+                              padding: "13px 14px 11px",
+                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.04)",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                margin: "0 0 8px",
+                                color: "#07195a",
+                                fontSize: "18px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              Mis casos
+                            </h3>
+
+                            <div style={{ overflowX: "auto" }}>
+                              <table
+                                style={{
+                                  width: "100%",
+                                  minWidth: "820px",
+                                  borderCollapse: "separate",
+                                  borderSpacing: 0,
+                                  overflow: "hidden",
+                                  borderRadius: "14px",
+                                  border: "1px solid #e6ebf2",
+                                }}
+                              >
+                                <thead>
+                                  <tr style={{ background: "#f5f7fb" }}>
+                                    {["N° Caso", "Seguro / póliza", "Estado", "Ejecutivo", "Fecha"].map((titulo) => (
+                                      <th
+                                        key={titulo}
+                                        style={{
+                                          textAlign: "left",
+                                          padding: "9px 10px",
+                                          color: "#07195a",
+                                          fontSize: "11px",
+                                          fontWeight: 950,
+                                          textTransform: "uppercase",
+                                          letterSpacing: "0.02em",
+                                          borderBottom: "1px solid #e6ebf2",
+                                          whiteSpace: "nowrap",
+                                        }}
+                                      >
+                                        {titulo}
+                                      </th>
+                                    ))}
+                                  </tr>
+                                </thead>
+
+                                <tbody>
+                                  {siniestrosCliente.length === 0 ? (
+                                    <tr>
+                                      <td
+                                        colSpan="5"
+                                        style={{
+                                          padding: "24px 16px",
+                                          textAlign: "center",
+                                          color: "#667085",
+                                          fontSize: "12px",
+                                          fontWeight: 850,
+                                          borderBottom: "1px solid #e6ebf2",
+                                        }}
+                                      >
+                                        <strong
+                                          style={{
+                                            display: "block",
+                                            color: "#07195a",
+                                            fontSize: "14px",
+                                            fontWeight: 950,
+                                            marginBottom: "5px",
+                                          }}
+                                        >
+                                          No tienes siniestros registrados.
+                                        </strong>
+                                        Selecciona una póliza vigente y presiona “Reportar siniestro” para iniciar un caso.
+                                      </td>
+                                    </tr>
+                                  ) : (
+                                    siniestrosPaginados.map((siniestro) => {
+                                      const activo = siniestroSeleccionado?.id === siniestro.id;
+                                      const meta = estadoMeta(siniestro.tipoEstado);
+
+                                      return (
+                                        <tr
+                                          key={siniestro.id}
+                                          onClick={() => seleccionarCaso(siniestro)}
+                                          style={{
+                                            cursor: "pointer",
+                                            background: activo ? "#fff7ed" : "#ffffff",
+                                            outline: activo ? "1px solid rgba(244, 124, 32, 0.42)" : "none",
+                                          }}
+                                        >
+                                          <td
+                                            style={{
+                                              padding: "9px 10px",
+                                              borderBottom: "1px solid #e6ebf2",
+                                              color: "#07195a",
+                                              fontSize: "12px",
+                                              fontWeight: 950,
+                                              whiteSpace: "nowrap",
+                                            }}
+                                          >
+                                            {siniestro.id}
+                                          </td>
+
+                                          <td
+                                            style={{
+                                              padding: "9px 10px",
+                                              borderBottom: "1px solid #e6ebf2",
+                                              color: "#07195a",
+                                              fontSize: "12px",
+                                              fontWeight: 900,
+                                              whiteSpace: "nowrap",
+                                            }}
+                                          >
+                                            <strong style={{ display: "block", fontWeight: 950 }}>{siniestro.seguro}</strong>
+                                            <span style={{ color: "#667085", fontSize: "11px", fontWeight: 850 }}>
+                                              {siniestro.poliza}
+                                            </span>
+                                          </td>
+
+                                          <td
+                                            style={{
+                                              padding: "9px 10px",
+                                              borderBottom: "1px solid #e6ebf2",
+                                              whiteSpace: "nowrap",
+                                            }}
+                                          >
+                                            <span
+                                              style={{
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                gap: "7px",
+                                                minWidth: "150px",
+                                                minHeight: "28px",
+                                                padding: "5px 12px",
+                                                borderRadius: "999px",
+                                                background: meta.background,
+                                                border: `1px solid ${meta.border}`,
+                                                color: meta.color,
+                                                fontSize: "11px",
+                                                fontWeight: 950,
+                                              }}
+                                            >
+                                              <img
+                                                src={meta.icono}
+                                                alt=""
+                                                style={{ width: "13px", height: "13px", objectFit: "contain" }}
+                                              />
+                                              {meta.texto}
+                                            </span>
+                                          </td>
+
+                                          <td
+                                            style={{
+                                              padding: "9px 10px",
+                                              borderBottom: "1px solid #e6ebf2",
+                                              color: "#07195a",
+                                              fontSize: "12px",
+                                              fontWeight: 950,
+                                              whiteSpace: "nowrap",
+                                            }}
+                                          >
+                                            {siniestro.ejecutivo}
+                                          </td>
+
+                                          <td
+                                            style={{
+                                              padding: "9px 10px",
+                                              borderBottom: "1px solid #e6ebf2",
+                                              color: "#07195a",
+                                              fontSize: "12px",
+                                              fontWeight: 950,
+                                              whiteSpace: "nowrap",
+                                            }}
+                                          >
+                                            {fechaFormateada(siniestro.fecha)}
+                                          </td>
+                                        </tr>
+                                      );
+                                    })
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+
+                            {siniestrosCliente.length > CASOS_POR_PAGINA && (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  gap: "10px",
+                                  marginTop: "9px",
+                                  flexWrap: "wrap",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    color: "#667085",
+                                    fontSize: "11px",
+                                    fontWeight: 850,
+                                  }}
+                                >
+                                  Mostrando {desdeSiniestro}-{hastaSiniestro} de {totalSiniestros} casos
+                                </span>
+
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                  }}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setPaginaSiniestros((pagina) => Math.max(1, pagina - 1))
+                                    }
+                                    disabled={paginaActualSiniestros === 1}
+                                    style={{
+                                      border: "1px solid #d9e2ef",
+                                      background: paginaActualSiniestros === 1 ? "#f5f7fb" : "#ffffff",
+                                      color: paginaActualSiniestros === 1 ? "#98a2b3" : "#07195a",
+                                      borderRadius: "10px",
+                                      padding: "6px 9px",
+                                      fontWeight: 950,
+                                      cursor: paginaActualSiniestros === 1 ? "not-allowed" : "pointer",
+                                    }}
+                                  >
+                                    ‹
+                                  </button>
+
+                                  {Array.from(
+                                    { length: totalPaginasSiniestros },
+                                    (_, index) => index + 1
+                                  ).map((pagina) => (
+                                    <button
+                                      key={pagina}
+                                      type="button"
+                                      onClick={() => setPaginaSiniestros(pagina)}
+                                      style={{
+                                        border:
+                                          paginaActualSiniestros === pagina
+                                            ? "1px solid #07195a"
+                                            : "1px solid #d9e2ef",
+                                        background:
+                                          paginaActualSiniestros === pagina ? "#07195a" : "#ffffff",
+                                        color:
+                                          paginaActualSiniestros === pagina ? "#ffffff" : "#07195a",
+                                        borderRadius: "10px",
+                                        padding: "6px 10px",
+                                        fontWeight: 950,
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      {pagina}
+                                    </button>
+                                  ))}
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setPaginaSiniestros((pagina) =>
+                                        Math.min(totalPaginasSiniestros, pagina + 1)
+                                      )
+                                    }
+                                    disabled={paginaActualSiniestros === totalPaginasSiniestros}
+                                    style={{
+                                      border: "1px solid #d9e2ef",
+                                      background:
+                                        paginaActualSiniestros === totalPaginasSiniestros
+                                          ? "#f5f7fb"
+                                          : "#ffffff",
+                                      color:
+                                        paginaActualSiniestros === totalPaginasSiniestros
+                                          ? "#98a2b3"
+                                          : "#07195a",
+                                      borderRadius: "10px",
+                                      padding: "6px 9px",
+                                      fontWeight: 950,
+                                      cursor:
+                                        paginaActualSiniestros === totalPaginasSiniestros
+                                          ? "not-allowed"
+                                          : "pointer",
+                                    }}
+                                  >
+                                    ›
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            <p
+                              style={{
+                                margin: "8px 0 0",
+                                color: "#98a2b3",
+                                textAlign: "center",
+                                fontSize: "11px",
+                                fontWeight: 850,
+                              }}
+                            >
+                              {siniestrosCliente.length > 0 ? "Última actualización: hoy, 00:18" : "Sin casos registrados"}
+                            </p>
+                          </section>
+                        </div>
+
+                        <aside style={{ display: "grid", gap: "10px" }}>
+                          <section
+                            style={{
+                              border: "1px solid #e6ebf2",
+                              borderRadius: "18px",
+                              background: "#ffffff",
+                              padding: "13px 14px",
+                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.04)",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                margin: "0 0 8px",
+                                color: uploadRequerido ? "#c2410c" : "#07195a",
+                                fontSize: "16px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              {uploadRequerido ? "Adjuntar respaldo requerido" : "Adjuntar respaldo"}
+                            </h3>
+
+                            <div
+                              style={{
+                                border: uploadRequerido ? "1px dashed rgba(244, 124, 32, 0.34)" : "1px dashed rgba(7, 25, 90, 0.22)",
+                                borderRadius: "16px",
+                                background: uploadRequerido ? "#fffaf5" : "#f8fafc",
+                                padding: "18px 14px",
+                                textAlign: "center",
+                                minHeight: "142px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <div style={{ width: "100%" }}>
+                                <img
+                                  src={ICONOS.upload}
+                                  alt=""
+                                  style={{
+                                    width: "39px",
+                                    height: "39px",
+                                    objectFit: "contain",
+                                    display: "block",
+                                    margin: "0 auto 10px",
+                                  }}
+                                />
+
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    color: "#07195a",
+                                    fontSize: "14px",
+                                    fontWeight: 950,
+                                  }}
+                                >
+                                  Fotos y documentos
+                                </strong>
+
+                                <p
+                                  style={{
+                                    margin: "5px auto 10px",
+                                    color: "#667085",
+                                    fontSize: "12px",
+                                    lineHeight: 1.35,
+                                    maxWidth: "285px",
+                                  }}
+                                >
+                                  Aquí se podrá subir PDF, fotos, constancias, presupuestos e informes.
+                                </p>
+
+                                <button
+                                  type="button"
+                                  onClick={() => alert("Carga simulada. Esta función se conectará al backend más adelante.")}
+                                  style={{
+                                    minHeight: "32px",
+                                    borderRadius: "11px",
+                                    border: "1px solid #07195a",
+                                    background: "#ffffff",
+                                    color: "#07195a",
+                                    fontWeight: 950,
+                                    cursor: "pointer",
+                                    padding: "6px 14px",
+                                  }}
+                                >
+                                  Adjuntar archivo
+                                </button>
+                              </div>
+                            </div>
+                          </section>
+
+                          <section
+                            style={{
+                              border: "1px solid #e6ebf2",
+                              borderRadius: "18px",
+                              background: "#ffffff",
+                              padding: "13px 14px",
+                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.04)",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                margin: "0 0 5px",
+                                color: "#07195a",
+                                fontSize: "16px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              ¿Qué póliza deseas reportar?
+                            </h3>
+
+                            <p
+                              style={{
+                                margin: "0 0 8px",
+                                color: "#667085",
+                                fontSize: "12px",
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              Selecciona tu póliza vigente y luego presiona “Reportar siniestro”.
+                            </p>
+
+                            <select
+                              disabled={polizasReportables.length === 0}
+                              value={polizaSeleccionada?.id || ""}
+                              onChange={(event) => seleccionarPoliza(event.target.value)}
+                              style={{
+                                width: "100%",
+                                minHeight: "36px",
+                                border: "1px solid #d9e2ef",
+                                borderRadius: "12px",
+                                background: "#f8fafc",
+                                color: "#07195a",
+                                fontWeight: 900,
+                                fontSize: "12px",
+                                padding: "0 11px",
+                                outline: "none",
+                                cursor: "pointer",
+                              }}
+                            >
+                              {polizasReportables.length === 0 ? (
+                                <option value="">No tienes pólizas vigentes registradas</option>
+                              ) : (
+                                Object.entries(categoriasReportables).map(([categoria, items]) => (
+                                  <optgroup key={categoria} label={`${categoria} (${items.length})`}>
+                                    {items.map((item) => (
+                                      <option key={item.id} value={item.id}>
+                                        {item.nombre} · {item.poliza}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                ))
+                              )}
+                            </select>
+
+                            {polizaSeleccionada ? (
+                              <div
+                                style={{
+                                  marginTop: "10px",
+                                  border: "1px solid rgba(7, 25, 90, 0.08)",
+                                  borderRadius: "14px",
+                                  background: "#f5f7fb",
+                                  padding: "10px 11px",
+                                }}
+                              >
+                                <small
+                                  style={{
+                                    display: "block",
+                                    color: "#f47c20",
+                                    fontSize: "10px",
+                                    fontWeight: 950,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.04em",
+                                  }}
+                                >
+                                  Póliza seleccionada
+                                </small>
+
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    marginTop: "3px",
+                                    color: "#07195a",
+                                    fontSize: "13px",
+                                    fontWeight: 950,
+                                    lineHeight: 1.2,
+                                  }}
+                                >
+                                  {polizaSeleccionada.nombre}
+                                </strong>
+
+                                <span
+                                  style={{
+                                    display: "block",
+                                    marginTop: "2px",
+                                    color: "#667085",
+                                    fontSize: "11px",
+                                    fontWeight: 800,
+                                  }}
+                                >
+                                  {polizaSeleccionada.categoria} · {polizaSeleccionada.poliza}
+                                </span>
+
+                                <span
+                                  style={{
+                                    display: "block",
+                                    marginTop: "7px",
+                                    color: reporteSiniestroActivo ? "#067647" : "#475467",
+                                    fontSize: "11px",
+                                    fontWeight: 900,
+                                  }}
+                                >
+                                  {reporteSiniestroActivo
+                                    ? "Reporte preparado para la póliza seleccionada."
+                                    : siniestroPorPoliza
+                                      ? "Esta póliza ya tiene un caso asociado."
+                                      : "Lista para iniciar un nuevo reporte."}
+                                </span>
+                              </div>
+                            ) : (
+                              <div
+                                style={{
+                                  marginTop: "10px",
+                                  border: "1px dashed #d9e2ef",
+                                  borderRadius: "14px",
+                                  background: "#f8fafc",
+                                  padding: "12px",
+                                  color: "#667085",
+                                  fontSize: "12px",
+                                  fontWeight: 850,
+                                  lineHeight: 1.35,
+                                }}
+                              >
+                                Cuando el backend entregue tus pólizas vigentes, podrás seleccionar una aquí para iniciar el reporte.
+                              </div>
+                            )}
+                          </section>
+                        </aside>
+                      </div>
+
+                      <section
+                        style={{
+                          marginTop: "10px",
+                          borderRadius: "18px",
+                          background: "linear-gradient(135deg, #07195a 0%, #031344 100%)",
+                          color: "#ffffff",
+                          padding: "12px 18px",
+                          display: "grid",
+                          gridTemplateColumns: "1.35fr 0.8fr 0.95fr",
+                          gap: "18px",
+                          alignItems: "center",
+                          boxShadow: "0 18px 38px rgba(7, 25, 90, 0.22)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "48px 1fr",
+                            gap: "13px",
+                            alignItems: "center",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "48px",
+                              height: "48px",
+                              borderRadius: "999px",
+                              border: "2px solid rgba(255, 255, 255, 0.7)",
+                              display: "grid",
+                              placeItems: "center",
+                              background: "rgba(255, 255, 255, 0.08)",
+                              position: "relative",
+                            }}
+                          >
+                            <span style={{ fontSize: "24px", lineHeight: 1 }}>👤</span>
+                            <span
+                              style={{
+                                position: "absolute",
+                                right: "4px",
+                                bottom: "4px",
+                                width: "13px",
+                                height: "13px",
+                                borderRadius: "999px",
+                                background: "#22c55e",
+                                border: "2px solid #ffffff",
+                              }}
+                            />
+                          </div>
+
+                          <div>
+                            <small
+                              style={{
+                                display: "block",
+                                opacity: 0.85,
+                                fontSize: "11px",
+                                fontWeight: 850,
+                              }}
+                            >
+                              Ejecutivo asignado
+                            </small>
+
+                            <strong
+                              style={{
+                                display: "block",
+                                marginTop: "3px",
+                                fontSize: "15px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              {siniestroSeleccionado?.ejecutivo || "Pendiente asignación"}
+                            </strong>
+
+                            <p
+                              style={{
+                                margin: "3px 0 0",
+                                opacity: 0.9,
+                                fontSize: "11px",
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              Acompañamiento en denuncia, respaldo y seguimiento con la compañía.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            borderLeft: "1px solid rgba(255, 255, 255, 0.28)",
+                            paddingLeft: "18px",
+                          }}
+                        >
+                          <strong
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              fontSize: "14px",
+                              fontWeight: 950,
+                            }}
+                          >
+                            <span style={{ fontSize: "17px" }}>◷</span>
+                            Horario de atención
+                          </strong>
+
+                          <p
+                            style={{
+                              margin: "5px 0 0",
+                              opacity: 0.9,
+                              fontSize: "12px",
+                              lineHeight: 1.35,
+                            }}
+                          >
+                            Lunes a viernes<br />
+                            09:00 a 18:00 hrs.
+                          </p>
+                        </div>
+
+                        <div
+                          style={{
+                            borderLeft: "1px solid rgba(255, 255, 255, 0.28)",
+                            paddingLeft: "18px",
+                          }}
+                        >
+                          <strong
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              fontSize: "14px",
+                              fontWeight: 950,
+                            }}
+                          >
+                            <span style={{ fontSize: "17px" }}>📄</span>
+                            Estado actual
+                          </strong>
+
+                          <p
+                            style={{
+                              margin: "5px 0 0",
+                              opacity: 0.9,
+                              fontSize: "12px",
+                              lineHeight: 1.35,
+                            }}
+                          >
+                            {siniestroSeleccionado ? estadoActual.texto : "Sin caso seleccionado"}<br />
+                            {siniestroSeleccionado
+                              ? `Última actualización: ${siniestroSeleccionado.actualizado || "pendiente"}`
+                              : "Esperando conexión con backend"}
+                          </p>
+                        </div>
+                      </section>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+
+            {["beneficiarios", "cuotas"].includes(vista) && (
               <div className="pc-panel pc-full-panel">
                 <h2>
                   {vista === "beneficiarios" && "Beneficios"}
                   {vista === "cuotas" && "Pagos y cuotas"}
-                  {vista === "documentos" && "Documentos"}
-                  {vista === "siniestro" && "Reportar siniestro"}
                 </h2>
 
                 <div className="pc-empty">
