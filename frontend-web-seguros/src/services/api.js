@@ -246,6 +246,25 @@ export async function reportarSiniestro(token, data) {
   return crearSiniestro(token, data);
 }
 
+
+export async function getFormularioSiniestro(token) {
+  return apiFetch("/portal/formulario-siniestro", {
+    headers: authHeaders(token),
+  });
+}
+
+export async function guardarFormularioSiniestro(token, data) {
+  return apiPost("/portal/formulario-siniestro", data, {
+    headers: authHeaders(token),
+  });
+}
+
+export async function enviarFormularioSiniestro(token, data) {
+  return apiPost("/portal/formulario-siniestro/enviar", data, {
+    headers: authHeaders(token),
+  });
+}
+
 /* ========================================
 BENEFICIOS
 ======================================== */

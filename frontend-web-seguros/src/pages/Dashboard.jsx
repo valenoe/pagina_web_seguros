@@ -84,6 +84,78 @@ function Dashboard() {
   const [siniestroSeleccionadoId, setSiniestroSeleccionadoId] = useState("");
   const [reporteSiniestroActivo, setReporteSiniestroActivo] = useState(false);
   const [paginaSiniestros, setPaginaSiniestros] = useState(1);
+  const [formularioSiniestroAbierto, setFormularioSiniestroAbierto] = useState(false);
+  const [modoFormularioSiniestro, setModoFormularioSiniestro] = useState("opciones");
+  const [mensajeFormularioSiniestro, setMensajeFormularioSiniestro] = useState("");
+  const [archivoRespaldoSiniestro, setArchivoRespaldoSiniestro] = useState(null);
+  const [formularioSiniestro, setFormularioSiniestro] = useState({
+    numeroSiniestro: "",
+    liquidador: "",
+    polizaItem: "",
+    siniestroDia: "",
+
+    aseguradoDireccion: "",
+    aseguradoCiudad: "",
+    denunciante: "",
+    denuncianteRut: "",
+
+    conductorNombre: "",
+    conductorRut: "",
+    conductorDireccion: "",
+    conductorTelefono: "",
+    conductorCiudad: "",
+    conductorRegion: "",
+    conductorComuna: "",
+    licenciaNumero: "",
+    licenciaVigencia: "",
+    licenciaClase: "",
+    conductorEdad: "",
+
+    vehiculoMarca: "",
+    vehiculoModelo: "",
+    vehiculoAnio: "",
+    vehiculoPatente: "",
+    vehiculoMotor: "",
+
+    fechaSiniestro: "",
+    horaSiniestro: "",
+    direccionOcurrencia: "",
+    ciudadOcurrencia: "",
+    regionOcurrencia: "",
+    relatoHechos: "",
+    lugarInspeccion: "",
+
+    tipoDano: "",
+    partesAfectadas: "",
+    magnitudDanos: "",
+    estimacion: "",
+
+    existeTercero: "",
+    terceroReclama: "",
+    terceroSeguro: "",
+    terceroCompania: "",
+    terceroCulpable: "",
+    terceroDano: "",
+
+    terceroNombre: "",
+    terceroRut: "",
+    terceroDireccion: "",
+    terceroCiudad: "",
+    terceroTelefono: "",
+    terceroFax: "",
+    terceroEmail: "",
+    terceroVehiculo: "",
+    terceroModelo: "",
+    terceroPatente: "",
+
+    comisaria: "",
+    folio: "",
+    fechaDenuncia: "",
+    juzgado: "",
+    citacion: "",
+    alcoholemia: "",
+    observaciones: "",
+  });
 
   const [avatarPerfil, setAvatarPerfil] = useState(
     localStorage.getItem("avatar_cliente") || ""
@@ -4052,9 +4124,12 @@ Estado: ${documento.estado}`);
 
                   const polizasReportables = polizas.map((poliza, index) => ({
                     id: String(poliza.id_poliza || poliza.numero_poliza || index),
+                    idPoliza: poliza.id_poliza || null,
                     nombre: poliza.seguro?.nombre || poliza.nombre || "Seguro contratado",
                     categoria: poliza.seguro?.categoria || poliza.categoria || "Pólizas vigentes",
                     poliza: poliza.numero_poliza || `Póliza ${index + 1}`,
+                    compania: poliza.compania || "Compañía pendiente",
+                    estado: poliza.estado || "vigente",
                   }));
 
                   const polizaSeleccionada =
@@ -4100,6 +4175,608 @@ Estado: ${documento.estado}`);
                     setReporteSiniestroActivo(true);
                     const caso = siniestrosCliente.find((item) => item.poliza === polizaSeleccionada.poliza);
                     setSiniestroSeleccionadoId(caso?.id || "");
+                  };
+
+                  const datosClienteFormulario = {
+                    nombre: datosPerfil.nombre || nombreCliente || "Cliente",
+                    rut: datosPerfil.rut || localStorage.getItem("rut_cliente") || "12.456.789-3",
+                    correo: datosPerfil.correo || localStorage.getItem("correo_cliente") || "",
+                    telefono: datosPerfil.telefono || localStorage.getItem("telefono_cliente") || "",
+                    direccion: datosPerfil.direccion || localStorage.getItem("direccion_cliente") || "",
+                  };
+
+                  const abrirFormularioSiniestro = (modo = "opciones") => {
+                    setModoFormularioSiniestro(modo);
+                    setMensajeFormularioSiniestro("");
+                    setFormularioSiniestroAbierto(true);
+                  };
+
+                  const cerrarFormularioSiniestro = () => {
+                    setFormularioSiniestroAbierto(false);
+                    setModoFormularioSiniestro("opciones");
+                    setMensajeFormularioSiniestro("");
+                  };
+
+                  const actualizarFormularioSiniestro = (campo, valor) => {
+                    setFormularioSiniestro((actual) => ({
+                      ...actual,
+                      [campo]: valor,
+                    }));
+                  };
+
+                  const escapeHtmlSiniestro = (valor) =>
+                    String(valor || "")
+                      .replaceAll("&", "&amp;")
+                      .replaceAll("<", "&lt;")
+                      .replaceAll(">", "&gt;")
+                      .replaceAll('"', "&quot;")
+                      .replaceAll("'", "&#039;");
+
+                  const generarHtmlFormularioSiniestro = () => {
+                    const v = (valor) => escapeHtmlSiniestro(valor || "");
+                    const polizaActual = polizaSeleccionada?.poliza || "";
+                    const seguroActual = polizaSeleccionada?.nombre || "";
+                    const companiaActual = polizaSeleccionada?.compania || "";
+                    const fechaEmision = new Date().toLocaleDateString("es-CL");
+                    const horaEmision = new Date().toLocaleTimeString("es-CL", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+
+                    const campo = (label, value) => `
+                      <div class="field">
+                        <span>${label}</span>
+                        <strong>${v(value) || "—"}</strong>
+                      </div>
+                    `;
+
+                    const fila = (label, value) => `
+                      <div class="row-field">
+                        <span>${label}</span>
+                        <strong>${v(value) || "—"}</strong>
+                      </div>
+                    `;
+
+                    return `
+                      <!doctype html>
+                      <html lang="es">
+                        <head>
+                          <meta charset="utf-8" />
+                          <title>Formulario Denuncio de Siniestro</title>
+                          <style>
+                            * { box-sizing: border-box; }
+
+                            @page {
+                              size: A4;
+                              margin: 12mm;
+                            }
+
+                            body {
+                              margin: 0;
+                              background: #eef2f8;
+                              color: #07195a;
+                              font-family: Arial, Helvetica, sans-serif;
+                              -webkit-print-color-adjust: exact;
+                              print-color-adjust: exact;
+                            }
+
+                            .sheet {
+                              width: 210mm;
+                              min-height: 297mm;
+                              margin: 0 auto;
+                              background: #ffffff;
+                              overflow: hidden;
+                              box-shadow: 0 22px 70px rgba(7, 25, 90, 0.16);
+                            }
+
+                            .hero {
+                              position: relative;
+                              padding: 28px 34px 24px;
+                              display: grid;
+                              grid-template-columns: 150px 1fr 190px;
+                              gap: 22px;
+                              align-items: center;
+                              background: linear-gradient(135deg, #07195a 0%, #031344 72%);
+                              color: #ffffff;
+                            }
+
+                            .hero::after {
+                              content: "";
+                              position: absolute;
+                              right: -90px;
+                              top: -120px;
+                              width: 260px;
+                              height: 260px;
+                              border-radius: 999px;
+                              background: rgba(244, 124, 32, 0.28);
+                            }
+
+                            .logo-box {
+                              position: relative;
+                              z-index: 2;
+                              width: 120px;
+                              min-height: 82px;
+                              padding: 13px;
+                              display: grid;
+                              place-items: center;
+                              background: #ffffff;
+                              border-radius: 18px;
+                              box-shadow: 0 14px 35px rgba(0, 0, 0, 0.16);
+                            }
+
+                            .logo-box img {
+                              width: 95px;
+                              height: auto;
+                              object-fit: contain;
+                            }
+
+                            .hero-title {
+                              position: relative;
+                              z-index: 2;
+                            }
+
+                            .hero-title small {
+                              display: inline-flex;
+                              padding: 7px 12px;
+                              margin-bottom: 10px;
+                              border-radius: 999px;
+                              background: #f47c20;
+                              color: #ffffff;
+                              font-size: 9px;
+                              font-weight: 900;
+                              letter-spacing: .08em;
+                              text-transform: uppercase;
+                            }
+
+                            .hero-title h1 {
+                              margin: 0;
+                              font-size: 24px;
+                              line-height: 1.08;
+                              letter-spacing: .02em;
+                              text-transform: uppercase;
+                            }
+
+                            .hero-title p {
+                              margin: 8px 0 0;
+                              color: rgba(255, 255, 255, 0.78);
+                              font-size: 10px;
+                              line-height: 1.45;
+                            }
+
+                            .case-box {
+                              position: relative;
+                              z-index: 2;
+                              display: grid;
+                              gap: 8px;
+                            }
+
+                            .case-box div {
+                              padding: 10px 12px;
+                              border-radius: 12px;
+                              background: rgba(255, 255, 255, 0.11);
+                              border: 1px solid rgba(255, 255, 255, 0.22);
+                            }
+
+                            .case-box span {
+                              display: block;
+                              color: rgba(255, 255, 255, 0.72);
+                              font-size: 8px;
+                              font-weight: 900;
+                              text-transform: uppercase;
+                              letter-spacing: .08em;
+                            }
+
+                            .case-box strong {
+                              display: block;
+                              min-height: 13px;
+                              margin-top: 3px;
+                              color: #ffffff;
+                              font-size: 11px;
+                              font-weight: 900;
+                            }
+
+                            .content {
+                              padding: 24px 28px 30px;
+                            }
+
+                            .summary-grid {
+                              display: grid;
+                              grid-template-columns: repeat(4, 1fr);
+                              gap: 10px;
+                              margin-bottom: 18px;
+                            }
+
+                            .field,
+                            .row-field,
+                            .mini-field {
+                              border: 1px solid #dfe6f3;
+                              background: #f8faff;
+                              border-radius: 14px;
+                              padding: 10px 12px;
+                              min-height: 54px;
+                            }
+
+                            .field span,
+                            .row-field span,
+                            .mini-field span {
+                              display: block;
+                              margin-bottom: 5px;
+                              color: #64708a;
+                              font-size: 8px;
+                              font-weight: 900;
+                              letter-spacing: .05em;
+                              text-transform: uppercase;
+                            }
+
+                            .field strong,
+                            .row-field strong,
+                            .mini-field strong {
+                              display: block;
+                              color: #07195a;
+                              font-size: 10.5px;
+                              line-height: 1.25;
+                              font-weight: 900;
+                              word-break: break-word;
+                            }
+
+                            .section {
+                              margin-top: 15px;
+                              border: 1px solid #e3e9f4;
+                              border-radius: 18px;
+                              overflow: hidden;
+                              break-inside: avoid;
+                            }
+
+                            .section-title {
+                              padding: 11px 15px;
+                              display: flex;
+                              justify-content: space-between;
+                              align-items: center;
+                              background: linear-gradient(90deg, #07195a, #10307e);
+                              color: #ffffff;
+                            }
+
+                            .section-title h2 {
+                              margin: 0;
+                              font-size: 12px;
+                              line-height: 1;
+                              text-transform: uppercase;
+                              letter-spacing: .04em;
+                            }
+
+                            .section-title span {
+                              color: #ffd7bd;
+                              font-size: 8px;
+                              font-weight: 900;
+                            }
+
+                            .section-body {
+                              padding: 13px;
+                              display: grid;
+                              gap: 9px;
+                              background: #ffffff;
+                            }
+
+                            .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
+                            .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+                            .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+
+                            .relato-box {
+                              min-height: 110px;
+                              padding: 13px;
+                              border: 1px solid #dfe6f3;
+                              border-radius: 14px;
+                              background: #fbfcff;
+                              color: #07195a;
+                              font-size: 10.5px;
+                              line-height: 1.55;
+                              white-space: pre-wrap;
+                            }
+
+                            .option-grid {
+                              display: grid;
+                              grid-template-columns: repeat(4, 1fr);
+                              gap: 8px;
+                            }
+
+                            .option {
+                              padding: 9px;
+                              border: 1px solid #dfe6f3;
+                              border-radius: 12px;
+                              background: #ffffff;
+                              color: #07195a;
+                              font-size: 8.5px;
+                              font-weight: 900;
+                              min-height: 42px;
+                            }
+
+                            .option.active {
+                              border-color: #f47c20;
+                              background: #fff3ea;
+                              color: #f47c20;
+                            }
+
+                            .signature {
+                              margin-top: 25px;
+                              display: grid;
+                              grid-template-columns: 1fr 1fr;
+                              gap: 18px;
+                              align-items: end;
+                            }
+
+                            .signature-card {
+                              min-height: 72px;
+                              padding: 15px;
+                              border: 1px dashed #aab5c9;
+                              border-radius: 16px;
+                              background: #fbfcff;
+                              display: flex;
+                              flex-direction: column;
+                              justify-content: flex-end;
+                            }
+
+                            .signature-line {
+                              height: 1px;
+                              background: #07195a;
+                              margin-bottom: 8px;
+                            }
+
+                            .signature-card strong {
+                              color: #07195a;
+                              font-size: 9px;
+                              text-align: center;
+                              text-transform: uppercase;
+                            }
+
+                            .footer-note {
+                              margin-top: 18px;
+                              padding-top: 12px;
+                              border-top: 1px solid #e6eaf4;
+                              display: flex;
+                              justify-content: space-between;
+                              gap: 12px;
+                              color: #64708a;
+                              font-size: 8.5px;
+                              line-height: 1.45;
+                            }
+
+                            @media print {
+                              body { background: #ffffff; }
+                              .sheet {
+                                width: 100%;
+                                min-height: auto;
+                                box-shadow: none;
+                              }
+                              .content { padding: 18px 22px 22px; }
+                              .section { break-inside: avoid; }
+                            }
+                          </style>
+                        </head>
+                        <body>
+                          <main class="sheet">
+                            <header class="hero">
+                              <div class="logo-box">
+                                <img src="/Logo Prieto.png" alt="Prieto & Correa" />
+                              </div>
+
+                              <div class="hero-title">
+                                <small>Denuncia de siniestro</small>
+                                <h1>Formulario Denuncio de Siniestro</h1>
+                                <p>Documento generado desde el Portal Clientes de Prieto & Correa Seguros.</p>
+                              </div>
+
+                              <div class="case-box">
+                                <div><span>N° Siniestro</span><strong>${v(formularioSiniestro.numeroSiniestro)}</strong></div>
+                                <div><span>Liquidador</span><strong>${v(formularioSiniestro.liquidador)}</strong></div>
+                              </div>
+                            </header>
+
+                            <section class="content">
+                              <div class="summary-grid">
+                                ${campo("Cliente", datosClienteFormulario.nombre)}
+                                ${campo("RUT", datosClienteFormulario.rut)}
+                                ${campo("Teléfono", datosClienteFormulario.telefono)}
+                                ${campo("Correo", datosClienteFormulario.correo)}
+                              </div>
+
+                              <section class="section">
+                                <div class="section-title"><h2>Datos generales</h2><span>Emisión ${v(fechaEmision)} · ${v(horaEmision)}</span></div>
+                                <div class="section-body grid-4">
+                                  ${campo("Póliza", polizaActual)}
+                                  ${campo("Seguro", seguroActual)}
+                                  ${campo("Compañía", companiaActual)}
+                                  ${campo("Siniestro día", formularioSiniestro.siniestroDia || fechaFormateada(formularioSiniestro.fechaSiniestro))}
+                                </div>
+                              </section>
+
+                              <section class="section">
+                                <div class="section-title"><h2>Antecedentes del asegurado</h2><span>Datos precargados del portal</span></div>
+                                <div class="section-body">
+                                  <div class="grid-2">
+                                    ${campo("Nombre", datosClienteFormulario.nombre)}
+                                    ${campo("R.U.T", datosClienteFormulario.rut)}
+                                  </div>
+                                  <div class="grid-3">
+                                    ${campo("Dirección", formularioSiniestro.aseguradoDireccion || datosClienteFormulario.direccion)}
+                                    ${campo("Ciudad", formularioSiniestro.aseguradoCiudad || formularioSiniestro.ciudadOcurrencia)}
+                                    ${campo("Denunciante", formularioSiniestro.denunciante || datosClienteFormulario.nombre)}
+                                  </div>
+                                  <div class="grid-3">
+                                    ${campo("R.U.T denunciante", formularioSiniestro.denuncianteRut || datosClienteFormulario.rut)}
+                                    ${campo("Teléfono", datosClienteFormulario.telefono)}
+                                    ${campo("E-mail", datosClienteFormulario.correo)}
+                                  </div>
+                                </div>
+                              </section>
+
+                              <section class="section">
+                                <div class="section-title"><h2>Antecedentes del conductor</h2><span>Información declarada</span></div>
+                                <div class="section-body">
+                                  <div class="grid-3">
+                                    ${campo("Nombre", formularioSiniestro.conductorNombre)}
+                                    ${campo("R.U.T", formularioSiniestro.conductorRut)}
+                                    ${campo("Teléfono", formularioSiniestro.conductorTelefono)}
+                                  </div>
+                                  <div class="grid-3">
+                                    ${campo("Dirección", formularioSiniestro.conductorDireccion)}
+                                    ${campo("Ciudad", formularioSiniestro.conductorCiudad)}
+                                    ${campo("Región", formularioSiniestro.conductorRegion)}
+                                  </div>
+                                  <div class="grid-4">
+                                    ${campo("Comuna", formularioSiniestro.conductorComuna)}
+                                    ${campo("N° licencia", formularioSiniestro.licenciaNumero)}
+                                    ${campo("Vigencia licencia", formularioSiniestro.licenciaVigencia)}
+                                    ${campo("Clase / Edad", `${formularioSiniestro.licenciaClase || ""} ${formularioSiniestro.conductorEdad ? "/ " + formularioSiniestro.conductorEdad : ""}`)}
+                                  </div>
+                                </div>
+                              </section>
+
+                              <section class="section">
+                                <div class="section-title"><h2>Antecedentes del vehículo</h2><span>Vehículo asociado al siniestro</span></div>
+                                <div class="section-body grid-4">
+                                  ${campo("Marca", formularioSiniestro.vehiculoMarca)}
+                                  ${campo("Modelo", formularioSiniestro.vehiculoModelo)}
+                                  ${campo("Año", formularioSiniestro.vehiculoAnio)}
+                                  ${campo("Patente", formularioSiniestro.vehiculoPatente)}
+                                  ${campo("N° de motor", formularioSiniestro.vehiculoMotor)}
+                                </div>
+                              </section>
+
+                              <section class="section">
+                                <div class="section-title"><h2>Antecedentes del siniestro</h2><span>Ocurrencia y relato</span></div>
+                                <div class="section-body">
+                                  <div class="grid-4">
+                                    ${campo("Dirección de ocurrencia", formularioSiniestro.direccionOcurrencia)}
+                                    ${campo("Ciudad", formularioSiniestro.ciudadOcurrencia)}
+                                    ${campo("Región", formularioSiniestro.regionOcurrencia)}
+                                    ${campo("Hora ocurrencia", formularioSiniestro.horaSiniestro)}
+                                  </div>
+                                  <div>
+                                    <div class="mini-field"><span>Relato de los hechos</span></div>
+                                    <div class="relato-box">${v(formularioSiniestro.relatoHechos) || "—"}</div>
+                                  </div>
+                                  ${fila("Lugar de inspección: dónde se encuentra el vehículo", formularioSiniestro.lugarInspeccion)}
+                                </div>
+                              </section>
+
+                              <section class="section">
+                                <div class="section-title"><h2>Daños al vehículo</h2><span>Selección declarada por el asegurado</span></div>
+                                <div class="section-body">
+                                  <div class="option-grid">
+                                    <div class="option ${formularioSiniestro.tipoDano === "Daños materiales" ? "active" : ""}">1. Daños materiales</div>
+                                    <div class="option ${formularioSiniestro.tipoDano === "Robo del vehículo" ? "active" : ""}">2. Robo del vehículo</div>
+                                    <div class="option ${formularioSiniestro.tipoDano === "Robo de accesorios" ? "active" : ""}">3. Robo de accesorios</div>
+                                    <div class="option ${formularioSiniestro.tipoDano === "Robo de partes o piezas" ? "active" : ""}">4. Robo de partes o piezas</div>
+                                  </div>
+                                  <div class="grid-3">
+                                    ${campo("Partes afectadas", formularioSiniestro.partesAfectadas)}
+                                    ${campo("Magnitud de daños", formularioSiniestro.magnitudDanos)}
+                                    ${campo("Estimación $", formularioSiniestro.estimacion)}
+                                  </div>
+                                </div>
+                              </section>
+
+                              <section class="section">
+                                <div class="section-title"><h2>Antecedentes del tercero</h2><span>En caso de existir</span></div>
+                                <div class="section-body">
+                                  <div class="grid-4">
+                                    ${campo("Existe tercero", formularioSiniestro.existeTercero)}
+                                    ${campo("Reclama", formularioSiniestro.terceroReclama)}
+                                    ${campo("Con seguro de daños", formularioSiniestro.terceroSeguro)}
+                                    ${campo("Compañía", formularioSiniestro.terceroCompania)}
+                                  </div>
+                                  <div class="grid-3">
+                                    ${campo("3° culpable", formularioSiniestro.terceroCulpable)}
+                                    ${campo("Daño del 3°", formularioSiniestro.terceroDano)}
+                                    ${campo("Nombre tercero", formularioSiniestro.terceroNombre)}
+                                  </div>
+                                  <div class="grid-3">
+                                    ${campo("R.U.T tercero", formularioSiniestro.terceroRut)}
+                                    ${campo("Dirección", formularioSiniestro.terceroDireccion)}
+                                    ${campo("Ciudad", formularioSiniestro.terceroCiudad)}
+                                  </div>
+                                  <div class="grid-4">
+                                    ${campo("Teléfono", formularioSiniestro.terceroTelefono)}
+                                    ${campo("Fax", formularioSiniestro.terceroFax)}
+                                    ${campo("E-mail", formularioSiniestro.terceroEmail)}
+                                    ${campo("Patente", formularioSiniestro.terceroPatente)}
+                                  </div>
+                                  <div class="grid-2">
+                                    ${campo("Marca vehículo tercero", formularioSiniestro.terceroVehiculo)}
+                                    ${campo("Modelo", formularioSiniestro.terceroModelo)}
+                                  </div>
+                                </div>
+                              </section>
+
+                              <section class="section">
+                                <div class="section-title"><h2>Antecedentes legales</h2><span>Constancia o denuncia policial obligatoria</span></div>
+                                <div class="section-body grid-3">
+                                  ${campo("Comisaría", formularioSiniestro.comisaria)}
+                                  ${campo("Folio / Párrafo", formularioSiniestro.folio)}
+                                  ${campo("Fecha", formularioSiniestro.fechaDenuncia)}
+                                  ${campo("Juzgado", formularioSiniestro.juzgado)}
+                                  ${campo("Citación", formularioSiniestro.citacion)}
+                                  ${campo("Alcoholemia", formularioSiniestro.alcoholemia)}
+                                </div>
+                              </section>
+
+                              <div class="signature">
+                                <div class="signature-card">
+                                  <div class="signature-line"></div>
+                                  <strong>Firma asegurado</strong>
+                                </div>
+                                <div class="signature-card">
+                                  <div class="signature-line"></div>
+                                  <strong>Recepción ejecutivo comercial</strong>
+                                </div>
+                              </div>
+
+                              <div class="footer-note">
+                                <p>Este documento fue generado digitalmente desde el Portal Clientes de Prieto & Correa Seguros. La información declarada debe ser respaldada con fotografías, constancia policial, documentos y otros antecedentes cuando corresponda.</p>
+                                <p><strong>Prieto & Correa Seguros</strong><br/>Formulario de denuncia de siniestro.</p>
+                              </div>
+                            </section>
+                          </main>
+                        </body>
+                      </html>
+                    `;
+                  };
+
+                  const descargarFormularioCompletado = () => {
+                    const ventana = window.open("", "_blank");
+                    if (!ventana) {
+                      setMensajeFormularioSiniestro("El navegador bloqueó la ventana. Permite ventanas emergentes para descargar el formulario.");
+                      return;
+                    }
+
+                    ventana.document.open();
+                    ventana.document.write(generarHtmlFormularioSiniestro());
+                    ventana.document.close();
+
+                    setTimeout(() => {
+                      ventana.focus();
+                      ventana.print();
+                    }, 350);
+
+                    setMensajeFormularioSiniestro("Formulario generado. Elige “Guardar como PDF” para dejarlo en tu teléfono o computador.");
+                  };
+
+                  const enviarFormularioAEjecutivo = () => {
+                    const resumen = [
+                      "Hola, necesito enviar un formulario de siniestro.",
+                      `Cliente: ${datosClienteFormulario.nombre}`,
+                      `RUT: ${datosClienteFormulario.rut}`,
+                      `Póliza: ${polizaSeleccionada?.poliza || "Sin póliza seleccionada"}`,
+                      `Seguro: ${polizaSeleccionada?.nombre || "Seguro"}`,
+                      `Compañía: ${polizaSeleccionada?.compania || "Pendiente"}`,
+                      `Fecha siniestro: ${formularioSiniestro.fechaSiniestro || "Pendiente"}`,
+                      `Ciudad: ${formularioSiniestro.ciudadOcurrencia || "Pendiente"}`,
+                      `Relato: ${formularioSiniestro.relatoHechos || "Pendiente"}`,
+                      archivoRespaldoSiniestro ? `Archivo seleccionado: ${archivoRespaldoSiniestro.name}` : "Archivo seleccionado: pendiente",
+                    ].join("\\n");
+
+                    setMensajeFormularioSiniestro("Se abrirá WhatsApp para enviar el formulario o coordinar el envío con tu ejecutivo.");
+                    abrirWhatsApp(resumen);
                   };
 
                   const casosActivos = siniestrosCliente.filter((item) => item.tipoEstado !== "cerrado").length;
@@ -4194,6 +4871,78 @@ Estado: ${documento.estado}`);
                     return `${partes[2]}-${partes[1]}-${partes[0]}`;
                   };
 
+                  const estiloSeccionFormulario = {
+                    border: "1px solid #e6ebf2",
+                    borderRadius: "18px",
+                    overflow: "hidden",
+                    background: "#ffffff",
+                    boxShadow: "0 10px 26px rgba(7, 25, 90, 0.04)",
+                  };
+
+                  const estiloTituloSeccionFormulario = {
+                    padding: "12px 14px",
+                    background: "#fde4cf",
+                    color: "#07195a",
+                    fontSize: "13px",
+                    fontWeight: 950,
+                    textTransform: "uppercase",
+                    borderBottom: "1px solid #e6ebf2",
+                  };
+
+                  const estiloGridFormulario = {
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                    gap: "12px",
+                    padding: "14px",
+                  };
+
+                  const campoSiniestro = (campo, etiqueta, opciones = {}) => {
+                    const tipo = opciones.tipo || "text";
+                    const full = opciones.full || false;
+                    const disabled = Boolean(opciones.disabled);
+                    const valor = opciones.valor !== undefined ? opciones.valor : formularioSiniestro[campo] || "";
+                    const onChange = (event) => actualizarFormularioSiniestro(campo, event.target.value);
+                    const estiloBase = {
+                      height: tipo === "textarea" ? "auto" : "44px",
+                      minHeight: tipo === "textarea" ? "96px" : "44px",
+                      border: "1px solid #d9e2ef",
+                      borderRadius: "12px",
+                      padding: tipo === "textarea" ? "12px" : "0 12px",
+                      color: "#07195a",
+                      background: disabled ? "#f3f6fb" : "#ffffff",
+                      fontWeight: 850,
+                      outline: "none",
+                      resize: tipo === "textarea" ? "vertical" : undefined,
+                    };
+
+                    return (
+                      <label
+                        key={campo || etiqueta}
+                        style={{
+                          display: "grid",
+                          gap: "7px",
+                          color: "#07195a",
+                          fontSize: "12px",
+                          fontWeight: 950,
+                          gridColumn: full ? "1 / -1" : "auto",
+                        }}
+                      >
+                        {etiqueta}
+                        {tipo === "select" ? (
+                          <select value={valor} onChange={onChange} style={estiloBase} disabled={disabled}>
+                            {(opciones.items || []).map((item) => (
+                              <option key={item} value={item === "Seleccionar" ? "" : item}>{item}</option>
+                            ))}
+                          </select>
+                        ) : tipo === "textarea" ? (
+                          <textarea value={valor} onChange={onChange} placeholder={opciones.placeholder || ""} style={estiloBase} disabled={disabled} />
+                        ) : (
+                          <input type={tipo} value={valor} onChange={onChange} placeholder={opciones.placeholder || ""} style={estiloBase} disabled={disabled} />
+                        )}
+                      </label>
+                    );
+                  };
+
                   const uploadRequerido = siniestroSeleccionado?.tipoEstado === "pendiente" || reporteSiniestroActivo;
                   const estadoActual = siniestroSeleccionado
                     ? estadoMeta(siniestroSeleccionado.tipoEstado)
@@ -4236,30 +4985,64 @@ Estado: ${documento.estado}`);
                           </p>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={reportarSiniestro}
-                          disabled={!polizaSeleccionada}
-                          title={!polizaSeleccionada ? "Selecciona una póliza para reportar" : "Iniciar reporte para la póliza seleccionada"}
+                        <div
                           style={{
-                            border: "none",
-                            borderRadius: "15px",
-                            background: polizaSeleccionada ? "#f47c20" : "#cbd5e1",
-                            color: "#ffffff",
-                            padding: "11px 18px",
-                            fontWeight: 950,
-                            cursor: polizaSeleccionada ? "pointer" : "not-allowed",
-                            display: "inline-flex",
+                            display: "flex",
                             alignItems: "center",
-                            justifyContent: "center",
-                            gap: "9px",
-                            boxShadow: polizaSeleccionada ? "0 12px 30px rgba(244, 124, 32, 0.25)" : "none",
-                            whiteSpace: "nowrap",
+                            justifyContent: "flex-end",
+                            gap: "10px",
+                            flexWrap: "wrap",
                           }}
                         >
-                          <span style={{ fontSize: "17px", lineHeight: 1 }}>+</span>
-                          <span>Reportar siniestro</span>
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => abrirFormularioSiniestro("opciones")}
+                            title="Completar o descargar el formulario de siniestro"
+                            style={{
+                              border: "1px solid #d9e2ef",
+                              borderRadius: "15px",
+                              background: "#ffffff",
+                              color: "#07195a",
+                              padding: "11px 18px",
+                              fontWeight: 950,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "9px",
+                              boxShadow: "0 12px 28px rgba(7, 25, 90, 0.08)",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            <span style={{ fontSize: "17px", lineHeight: 1 }}>▣</span>
+                            <span>Formulario siniestro</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={reportarSiniestro}
+                            disabled={!polizaSeleccionada}
+                            title={!polizaSeleccionada ? "Selecciona una póliza para reportar" : "Iniciar reporte para la póliza seleccionada"}
+                            style={{
+                              border: "none",
+                              borderRadius: "15px",
+                              background: polizaSeleccionada ? "#f47c20" : "#cbd5e1",
+                              color: "#ffffff",
+                              padding: "11px 18px",
+                              fontWeight: 950,
+                              cursor: polizaSeleccionada ? "pointer" : "not-allowed",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "9px",
+                              boxShadow: polizaSeleccionada ? "0 12px 30px rgba(244, 124, 32, 0.25)" : "none",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            <span style={{ fontSize: "17px", lineHeight: 1 }}>+</span>
+                            <span>Reportar siniestro</span>
+                          </button>
+                        </div>
                       </div>
 
                       <div
@@ -5198,6 +5981,506 @@ Estado: ${documento.estado}`);
                           </p>
                         </div>
                       </section>
+
+                      {formularioSiniestroAbierto && (
+                        <div
+                          style={{
+                            position: "fixed",
+                            inset: 0,
+                            zIndex: 99999,
+                            background: "rgba(3, 19, 68, 0.62)",
+                            backdropFilter: "blur(6px)",
+                            padding: "24px",
+                            display: "grid",
+                            placeItems: "center",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "min(1120px, 100%)",
+                              maxHeight: "92vh",
+                              overflowY: "auto",
+                              background: "#ffffff",
+                              borderRadius: "28px",
+                              boxShadow: "0 35px 90px rgba(0, 0, 0, 0.28)",
+                              border: "1px solid rgba(255, 255, 255, 0.65)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                padding: "24px 28px",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                gap: "16px",
+                                alignItems: "flex-start",
+                                background: "linear-gradient(135deg, #07195a, #031344)",
+                                color: "#ffffff",
+                                borderRadius: "28px 28px 0 0",
+                              }}
+                            >
+                              <div>
+                                <span
+                                  style={{
+                                    display: "inline-flex",
+                                    width: "fit-content",
+                                    padding: "7px 12px",
+                                    borderRadius: "999px",
+                                    background: "#f47c20",
+                                    color: "#ffffff",
+                                    fontSize: "10px",
+                                    fontWeight: 950,
+                                    textTransform: "uppercase",
+                                    marginBottom: "10px",
+                                  }}
+                                >
+                                  Denuncio de siniestro
+                                </span>
+
+                                <h2
+                                  style={{
+                                    margin: 0,
+                                    color: "#ffffff",
+                                    fontSize: "26px",
+                                    fontWeight: 950,
+                                    letterSpacing: "-0.04em",
+                                  }}
+                                >
+                                  Formulario Siniestro
+                                </h2>
+
+                                <p
+                                  style={{
+                                    margin: "8px 0 0",
+                                    maxWidth: "720px",
+                                    color: "rgba(255, 255, 255, 0.82)",
+                                    fontSize: "13px",
+                                    lineHeight: 1.55,
+                                  }}
+                                >
+                                  Puedes completarlo en línea con tus datos precargados o descargar el PDF manual para imprimirlo, llenarlo y enviarlo a tu ejecutivo comercial.
+                                </p>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={cerrarFormularioSiniestro}
+                                style={{
+                                  width: "40px",
+                                  height: "40px",
+                                  border: "none",
+                                  borderRadius: "999px",
+                                  background: "rgba(255, 255, 255, 0.14)",
+                                  color: "#ffffff",
+                                  fontSize: "22px",
+                                  fontWeight: 900,
+                                  cursor: "pointer",
+                                  flex: "0 0 auto",
+                                }}
+                                aria-label="Cerrar formulario"
+                              >
+                                ×
+                              </button>
+                            </div>
+
+                            <div style={{ padding: "26px 28px 30px" }}>
+                              {modoFormularioSiniestro === "opciones" ? (
+                                <>
+                                  <div
+                                    style={{
+                                      display: "grid",
+                                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                                      gap: "18px",
+                                    }}
+                                  >
+                                    <article
+                                      style={{
+                                        padding: "24px",
+                                        borderRadius: "22px",
+                                        border: "1px solid #e6ebf2",
+                                        background: "radial-gradient(circle at top right, rgba(244, 124, 32, 0.12), transparent 35%), #ffffff",
+                                        boxShadow: "0 14px 34px rgba(7, 25, 90, 0.07)",
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          width: "56px",
+                                          height: "56px",
+                                          borderRadius: "18px",
+                                          display: "grid",
+                                          placeItems: "center",
+                                          background: "rgba(244, 124, 32, 0.13)",
+                                          color: "#f47c20",
+                                          fontSize: "28px",
+                                          fontWeight: 950,
+                                          marginBottom: "16px",
+                                        }}
+                                      >
+                                        ✎
+                                      </div>
+
+                                      <h3
+                                        style={{
+                                          margin: "0 0 8px",
+                                          color: "#07195a",
+                                          fontSize: "21px",
+                                          fontWeight: 950,
+                                        }}
+                                      >
+                                        Completar formulario en línea
+                                      </h3>
+
+                                      <p
+                                        style={{
+                                          margin: "0 0 18px",
+                                          color: "#667085",
+                                          fontSize: "13px",
+                                          lineHeight: 1.65,
+                                        }}
+                                      >
+                                        Ideal para usar desde el teléfono. El sistema precarga tus datos de cliente y póliza, y luego puedes guardar el documento como PDF.
+                                      </p>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => setModoFormularioSiniestro("digital")}
+                                        style={{
+                                          width: "100%",
+                                          minHeight: "46px",
+                                          border: "none",
+                                          borderRadius: "14px",
+                                          background: "#07195a",
+                                          color: "#ffffff",
+                                          fontWeight: 950,
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        Completar en línea
+                                      </button>
+                                    </article>
+
+                                    <article
+                                      style={{
+                                        padding: "24px",
+                                        borderRadius: "22px",
+                                        border: "1px solid #e6ebf2",
+                                        background: "#f8faff",
+                                        boxShadow: "0 14px 34px rgba(7, 25, 90, 0.05)",
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          width: "56px",
+                                          height: "56px",
+                                          borderRadius: "18px",
+                                          display: "grid",
+                                          placeItems: "center",
+                                          background: "#eef4ff",
+                                          color: "#07195a",
+                                          fontSize: "26px",
+                                          fontWeight: 950,
+                                          marginBottom: "16px",
+                                        }}
+                                      >
+                                        PDF
+                                      </div>
+
+                                      <h3
+                                        style={{
+                                          margin: "0 0 8px",
+                                          color: "#07195a",
+                                          fontSize: "21px",
+                                          fontWeight: 950,
+                                        }}
+                                      >
+                                        Descargar formulario manual
+                                      </h3>
+
+                                      <p
+                                        style={{
+                                          margin: "0 0 18px",
+                                          color: "#667085",
+                                          fontSize: "13px",
+                                          lineHeight: 1.65,
+                                        }}
+                                      >
+                                        Pensado para clientes que prefieren imprimir, llenar a mano o guardar el documento para enviarlo después a su ejecutivo.
+                                      </p>
+
+                                      <a
+                                        href="/formulario-siniestro.pdf"
+                                        download="formulario-siniestro-prieto-correa.pdf"
+                                        style={{
+                                          width: "100%",
+                                          minHeight: "46px",
+                                          borderRadius: "14px",
+                                          background: "#f47c20",
+                                          color: "#ffffff",
+                                          fontWeight: 950,
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                        }}
+                                      >
+                                        Descargar PDF manual
+                                      </a>
+                                    </article>
+                                  </div>
+
+                                  <div
+                                    style={{
+                                      marginTop: "18px",
+                                      padding: "16px",
+                                      borderRadius: "18px",
+                                      background: "#f8faff",
+                                      border: "1px dashed #cbd5e1",
+                                      color: "#56637a",
+                                      fontSize: "12px",
+                                      lineHeight: 1.6,
+                                      fontWeight: 800,
+                                    }}
+                                  >
+                                    Importante: guarda el PDF en tu teléfono para enviarlo por WhatsApp o correo a tu ejecutivo comercial. Para que la descarga manual funcione, deja el archivo en <strong>public/formulario-siniestro.pdf</strong>.
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div
+                                    style={{
+                                      display: "grid",
+                                      gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                                      gap: "12px",
+                                      marginBottom: "18px",
+                                    }}
+                                  >
+                                    {[
+                                      ["Cliente", datosClienteFormulario.nombre],
+                                      ["RUT", datosClienteFormulario.rut],
+                                      ["Teléfono", datosClienteFormulario.telefono || "Pendiente"],
+                                      ["Correo", datosClienteFormulario.correo || "Pendiente"],
+                                    ].map(([titulo, valor]) => (
+                                      <article
+                                        key={titulo}
+                                        style={{
+                                          padding: "14px",
+                                          border: "1px solid #e6ebf2",
+                                          borderRadius: "16px",
+                                          background: "#f8faff",
+                                        }}
+                                      >
+                                        <small
+                                          style={{
+                                            display: "block",
+                                            color: "#667085",
+                                            fontSize: "10px",
+                                            fontWeight: 950,
+                                            textTransform: "uppercase",
+                                            marginBottom: "6px",
+                                          }}
+                                        >
+                                          {titulo}
+                                        </small>
+
+                                        <strong
+                                          style={{
+                                            display: "block",
+                                            color: "#07195a",
+                                            fontSize: "13px",
+                                            fontWeight: 950,
+                                            lineHeight: 1.35,
+                                          }}
+                                        >
+                                          {valor}
+                                        </strong>
+                                      </article>
+                                    ))}
+                                  </div>
+
+                                  <form
+                                    onSubmit={(event) => {
+                                      event.preventDefault();
+                                      descargarFormularioCompletado();
+                                    }}
+                                    style={{ display: "grid", gap: "16px" }}
+                                  >
+
+                                    <section style={estiloSeccionFormulario}>
+                                      <div style={estiloTituloSeccionFormulario}>Datos generales</div>
+                                      <div style={estiloGridFormulario}>
+                                        {campoSiniestro("numeroSiniestro", "N° siniestro", { placeholder: "Lo completa la compañía" })}
+                                        {campoSiniestro("liquidador", "Liquidador", { placeholder: "Si ya fue asignado" })}
+                                        <label style={{ display: "grid", gap: "7px", color: "#07195a", fontSize: "12px", fontWeight: 950 }}>
+                                          Póliza asociada
+                                          <select
+                                            value={polizaSeleccionada?.id || ""}
+                                            onChange={(event) => seleccionarPoliza(event.target.value)}
+                                            style={{ height: "44px", border: "1px solid #d9e2ef", borderRadius: "12px", padding: "0 12px", color: "#07195a", fontWeight: 850 }}
+                                          >
+                                            {polizasReportables.length === 0 ? (
+                                              <option value="">No tienes pólizas vigentes registradas</option>
+                                            ) : (
+                                              polizasReportables.map((poliza) => (
+                                                <option key={poliza.id} value={poliza.id}>
+                                                  {poliza.nombre} — {poliza.poliza} — {poliza.compania}
+                                                </option>
+                                              ))
+                                            )}
+                                          </select>
+                                        </label>
+                                        {campoSiniestro("polizaItem", "Item")}
+                                        {campoSiniestro("fechaSiniestro", "Fecha del siniestro", { tipo: "date" })}
+                                        {campoSiniestro("horaSiniestro", "Hora ocurrencia", { tipo: "time" })}
+                                      </div>
+                                    </section>
+
+                                    <section style={estiloSeccionFormulario}>
+                                      <div style={estiloTituloSeccionFormulario}>Antecedentes del asegurado</div>
+                                      <div style={estiloGridFormulario}>
+                                        {campoSiniestro("nombreAuto", "Nombre", { valor: datosClienteFormulario.nombre, disabled: true })}
+                                        {campoSiniestro("rutAuto", "R.U.T", { valor: datosClienteFormulario.rut, disabled: true })}
+                                        {campoSiniestro("telefonoAuto", "Teléfono", { valor: datosClienteFormulario.telefono, disabled: true })}
+                                        {campoSiniestro("emailAuto", "E-mail", { valor: datosClienteFormulario.correo, disabled: true })}
+                                        {campoSiniestro("aseguradoDireccion", "Dirección", { valor: formularioSiniestro.aseguradoDireccion || datosClienteFormulario.direccion, placeholder: "Dirección registrada o actual" })}
+                                        {campoSiniestro("aseguradoCiudad", "Ciudad")}
+                                        {campoSiniestro("denunciante", "Denunciante", { valor: formularioSiniestro.denunciante || datosClienteFormulario.nombre })}
+                                        {campoSiniestro("denuncianteRut", "R.U.T denunciante", { valor: formularioSiniestro.denuncianteRut || datosClienteFormulario.rut })}
+                                      </div>
+                                    </section>
+
+                                    <section style={estiloSeccionFormulario}>
+                                      <div style={estiloTituloSeccionFormulario}>Antecedentes del conductor</div>
+                                      <div style={estiloGridFormulario}>
+                                        {campoSiniestro("conductorNombre", "Nombre")}
+                                        {campoSiniestro("conductorRut", "R.U.T")}
+                                        {campoSiniestro("conductorTelefono", "Teléfono")}
+                                        {campoSiniestro("conductorDireccion", "Dirección")}
+                                        {campoSiniestro("conductorCiudad", "Ciudad")}
+                                        {campoSiniestro("conductorRegion", "Región")}
+                                        {campoSiniestro("conductorComuna", "Comuna")}
+                                        {campoSiniestro("licenciaNumero", "N° licencia conducir")}
+                                        {campoSiniestro("licenciaVigencia", "Vigencia licencia")}
+                                        {campoSiniestro("licenciaClase", "Clase")}
+                                        {campoSiniestro("conductorEdad", "Edad", { tipo: "number" })}
+                                      </div>
+                                    </section>
+
+                                    <section style={estiloSeccionFormulario}>
+                                      <div style={estiloTituloSeccionFormulario}>Antecedentes del vehículo</div>
+                                      <div style={estiloGridFormulario}>
+                                        {campoSiniestro("vehiculoMarca", "Marca")}
+                                        {campoSiniestro("vehiculoModelo", "Modelo")}
+                                        {campoSiniestro("vehiculoAnio", "Año")}
+                                        {campoSiniestro("vehiculoPatente", "Patente")}
+                                        {campoSiniestro("vehiculoMotor", "N° de motor")}
+                                      </div>
+                                    </section>
+
+                                    <section style={estiloSeccionFormulario}>
+                                      <div style={estiloTituloSeccionFormulario}>Antecedentes del siniestro</div>
+                                      <div style={estiloGridFormulario}>
+                                        {campoSiniestro("direccionOcurrencia", "Dirección de ocurrencia", { placeholder: "Lugar exacto donde ocurrió" })}
+                                        {campoSiniestro("ciudadOcurrencia", "Ciudad")}
+                                        {campoSiniestro("regionOcurrencia", "Región")}
+                                        {campoSiniestro("lugarInspeccion", "Lugar de inspección", { full: true, placeholder: "Dónde se encuentra el vehículo" })}
+                                        {campoSiniestro("relatoHechos", "Relato de los hechos", { tipo: "textarea", full: true, placeholder: "Describe claramente qué ocurrió, dónde, cómo y quiénes participaron." })}
+                                      </div>
+                                    </section>
+
+                                    <section style={estiloSeccionFormulario}>
+                                      <div style={estiloTituloSeccionFormulario}>Daños al vehículo</div>
+                                      <div style={estiloGridFormulario}>
+                                        {campoSiniestro("tipoDano", "Tipo de daños", { tipo: "select", items: ["Seleccionar", "Daños materiales", "Robo del vehículo", "Robo de accesorios", "Robo de partes o piezas", "Otro"] })}
+                                        {campoSiniestro("partesAfectadas", "Partes afectadas", { tipo: "select", items: ["Seleccionar", "Delantera", "Trasera", "Costado izquierdo", "Costado derecho", "Más de una parte"] })}
+                                        {campoSiniestro("magnitudDanos", "Magnitud de daños", { tipo: "select", items: ["Seleccionar", "Leves", "Medianos", "Graves"] })}
+                                        {campoSiniestro("estimacion", "Estimación $")}
+                                      </div>
+                                    </section>
+
+                                    <section style={estiloSeccionFormulario}>
+                                      <div style={estiloTituloSeccionFormulario}>Antecedentes del tercero</div>
+                                      <div style={estiloGridFormulario}>
+                                        {campoSiniestro("existeTercero", "Existe tercero", { tipo: "select", items: ["Seleccionar", "Sí", "No"] })}
+                                        {campoSiniestro("terceroReclama", "Reclama", { tipo: "select", items: ["Seleccionar", "Sí", "No"] })}
+                                        {campoSiniestro("terceroSeguro", "Con seguro de daños", { tipo: "select", items: ["Seleccionar", "Sí", "No"] })}
+                                        {campoSiniestro("terceroCompania", "¿En qué compañía?")}
+                                        {campoSiniestro("terceroCulpable", "3° culpable", { tipo: "select", items: ["Seleccionar", "Sí", "No", "Por determinar"] })}
+                                        {campoSiniestro("terceroDano", "Daño del 3°", { tipo: "select", items: ["Seleccionar", "Leves", "Medianos", "Graves"] })}
+                                      </div>
+                                    </section>
+
+                                    <section style={estiloSeccionFormulario}>
+                                      <div style={estiloTituloSeccionFormulario}>Identificación del tercero</div>
+                                      <div style={estiloGridFormulario}>
+                                        {campoSiniestro("terceroNombre", "Nombre")}
+                                        {campoSiniestro("terceroRut", "R.U.T")}
+                                        {campoSiniestro("terceroTelefono", "Teléfono")}
+                                        {campoSiniestro("terceroFax", "Fax")}
+                                        {campoSiniestro("terceroEmail", "E-mail")}
+                                        {campoSiniestro("terceroDireccion", "Dirección")}
+                                        {campoSiniestro("terceroCiudad", "Ciudad")}
+                                        {campoSiniestro("terceroVehiculo", "Marca vehículo")}
+                                        {campoSiniestro("terceroModelo", "Modelo")}
+                                        {campoSiniestro("terceroPatente", "Patente")}
+                                      </div>
+                                    </section>
+
+                                    <section style={estiloSeccionFormulario}>
+                                      <div style={estiloTituloSeccionFormulario}>Antecedentes legales</div>
+                                      <div style={estiloGridFormulario}>
+                                        {campoSiniestro("comisaria", "Comisaría")}
+                                        {campoSiniestro("folio", "Folio / párrafo")}
+                                        {campoSiniestro("fechaDenuncia", "Fecha", { tipo: "date" })}
+                                        {campoSiniestro("juzgado", "Juzgado")}
+                                        {campoSiniestro("citacion", "Citación")}
+                                        {campoSiniestro("alcoholemia", "Alcoholemia", { tipo: "select", items: ["Seleccionar", "Sí", "No", "No aplica", "Pendiente"] })}
+                                      </div>
+                                    </section>
+
+                                    <label style={{ display: "grid", gap: "7px", color: "#07195a", fontSize: "12px", fontWeight: 950 }}>
+                                      Adjuntar respaldo
+                                      <input
+                                        type="file"
+                                        accept=".pdf,.jpg,.jpeg,.png,.heic"
+                                        onChange={(event) => setArchivoRespaldoSiniestro(event.target.files?.[0] || null)}
+                                        style={{ minHeight: "46px", border: "1px dashed #cbd5e1", borderRadius: "13px", padding: "12px", color: "#07195a", fontWeight: 850, background: "#f8faff" }}
+                                      />
+                                      <small style={{ color: "#667085", fontWeight: 800 }}>
+                                        {archivoRespaldoSiniestro ? `Archivo seleccionado: ${archivoRespaldoSiniestro.name}` : "Puedes adjuntar fotos, constancias, presupuestos o informes."}
+                                      </small>
+                                    </label>
+
+                                    {mensajeFormularioSiniestro && (
+                                      <div style={{ padding: "13px 15px", borderRadius: "14px", background: "#f8faff", border: "1px solid #d9e2ef", color: "#07195a", fontSize: "12px", fontWeight: 850, lineHeight: 1.55 }}>
+                                        {mensajeFormularioSiniestro}
+                                      </div>
+                                    )}
+
+                                    <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+                                      <button type="button" onClick={() => setModoFormularioSiniestro("opciones")} style={{ minHeight: "46px", border: "1px solid #d9e2ef", borderRadius: "14px", background: "#ffffff", color: "#07195a", padding: "0 18px", fontWeight: 950, cursor: "pointer" }}>
+                                        Volver
+                                      </button>
+
+                                      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                                        <a href="/formulario-siniestro.pdf" download="formulario-siniestro-prieto-correa.pdf" style={{ minHeight: "46px", borderRadius: "14px", background: "#eef4ff", color: "#07195a", padding: "0 18px", fontWeight: 950, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                                          Descargar PDF en blanco
+                                        </a>
+
+                                        <button type="submit" style={{ minHeight: "46px", border: "none", borderRadius: "14px", background: "#f47c20", color: "#ffffff", padding: "0 18px", fontWeight: 950, cursor: "pointer" }}>
+                                          Descargar completado
+                                        </button>
+
+                                        <button type="button" onClick={enviarFormularioAEjecutivo} style={{ minHeight: "46px", border: "none", borderRadius: "14px", background: "#07195a", color: "#ffffff", padding: "0 18px", fontWeight: 950, cursor: "pointer" }}>
+                                          Enviar a ejecutivo
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </form>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                     </>
                   );
                 })()}
