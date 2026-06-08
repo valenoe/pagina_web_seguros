@@ -1,12 +1,24 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getMisCotizaciones, getMisPolizas } from "../services/api";
+import {
+  getMiCuenta,
+  getMisAlertas,
+  getMisBeneficiarios,
+  getMisBeneficios,
+  getMisCoberturas,
+  getMisCotizaciones,
+  getMisDocumentos,
+  getMisPagos,
+  getMisPolizas,
+} from "../services/api";
 
 const VISTAS_PERMITIDAS = [
-  "resumen",
+  "Resumen",
+  "mis-seguros",
   "polizas",
   "siniestro",
   "cuotas",
+  "beneficios",
   "documentos",
   "cotizaciones",
   "beneficiarios",
@@ -28,14 +40,31 @@ function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const nombreCliente = localStorage.getItem("nombre_cliente") || "Cliente";
+  const nombreClienteGuardado = localStorage.getItem("nombre_cliente") || "";
+  const nombreCliente = nombreClienteGuardado && !/[0-9]/.test(nombreClienteGuardado)
+    ? nombreClienteGuardado
+    : "Matías";
+  const primerNombreCliente = nombreCliente.split(" ")[0] || "Matías";
 
   const [cotizaciones, setCotizaciones] = useState([]);
   const [polizas, setPolizas] = useState([]);
+  const [coberturas, setCoberturas] = useState([]);
+  const [beneficiarios, setBeneficiarios] = useState([]);
+  const [beneficios, setBeneficios] = useState([]);
+  const [categoriaBeneficioActiva, setCategoriaBeneficioActiva] = useState("todos");
+  const [beneficioSlide, setBeneficioSlide] = useState(0);
+  const [documentos, setDocumentos] = useState([]);
+  const [pagos, setPagos] = useState([]);
+  const [alertas, setAlertas] = useState([]);
+  const [notificacionesAbiertas, setNotificacionesAbiertas] = useState(false);
   const [vista, setVista] = useState(() => obtenerVistaDesdeRuta(location) || "resumen");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [seguroDetalleId, setSeguroDetalleId] = useState(null);
+  const [seguroSlide, setSeguroSlide] = useState(0);
+  const [filtroSeguros, setFiltroSeguros] = useState("todos");
+  const [ordenSeguros, setOrdenSeguros] = useState("recomendados");
+  const [segurosPorVista, setSegurosPorVista] = useState(3);
   const [cotizacionCompacta, setCotizacionCompacta] = useState({
     detalle: "",
     comentario: "",
@@ -47,6 +76,8 @@ function Dashboard() {
     tipo: "todos",
     estado: "todos",
   });
+
+  const [tabMisSeguros, setTabMisSeguros] = useState("coberturas");
 
   const [documentoSeleccionado, setDocumentoSeleccionado] = useState(null);
   const [polizaReporteId, setPolizaReporteId] = useState("");
@@ -81,10 +112,48 @@ function Dashboard() {
     pagos: false,
   });
 
+  const nombreVisible = datosPerfil.nombre || nombreCliente || "Cliente";
+  const primerNombreVisible = nombreVisible.split(" ")[0] || "Cliente";
+  const inicialVisible = primerNombreVisible.charAt(0).toUpperCase();
+
   useEffect(() => {
     const vistaRuta = obtenerVistaDesdeRuta(location);
     if (vistaRuta) setVista(vistaRuta);
   }, [location]);
+
+  useEffect(() => {
+    function ajustarSegurosPorVista() {
+      if (window.innerWidth <= 700) {
+        setSegurosPorVista(1);
+        return;
+      }
+
+      if (window.innerWidth <= 1250) {
+        setSegurosPorVista(2);
+        return;
+      }
+
+      setSegurosPorVista(3);
+    }
+
+    ajustarSegurosPorVista();
+    window.addEventListener("resize", ajustarSegurosPorVista);
+
+    return () => window.removeEventListener("resize", ajustarSegurosPorVista);
+  }, []);
+
+  useEffect(() => {
+    setSeguroSlide(0);
+  }, [filtroSeguros, ordenSeguros, segurosPorVista]);
+
+  useEffect(() => {
+    const intervalo = window.setInterval(() => {
+      setBeneficioSlide((actual) => actual + 1);
+    }, 5000);
+
+    return () => window.clearInterval(intervalo);
+  }, []);
+
 
   const segurosDisponibles = [
     {
@@ -126,7 +195,7 @@ function Dashboard() {
       descripcion:
         "Protección para vivienda, incendio, sismo, daños y asistencias del hogar.",
       foto: "/foto-hogar.png",
-      precioUf: "Cotización personalizada",
+      precioUf: "Según Evaluación",
       precioClp: "Según características del hogar",
       cubre: ["Incendio", "Sismo", "Robo", "Daños en estructura"],
     },
@@ -185,13 +254,124 @@ function Dashboard() {
 
     async function cargarDatos() {
       try {
-        const [cots, pols] = await Promise.all([
+        const [
+          cuentaResult,
+          alertasResult,
+          cotsResult,
+          polsResult,
+          cobResult,
+          benResult,
+          docsResult,
+          pagosResult,
+          beneficiosResult,
+        ] = await Promise.allSettled([
+          getMiCuenta(token),
+          getMisAlertas(token),
           getMisCotizaciones(token),
           getMisPolizas(token),
+          getMisCoberturas(token),
+          getMisBeneficiarios(token),
+          getMisDocumentos(token),
+          getMisPagos(token),
+          getMisBeneficios(token),
         ]);
 
-        setCotizaciones(Array.isArray(cots) ? cots : []);
-        setPolizas(Array.isArray(pols) ? pols : []);
+        if (cuentaResult.status === "fulfilled" && cuentaResult.value) {
+          const cuenta = cuentaResult.value;
+
+          const nombreCuenta =
+            cuenta.nombre ||
+            cuenta.nombre_o_razon_social ||
+            cuenta.razon_social ||
+            cuenta.cliente?.nombre_o_razon_social ||
+            datosPerfil.nombre;
+
+          const rutCuenta =
+            cuenta.rut ||
+            cuenta.rut_cliente ||
+            cuenta.cliente?.rut ||
+            datosPerfil.rut;
+
+          const correoCuenta =
+            cuenta.correo ||
+            cuenta.email ||
+            cuenta.cliente?.email ||
+            datosPerfil.correo;
+
+          const telefonoCuenta =
+            cuenta.telefono ||
+            cuenta.celular ||
+            cuenta.cliente?.telefono ||
+            datosPerfil.telefono;
+
+          const direccionCuenta =
+            cuenta.direccion ||
+            cuenta.domicilio ||
+            cuenta.cliente?.direccion ||
+            datosPerfil.direccion;
+
+          setDatosPerfil((actual) => ({
+            ...actual,
+            nombre: nombreCuenta || actual.nombre,
+            rut: rutCuenta || actual.rut,
+            correo: correoCuenta || actual.correo,
+            telefono: telefonoCuenta || actual.telefono,
+            direccion: direccionCuenta || actual.direccion,
+          }));
+
+          if (nombreCuenta) localStorage.setItem("nombre_cliente", nombreCuenta);
+          if (rutCuenta) localStorage.setItem("rut_cliente", rutCuenta);
+          if (correoCuenta) localStorage.setItem("correo_cliente", correoCuenta);
+          if (telefonoCuenta) localStorage.setItem("telefono_cliente", telefonoCuenta);
+          if (direccionCuenta) localStorage.setItem("direccion_cliente", direccionCuenta);
+
+          const fotoCuenta =
+            cuenta.avatar_url ||
+            cuenta.foto_perfil ||
+            cuenta.foto ||
+            cuenta.cliente?.foto_perfil;
+
+          if (fotoCuenta) {
+            setAvatarPerfil(fotoCuenta);
+            localStorage.setItem("avatar_cliente", fotoCuenta);
+          }
+        }
+
+        if (alertasResult.status === "fulfilled") {
+          setAlertas(Array.isArray(alertasResult.value) ? alertasResult.value : []);
+        }
+
+        if (cotsResult.status === "fulfilled") {
+          setCotizaciones(Array.isArray(cotsResult.value) ? cotsResult.value : []);
+        }
+
+        if (polsResult.status === "fulfilled") {
+          setPolizas(Array.isArray(polsResult.value) ? polsResult.value : []);
+        }
+
+        if (cobResult.status === "fulfilled") {
+          setCoberturas(Array.isArray(cobResult.value) ? cobResult.value : []);
+        }
+
+        if (benResult.status === "fulfilled") {
+          setBeneficiarios(Array.isArray(benResult.value) ? benResult.value : []);
+        }
+
+        if (docsResult.status === "fulfilled") {
+          setDocumentos(Array.isArray(docsResult.value) ? docsResult.value : []);
+        }
+
+        if (pagosResult.status === "fulfilled") {
+          setPagos(Array.isArray(pagosResult.value) ? pagosResult.value : []);
+        }
+
+        if (beneficiosResult.status === "fulfilled") {
+          setBeneficios(Array.isArray(beneficiosResult.value) ? beneficiosResult.value : []);
+        }
+
+        if (cotsResult.status === "rejected" && polsResult.status === "rejected") {
+          throw new Error("Sesión expirada");
+        }
       } catch {
         setError("Sesión expirada. Vuelve a ingresar.");
         localStorage.removeItem("token");
@@ -236,6 +416,53 @@ function Dashboard() {
   function textoEstado(estado) {
     if (estado === "por-vencer") return "Por vencer";
     return estado || "Vigente";
+  }
+
+  const segurosFiltrados = segurosDisponibles.filter((seguro) => {
+    if (filtroSeguros === "todos") return true;
+    if (filtroSeguros === "vehiculos") return seguro.categoria === "Vehículos";
+    if (filtroSeguros === "personas") return seguro.categoria === "Personas";
+    if (filtroSeguros === "hogar") return seguro.id === "hogar";
+    if (filtroSeguros === "empresas") return seguro.categoria === "Empresas y otros";
+    if (filtroSeguros === "internacional") {
+      return (
+        seguro.id === "rci-argentina" ||
+        seguro.id === "viaje" ||
+        seguro.nombre.toLowerCase().includes("internacional")
+      );
+    }
+
+    return true;
+  });
+
+  const segurosOrdenados = [...segurosFiltrados].sort((a, b) => {
+    if (ordenSeguros === "categoria") return a.categoria.localeCompare(b.categoria);
+    if (ordenSeguros === "precio") return a.precioUf.localeCompare(b.precioUf);
+    return segurosDisponibles.findIndex((seguro) => seguro.id === a.id) - segurosDisponibles.findIndex((seguro) => seguro.id === b.id);
+  });
+
+  const totalPaginasSeguros = Math.max(Math.ceil(segurosOrdenados.length / segurosPorVista), 1);
+  const paginaSeguroActual = Math.min(seguroSlide, totalPaginasSeguros - 1);
+  const mostrarFlechasSeguros = totalPaginasSeguros > 1;
+  const segurosVisiblesCarrusel = segurosOrdenados.slice(
+    paginaSeguroActual * segurosPorVista,
+    paginaSeguroActual * segurosPorVista + segurosPorVista
+  );
+
+  function avanzarSeguros() {
+    setSeguroSlide((prev) => Math.min(prev + 1, totalPaginasSeguros - 1));
+  }
+
+  function retrocederSeguros() {
+    setSeguroSlide((prev) => Math.max(prev - 1, 0));
+  }
+
+  function irASlideSeguro(index) {
+    setSeguroSlide(Math.min(Math.max(index, 0), totalPaginasSeguros - 1));
+  }
+
+  function cambiarFiltroSeguros(nuevoFiltro) {
+    setFiltroSeguros(nuevoFiltro);
   }
 
   function abrirDetalleCotizacion(idSeguro) {
@@ -378,93 +605,180 @@ Estado: ${documento.estado}`);
     };
   }
 
-  const polizasActivas = polizas.filter(
-    (p) => p.estado === "activa" || p.estado === "vigente"
+  function normalizarEstado(estado = "") {
+    const estadoLimpio = String(estado || "").toLowerCase().trim();
+    if (["activa", "activo", "vigente"].includes(estadoLimpio)) return "vigente";
+    if (["por vencer", "por-vencer", "proxima", "próxima"].includes(estadoLimpio)) return "por-vencer";
+    if (["vencida", "caducada", "inactiva", "anulada"].includes(estadoLimpio)) return "vencida";
+    return estadoLimpio || "vigente";
+  }
+
+  function obtenerNombreSeguroDesdePoliza(poliza, index = 0) {
+    return (
+      poliza.seguro?.nombre ||
+      poliza.nombre_seguro ||
+      poliza.seguro_nombre ||
+      `Seguro asociado ${index + 1}`
+    );
+  }
+
+  function obtenerNumeroPoliza(poliza, index = 0) {
+    return poliza.numero_poliza || poliza.numero || `POL-${String(index + 1).padStart(4, "0")}`;
+  }
+
+  function normalizarPoliza(poliza, index = 0) {
+    const nombreSeguro = obtenerNombreSeguroDesdePoliza(poliza, index);
+    const numeroPoliza = obtenerNumeroPoliza(poliza, index);
+
+    return {
+      id: poliza.id_poliza || poliza.id || `poliza-${index}`,
+      id_poliza: poliza.id_poliza || poliza.id,
+      seguro: nombreSeguro,
+      categoria: poliza.seguro?.categoria || poliza.categoria || "Seguro",
+      numero_poliza: numeroPoliza,
+      compania: poliza.compania || "Compañía no informada",
+      estado: normalizarEstado(calcularEstado(poliza) || poliza.estado),
+      fecha_inicio: poliza.fecha_inicio || "",
+      fecha_vencimiento: poliza.fecha_vencimiento || "",
+      prima: poliza.prima || poliza.valor_prima || null,
+      origen: poliza.origen || "portal",
+      raw: poliza,
+    };
+  }
+
+  const polizasNormalizadas = polizas.map(normalizarPoliza);
+
+  const polizasActivas = polizasNormalizadas.filter(
+    (p) => p.estado === "vigente" || p.estado === "activa"
   ).length;
 
   const companiasAsociadas = [
-    ...new Set(polizas.map((p) => p.compania).filter(Boolean)),
+    ...new Set(polizasNormalizadas.map((p) => p.compania).filter(Boolean)),
   ].length;
 
-  const proximaPoliza = polizas[0];
+  const proximaPoliza = [...polizasNormalizadas]
+    .filter((p) => p.fecha_vencimiento)
+    .sort((a, b) => new Date(a.fecha_vencimiento) - new Date(b.fecha_vencimiento))[0];
 
-  const documentosDesdePolizas = polizas.flatMap((poliza, index) => {
-    const nombreSeguro = poliza.seguro?.nombre || poliza.nombre_seguro || "Seguro asociado";
-    const numeroPoliza = poliza.numero_poliza || `POL-${String(index + 1).padStart(4, "0")}`;
+  const beneficiariosNormalizados =
+    beneficiarios.length > 0
+      ? beneficiarios.map((beneficiario, index) => ({
+          id: beneficiario.id_beneficiario || beneficiario.id || `beneficiario-${index}`,
+          seguro:
+            beneficiario.seguro ||
+            beneficiario.nombre_seguro ||
+            beneficiario.poliza?.seguro?.nombre ||
+            "Seguro asociado",
+          poliza:
+            beneficiario.numero_poliza ||
+            beneficiario.poliza?.numero_poliza ||
+            beneficiario.poliza ||
+            "—",
+          nombre: beneficiario.nombre || "Beneficiario",
+          rut: beneficiario.rut || "—",
+          relacion: beneficiario.relacion || "No informado",
+          porcentaje: beneficiario.porcentaje ? `${beneficiario.porcentaje}%` : "Según póliza",
+          estado: beneficiario.estado || "activo",
+        }))
+      : polizas.flatMap((poliza, index) => {
+          const nombreSeguro = obtenerNombreSeguroDesdePoliza(poliza, index);
+          const numeroPoliza = obtenerNumeroPoliza(poliza, index);
+          const beneficiariosPoliza = poliza.beneficiarios || [];
 
-    return [
-      {
-        id: `poliza-${poliza.id_poliza || index}`,
-        nombre: "Póliza vigente",
-        seguro: `${nombreSeguro} / ${numeroPoliza}`,
-        tipo: "Póliza",
-        estado: "Disponible",
-        fecha: poliza.fecha_inicio || poliza.fecha_vencimiento,
-      },
-      {
-        id: `certificado-${poliza.id_poliza || index}`,
-        nombre: "Certificado de cobertura",
-        seguro: `${nombreSeguro} / ${numeroPoliza}`,
-        tipo: "Certificado",
-        estado: "Disponible",
-        fecha: poliza.fecha_inicio || poliza.fecha_vencimiento,
-      },
-      {
-        id: `condiciones-${poliza.id_poliza || index}`,
-        nombre: "Condiciones generales",
-        seguro: `${nombreSeguro} / ${numeroPoliza}`,
-        tipo: "Condiciones",
-        estado: "Disponible",
-        fecha: poliza.fecha_inicio || poliza.fecha_vencimiento,
-      },
-    ];
-  });
+          return beneficiariosPoliza.map((beneficiario, bIndex) => ({
+            id: beneficiario.id_beneficiario || `${poliza.id_poliza || index}-${bIndex}`,
+            seguro: nombreSeguro,
+            poliza: numeroPoliza,
+            nombre: beneficiario.nombre || "Beneficiario",
+            rut: beneficiario.rut || "—",
+            relacion: beneficiario.relacion || "No informado",
+            porcentaje: beneficiario.porcentaje ? `${beneficiario.porcentaje}%` : "Según póliza",
+            estado: beneficiario.estado || "activo",
+          }));
+        });
 
-  const documentosDemo =
-    documentosDesdePolizas.length > 0
-      ? documentosDesdePolizas
-      : [
-          {
-            id: "doc-demo-1",
-            nombre: "Póliza vigente",
-            seguro: "Seguro de Autos / POL-2026-0001",
-            tipo: "Póliza",
-            estado: "Disponible",
-            fecha: "2026-06-06",
-          },
-          {
-            id: "doc-demo-2",
-            nombre: "Certificado de cobertura",
-            seguro: "Seguro de Hogar / POL-2026-0002",
-            tipo: "Certificado",
-            estado: "Disponible",
-            fecha: "2026-06-05",
-          },
-          {
-            id: "doc-demo-3",
-            nombre: "Comprobante de pago",
-            seguro: "Seguro de Autos / POL-2026-0001",
-            tipo: "Comprobante",
-            estado: "Disponible",
-            fecha: "2026-06-01",
-          },
-          {
-            id: "doc-demo-4",
-            nombre: "Inspección fotográfica",
-            seguro: "Seguro Empresa / POL-2026-0003",
-            tipo: "Inspección",
-            estado: "En preparación",
-            fecha: "",
-          },
-          {
-            id: "doc-demo-5",
-            nombre: "Endoso de modificación",
-            seguro: "Seguro Flota / POL-2026-0004",
-            tipo: "Endoso",
-            estado: "Bajo solicitud",
-            fecha: "",
-          },
-        ];
+  const coberturasNormalizadas =
+    coberturas.length > 0
+      ? coberturas.map((item, index) => ({
+          id: item.id_cobertura || item.id_poliza || item.id || `cobertura-${index}`,
+          seguro: item.seguro || item.nombre_seguro || item.poliza?.seguro?.nombre || "Seguro asociado",
+          poliza: item.numero_poliza || item.poliza?.numero_poliza || item.poliza || "—",
+          estado: normalizarEstado(item.estado || item.poliza?.estado),
+          monto: item.monto_asegurado || item.capital_asegurado || item.monto || "Según póliza",
+          deducible: item.deducible || "Según condiciones",
+          coberturas: Array.isArray(item.coberturas)
+            ? item.coberturas.map((c) => (typeof c === "string" ? c : c.nombre || c.detalle)).filter(Boolean)
+            : item.nombre
+              ? [item.nombre]
+              : ["Cobertura principal según póliza"],
+          exclusiones: Array.isArray(item.exclusiones)
+            ? item.exclusiones
+            : ["Revisar condiciones generales del contrato"],
+        }))
+      : polizasNormalizadas.map((poliza) => ({
+          id: poliza.id_poliza || poliza.id,
+          seguro: poliza.seguro,
+          poliza: poliza.numero_poliza,
+          estado: poliza.estado,
+          monto: poliza.raw.monto_cobertura || poliza.raw.capital_asegurado || "Según póliza",
+          deducible: poliza.raw.deducible || "Según condiciones",
+          coberturas: Array.isArray(poliza.raw.coberturas)
+            ? poliza.raw.coberturas
+            : [
+                "Cobertura principal según póliza",
+                "Asistencia y acompañamiento Prieto & Correa",
+                "Revisión de vigencia y condiciones contratadas",
+              ],
+          exclusiones: poliza.raw.exclusiones || ["Revisar condiciones generales del contrato"],
+        }));
+
+  const documentosDesdePolizas = polizasNormalizadas.flatMap((poliza) => [
+    {
+      id: `poliza-${poliza.id}`,
+      nombre: "Póliza vigente",
+      seguro: `${poliza.seguro} / ${poliza.numero_poliza}`,
+      tipo: "Póliza",
+      estado: "Disponible",
+      fecha: poliza.fecha_inicio || poliza.fecha_vencimiento,
+      url_pdf: poliza.raw.url_pdf || "",
+    },
+    {
+      id: `certificado-${poliza.id}`,
+      nombre: "Certificado de cobertura",
+      seguro: `${poliza.seguro} / ${poliza.numero_poliza}`,
+      tipo: "Certificado",
+      estado: "Disponible",
+      fecha: poliza.fecha_inicio || poliza.fecha_vencimiento,
+      url_pdf: poliza.raw.url_certificado || "",
+    },
+    {
+      id: `condiciones-${poliza.id}`,
+      nombre: "Condiciones generales",
+      seguro: `${poliza.seguro} / ${poliza.numero_poliza}`,
+      tipo: "Condiciones",
+      estado: "Disponible",
+      fecha: poliza.fecha_inicio || poliza.fecha_vencimiento,
+      url_pdf: poliza.raw.url_condiciones || "",
+    },
+  ]);
+
+  const documentosNormalizados =
+    documentos.length > 0
+      ? documentos.map((documento, index) => ({
+          id: documento.id_documento || documento.id || `documento-${index}`,
+          nombre: documento.nombre || documento.titulo || "Documento",
+          seguro:
+            documento.seguro ||
+            documento.nombre_seguro ||
+            `${documento.poliza?.seguro?.nombre || "Seguro asociado"} / ${documento.numero_poliza || documento.poliza?.numero_poliza || "—"}`,
+          tipo: documento.tipo || "Documento",
+          estado: documento.estado || "Disponible",
+          fecha: documento.fecha || documento.fecha_emision || documento.created_at || "",
+          url_pdf: documento.url_pdf || documento.url || "",
+        }))
+      : documentosDesdePolizas;
+
+  const documentosDemo = documentosNormalizados;
 
   const segurosDocumentos = ["todos", ...new Set(documentosDemo.map((d) => d.seguro))];
   const tiposDocumentos = ["todos", ...new Set(documentosDemo.map((d) => d.tipo))];
@@ -493,10 +807,247 @@ Estado: ${documento.estado}`);
   });
 
   const documentosDisponibles = documentosDemo.filter(
-    (documento) => documento.estado === "Disponible"
+    (documento) => String(documento.estado).toLowerCase() === "disponible"
   ).length;
 
   const polizasConDocumentos = new Set(documentosDemo.map((documento) => documento.seguro)).size;
+
+  const coberturasMisSeguros = coberturasNormalizadas;
+  const beneficiariosMisSeguros = beneficiariosNormalizados;
+
+  const beneficiariosTotales = beneficiariosMisSeguros.length;
+  const beneficiariosActivos = beneficiariosMisSeguros.filter((beneficiario) =>
+    ["activo", "activa", "vigente"].includes(
+      String(beneficiario.estado || "").toLowerCase().trim()
+    )
+  ).length;
+  const polizasConBeneficiarios = new Set(
+    beneficiariosMisSeguros
+      .map((beneficiario) => beneficiario.poliza || beneficiario.seguro)
+      .filter(Boolean)
+  ).size;
+
+
+  const coberturasFilas = coberturasMisSeguros.flatMap((item) => {
+    const incluidas = (item.coberturas || []).map((cobertura, index) => ({
+      id: `${item.id}-incluida-${index}`,
+      nombre: cobertura,
+      seguro: item.seguro || "Seguro asociado",
+      poliza: item.poliza || "—",
+      condicion: "Incluida",
+      monto: item.monto || "Según póliza",
+      deducible: item.deducible || "Según condiciones",
+      estado: "incluida",
+    }));
+
+    const excluidas = (item.exclusiones || []).map((exclusion, index) => ({
+      id: `${item.id}-excluida-${index}`,
+      nombre: exclusion,
+      seguro: item.seguro || "Seguro asociado",
+      poliza: item.poliza || "—",
+      condicion: "Exclusión",
+      monto: "No aplica",
+      deducible: "No aplica",
+      estado: "excluida",
+    }));
+
+    return [...incluidas, ...excluidas];
+  });
+
+  const coberturasRegistradas = coberturasFilas.length;
+  const coberturasIncluidas = coberturasFilas.filter((cobertura) => cobertura.estado === "incluida").length;
+  const coberturasExcluidas = coberturasFilas.filter((cobertura) => cobertura.estado === "excluida").length;
+  const polizasConCoberturas = new Set(
+    coberturasMisSeguros
+      .map((cobertura) => cobertura.poliza || cobertura.seguro)
+      .filter(Boolean)
+  ).size;
+
+
+  function formatearMoneda(valor, moneda = "CLP") {
+    if (valor === null || valor === undefined || valor === "") return "—";
+
+    const numero = Number(valor);
+
+    if (Number.isNaN(numero)) return String(valor);
+
+    if (moneda === "UF") return `${numero.toLocaleString("es-CL")} UF`;
+
+    return numero.toLocaleString("es-CL", {
+      style: "currency",
+      currency: "CLP",
+      maximumFractionDigits: 0,
+    });
+  }
+
+  function normalizarPago(pago, index = 0) {
+    const polizaAsociada =
+      polizasNormalizadas.find(
+        (poliza) =>
+          poliza.id_poliza === pago.id_poliza ||
+          poliza.id_poliza === pago.poliza_id ||
+          poliza.numero_poliza === pago.numero_poliza
+      ) || {};
+
+    return {
+      id: pago.id_pago || pago.id || `pago-${index}`,
+      id_pago: pago.id_pago || pago.id,
+      id_poliza: pago.id_poliza || pago.poliza_id || polizaAsociada.id_poliza,
+      seguro:
+        pago.seguro ||
+        pago.nombre_seguro ||
+        pago.poliza?.seguro?.nombre ||
+        polizaAsociada.seguro ||
+        "Seguro asociado",
+      compania:
+        pago.compania ||
+        pago.poliza?.compania ||
+        polizaAsociada.compania ||
+        "Compañía no informada",
+      numero_poliza:
+        pago.numero_poliza ||
+        pago.poliza?.numero_poliza ||
+        polizaAsociada.numero_poliza ||
+        "—",
+      cuota:
+        pago.numero_cuota && pago.total_cuotas
+          ? `${pago.numero_cuota}/${pago.total_cuotas}`
+          : pago.cuota || "—",
+      monto: pago.monto ?? pago.total ?? pago.valor ?? 0,
+      moneda: pago.moneda || "CLP",
+      fecha_vencimiento:
+        pago.fecha_vencimiento ||
+        pago.vencimiento ||
+        pago.fecha_pago ||
+        "",
+      fecha_pago: pago.fecha_pago || "",
+      estado: normalizarEstado(pago.estado || "pendiente"),
+      url_pago: pago.url_pago || pago.link_pago || "",
+      url_comprobante: pago.url_comprobante || pago.comprobante || "",
+      raw: pago,
+    };
+  }
+
+  const pagosNormalizados = pagos.map(normalizarPago);
+
+  const pagosPendientes = pagosNormalizados.filter((pago) =>
+    ["pendiente", "por-vencer", "vigente", "activa"].includes(pago.estado)
+  );
+
+  const pagosRealizados = pagosNormalizados.filter((pago) =>
+    ["pagado", "pagada", "completado", "completada"].includes(
+      String(pago.estado || "").toLowerCase().trim()
+    )
+  ).length;
+
+  const montoPendiente = pagosPendientes.reduce((total, pago) => {
+    const monto = Number(pago.monto);
+    return total + (Number.isNaN(monto) ? 0 : monto);
+  }, 0);
+
+  const proximoPago = [...pagosPendientes]
+    .filter((pago) => pago.fecha_vencimiento)
+    .sort((a, b) => new Date(a.fecha_vencimiento) - new Date(b.fecha_vencimiento))[0];
+
+  function iniciarPago(pago) {
+    if (pago.url_pago) {
+      window.open(pago.url_pago, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    abrirWhatsApp(
+      `Hola, necesito ayuda para pagar la cuota ${pago.cuota} de ${pago.seguro}, póliza ${pago.numero_poliza}.`
+    );
+  }
+
+
+
+
+  const categoriasBeneficios = [
+    { id: "todos", nombre: "Todos", icono: "/descuento.png" },
+    { id: "sabores", nombre: "Sabores", icono: "/sabores.png" },
+    { id: "viajes", nombre: "Viajes", icono: "/viajes.png" },
+    { id: "bienestar", nombre: "Bienestar", icono: "/bienstar.png" },
+    { id: "panoramas", nombre: "Panoramas", icono: "/panoramas.png" },
+    { id: "marcas", nombre: "Marcas", icono: "/marcas.png" },
+    { id: "delivery", nombre: "Delivery", icono: "/delivery.png" },
+    { id: "mascotas", nombre: "Mascotas", icono: "/mascotas.png" },
+    { id: "descuentos", nombre: "Descuentos", icono: "/descuento.png" },
+  ];
+
+  const beneficiosDemo = [
+    {
+      id_beneficio: "sabores-1",
+      titulo: "40% dcto. en restaurantes asociados",
+      descripcion: "Beneficio exclusivo para clientes con pólizas activas.",
+      categoria: "sabores",
+      estado: "activo",
+      vigencia: "2026-06-30",
+      imagen: "/restaurant.jpg",
+      icono: "/sabores.png",
+      destacado: true,
+    },
+    {
+      id_beneficio: "viajes-1",
+      titulo: "Asistencia preferente para viajes",
+      descripcion: "Orientación y acceso rápido a coberturas de viaje.",
+      categoria: "viajes",
+      estado: "activo",
+      vigencia: "2026-12-31",
+      imagen: "/viaje.jpg",
+      icono: "/viajes.png",
+      destacado: true,
+    },
+    {
+      id_beneficio: "panoramas-1",
+      titulo: "Beneficios en panoramas familiares",
+      descripcion: "Promociones para eventos, entretención y actividades seleccionadas.",
+      categoria: "panoramas",
+      estado: "activo",
+      vigencia: "2026-09-30",
+      imagen: "/panorama.jpg",
+      icono: "/panoramas.png",
+      destacado: true,
+    },
+    {
+      id_beneficio: "bienestar-1",
+      titulo: "Convenios de bienestar y vida saludable",
+      descripcion: "Acceso preferente a beneficios de salud, deporte y bienestar.",
+      categoria: "bienestar",
+      estado: "activo",
+      vigencia: "2026-08-31",
+      imagen: "/bienestargym.jpg",
+      icono: "/bienstar.png",
+      destacado: true,
+    },
+    {
+      id_beneficio: "delivery-1",
+      titulo: "Convenios en delivery y compras online",
+      descripcion: "Promociones disponibles para clientes registrados.",
+      categoria: "delivery",
+      estado: "proximamente",
+      vigencia: "Próximamente",
+      imagen: "/delivery.png",
+      icono: "/delivery.png",
+      destacado: false,
+    },
+  ];
+
+  const beneficiosBase = beneficios.length > 0 ? beneficios : beneficiosDemo;
+  const beneficiosFiltrados = beneficiosBase.filter((beneficio) => {
+    if (categoriaBeneficioActiva === "todos") return true;
+    return String(beneficio.categoria || "").toLowerCase() === categoriaBeneficioActiva;
+  });
+  const beneficiosDestacados = beneficiosBase.filter((beneficio) => beneficio.destacado !== false);
+  const beneficioPrincipal = beneficiosDestacados.length > 0
+    ? beneficiosDestacados[beneficioSlide % beneficiosDestacados.length]
+    : beneficiosBase[0];
+  const beneficiosActivos = beneficiosBase.filter((beneficio) => beneficio.estado !== "proximamente").length;
+
+  function abrirMisSeguros(tab = "coberturas") {
+    setTabMisSeguros(tab);
+    setVista("mis-seguros");
+  }
 
   return (
     <section className="pc-dashboard">
@@ -513,62 +1064,6 @@ Estado: ${documento.estado}`);
             <img src="/inicio.png" alt="" />
             <span>Inicio</span>
           </button>
-
-          <button
-            className={vista === "polizas" ? "active" : ""}
-            onClick={() => setVista("polizas")}
-          >
-            <img src="/mis-polizas-activas.png" alt="" />
-            <span>Mis Pólizas</span>
-          </button>
-
-          <button
-            className={vista === "siniestro" ? "active" : ""}
-            onClick={() => setVista("siniestro")}
-          >
-            <img src="/reportar-siniestro.png" alt="" />
-            <span>Siniestros</span>
-          </button>
-
-          <button
-            className={vista === "cuotas" ? "active" : ""}
-            onClick={() => setVista("cuotas")}
-          >
-            <img src="/pagos.png" alt="" />
-            <span>Pagos</span>
-          </button>
-
-          <button
-            className={vista === "documentos" ? "active" : ""}
-            onClick={() => setVista("documentos")}
-          >
-            <img src="/documentos.png" alt="" />
-            <span>Documentos</span>
-          </button>
-
-          <button
-            className={vista === "cotizaciones" ? "active" : ""}
-            onClick={() => setVista("cotizaciones")}
-          >
-            <img src="/campana.png" alt="" />
-            <span>Cotizaciones</span>
-          </button>
-
-          <button
-            className={vista === "beneficiarios" ? "active" : ""}
-            onClick={() => setVista("beneficiarios")}
-          >
-            <img src="/beneficios.png" alt="" />
-            <span>Beneficios</span>
-          </button>
-
-          <button
-            className={vista === "perfil" ? "active" : ""}
-            onClick={() => setVista("perfil")}
-          >
-            <img src="/icon-cliente.png" alt="" />
-            <span>Perfil</span>
-          </button>
         </nav>
 
         <div className="pc-sidebar-promo">
@@ -584,26 +1079,246 @@ Estado: ${documento.estado}`);
 
       <main className="pc-main">
         <header className="pc-header">
-          <div>
-            <h1>¡Hola, {nombreCliente}!</h1>
-            <p>Nos alegra tenerte de vuelta.</p>
-          </div>
-
-          <div className="pc-header-user">
-            <span>
-              <img src="/campana.png" alt="Notificaciones" />
-            </span>
-
-            <span>
-              <img src="/correo-electronico.png" alt="Correo" />
-            </span>
+          <div
+            className="pc-header-greeting"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "14px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setVista("perfil")}
+              title="Ir a Mi Cuenta"
+              style={{
+                width: "54px",
+                height: "54px",
+                border: "3px solid #ffffff",
+                borderRadius: "999px",
+                background: "#eef3ff",
+                boxShadow: "0 12px 28px rgba(7, 25, 90, 0.12)",
+                overflow: "hidden",
+                display: "grid",
+                placeItems: "center",
+                color: "#07195a",
+                fontWeight: 900,
+                fontSize: "18px",
+                flexShrink: 0,
+              }}
+            >
+              {avatarPerfil ? (
+                <img
+                  src={avatarPerfil}
+                  alt={`Foto de ${nombreVisible}`}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                <span>{inicialVisible}</span>
+              )}
+            </button>
 
             <div>
-              <strong>{nombreCliente}</strong>
-              <small>
-                <img src="/premium.png" alt="" />
-                Cliente Prieto & Correa
-              </small>
+              <h1>¡Hola, {nombreVisible}!</h1>
+              <p>Nos alegra tenerte de vuelta.</p>
+            </div>
+          </div>
+
+          <div className="pc-header-user" style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => setNotificacionesAbiertas((abierta) => !abierta)}
+              title="Notificaciones"
+              style={{
+                position: "relative",
+                width: "42px",
+                height: "42px",
+                border: "none",
+                borderRadius: "999px",
+                background: "#ffffff",
+                display: "grid",
+                placeItems: "center",
+                boxShadow: "0 8px 24px rgba(7, 25, 90, 0.08)",
+              }}
+            >
+              <img
+                src="/campana.png"
+                alt="Notificaciones"
+                style={{
+                  width: "20px",
+                  height: "20px",
+                  objectFit: "contain",
+                }}
+              />
+
+              {alertas.length > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "-4px",
+                    right: "-4px",
+                    minWidth: "18px",
+                    height: "18px",
+                    padding: "0 5px",
+                    borderRadius: "999px",
+                    background: "#f47c20",
+                    color: "#ffffff",
+                    fontSize: "10px",
+                    fontWeight: 900,
+                    display: "grid",
+                    placeItems: "center",
+                    border: "2px solid #ffffff",
+                  }}
+                >
+                  {alertas.length}
+                </span>
+              )}
+            </button>
+
+            {notificacionesAbiertas && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "54px",
+                  right: "54px",
+                  width: "340px",
+                  padding: "16px",
+                  background: "#ffffff",
+                  border: "1px solid #e6eaf4",
+                  borderRadius: "18px",
+                  boxShadow: "0 18px 45px rgba(7, 25, 90, 0.16)",
+                  zIndex: 50,
+                }}
+              >
+                <strong
+                  style={{
+                    display: "block",
+                    color: "#07195a",
+                    fontSize: "15px",
+                    marginBottom: "12px",
+                  }}
+                >
+                  Notificaciones
+                </strong>
+
+                {alertas.length > 0 ? (
+                  <div style={{ display: "grid", gap: "10px" }}>
+                    {alertas.slice(0, 5).map((alerta, index) => (
+                      <article
+                        key={alerta.id_alerta || alerta.id || index}
+                        style={{
+                          padding: "12px",
+                          borderRadius: "14px",
+                          background: "#f8faff",
+                          border: "1px solid #e7ecf7",
+                        }}
+                      >
+                        <strong
+                          style={{
+                            display: "block",
+                            color: "#07195a",
+                            fontSize: "12px",
+                            marginBottom: "5px",
+                          }}
+                        >
+                          {alerta.titulo ||
+                            alerta.tipo ||
+                            "Nueva notificación"}
+                        </strong>
+
+                        <p
+                          style={{
+                            color: "#56637a",
+                            fontSize: "11px",
+                            lineHeight: 1.5,
+                            margin: 0,
+                          }}
+                        >
+                          {alerta.mensaje ||
+                            alerta.descripcion ||
+                            "Tienes una actualización pendiente en tu portal."}
+                        </p>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p
+                    style={{
+                      color: "#56637a",
+                      fontSize: "12px",
+                      lineHeight: 1.5,
+                      margin: 0,
+                    }}
+                  >
+                    No tienes notificaciones pendientes.
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div
+              style={{
+                display: "grid",
+                justifyItems: "center",
+                gap: "4px",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setVista("perfil")}
+                title="Editar perfil"
+                aria-label="Editar perfil"
+                style={{
+                  width: "42px",
+                  height: "42px",
+                  border: "2px solid #ffffff",
+                  borderRadius: "999px",
+                  background: "#eef3ff",
+                  boxShadow: "0 8px 24px rgba(7, 25, 90, 0.08)",
+                  overflow: "hidden",
+                  display: "grid",
+                  placeItems: "center",
+                  color: "#07195a",
+                  fontWeight: 900,
+                  fontSize: "14px",
+                  flexShrink: 0,
+                }}
+              >
+                {avatarPerfil ? (
+                  <img
+                    src={avatarPerfil}
+                    alt={`Foto de ${nombreVisible}`}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      filter: "none",
+                    }}
+                  />
+                ) : (
+                  <span>{inicialVisible}</span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setVista("perfil")}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  color: "#07195a",
+                  fontSize: "10px",
+                  fontWeight: 900,
+                  lineHeight: 1,
+                  padding: 0,
+                }}
+              >
+                Editar perfil
+              </button>
             </div>
           </div>
         </header>
@@ -621,18 +1336,18 @@ Estado: ${documento.estado}`);
                     <div>
                       <span className="pc-title-icon">
                         <img src="/proteger.png" alt="" />
-                        Resumen de tu protección
+                        Centro de protección
                       </span>
 
-                      <h2>Estás protegido en lo que más te importa</h2>
+                      <h2>Tu protección está al día</h2>
 
                       <p>
-                        Tus pólizas activas brindan tranquilidad a ti y a tu
-                        familia.
+                        Todo bajo control. Prieto & Correa monitorea tu respaldo
+                        para que sepas qué tienes protegido y qué revisar.
                       </p>
 
-                      <button onClick={() => setVista("polizas")}>
-                        Ver mis pólizas
+                      <button onClick={() => abrirMisSeguros("coberturas")}>
+                        Revisar cobertura
                       </button>
                     </div>
 
@@ -642,22 +1357,22 @@ Estado: ${documento.estado}`);
                   <div className="pc-stats">
                     <article>
                       <strong>{polizasActivas}</strong>
-                      <span>Pólizas activas</span>
+                      <span>Protecciones activas</span>
                     </article>
 
                     <article>
-                      <strong>{polizas.length}</strong>
-                      <span>Total pólizas</span>
+                      <strong>{proximaPoliza?.fecha_vencimiento ? formatearFecha(proximaPoliza.fecha_vencimiento) : "—"}</strong>
+                      <span>Próximo vencimiento</span>
                     </article>
 
                     <article>
-                      <strong>{cotizaciones.length}</strong>
-                      <span>Cotizaciones</span>
+                      <strong>0</strong>
+                      <span>Casos abiertos</span>
                     </article>
 
                     <article>
-                      <strong>{companiasAsociadas}</strong>
-                      <span>Compañías</span>
+                      <strong>{companiasAsociadas > 0 ? companiasAsociadas : "—"}</strong>
+                      <span>Compañías asociadas</span>
                     </article>
                   </div>
 
@@ -668,18 +1383,21 @@ Estado: ${documento.estado}`);
                         Mis pólizas activas
                       </h3>
 
-                      <button onClick={() => setVista("polizas")}>
+                      <button onClick={() => abrirMisSeguros("coberturas")}>
                         Ver todas
                       </button>
                     </div>
 
-                    {polizas.length === 0 ? (
-                      <div className="pc-empty">
-                        <h3>No tienes pólizas registradas</h3>
+                    {polizasNormalizadas.length === 0 ? (
+                      <div className="pc-empty pc-empty-protection">
+                        <h3>Aún no tienes pólizas visibles</h3>
                         <p>
-                          Cuando tengas pólizas activas, aparecerán en este
-                          apartado.
+                          Tu ejecutivo puede ayudarte a revisar tu protección actual
+                          y activar tus pólizas en el portal.
                         </p>
+                        <button onClick={() => setVista("cotizaciones")}>
+                          Explorar seguros disponibles
+                        </button>
                       </div>
                     ) : (
                       polizas.slice(0, 3).map((p) => (
@@ -715,6 +1433,7 @@ Estado: ${documento.estado}`);
                     <div>
                       <small>Tu corredor asignado</small>
                       <strong>Ejecutivo Prieto & Correa</strong>
+                      <span className="pc-advisor-status">Disponible ahora</span>
 
                       <p className="contacto-corredor">
                         <img src="/telefono.png" alt="" />
@@ -724,15 +1443,6 @@ Estado: ${documento.estado}`);
                       </p>
                     </div>
 
-                    <button
-                      className="pc-whatsapp-button pc-whatsapp-button-small"
-                      onClick={() =>
-                        abrirWhatsApp("Hola, necesito contactar a mi ejecutivo de seguros.")
-                      }
-                    >
-                      <img src="/whatsapp.png" alt="" />
-                      <span>Contactar</span>
-                    </button>
                   </div>
                 </section>
 
@@ -743,30 +1453,20 @@ Estado: ${documento.estado}`);
                       Acciones rápidas
                     </h3>
 
-                    <div className="pc-actions-grid">
+                    <div className="pc-actions-grid pc-actions-grid-priority">
                       <button onClick={() => setVista("siniestro")}>
                         <img src="/reportar-siniestro.png" alt="" />
                         <span>Reportar siniestro →</span>
                       </button>
 
-                      <button onClick={() => setVista("cuotas")}>
-                        <img src="/tarjeta-de-debito.png" alt="" />
-                        <span>Realizar un pago →</span>
-                      </button>
-
-                      <button
-                        className="pc-action-whatsapp"
-                        onClick={() =>
-                          abrirWhatsApp("Hola, necesito solicitar asistencia desde mi portal de cliente.")
-                        }
-                      >
-                        <img src="/whatsapp.png" alt="" />
-                        <span>Solicitar asistencia →</span>
-                      </button>
-
-                      <button onClick={() => setVista("documentos")}>
+                      <button onClick={() => abrirMisSeguros("documentos")}>
                         <img src="/documentos.png" alt="" />
-                        <span>Descargar documentos →</span>
+                        <span>Ver documentos →</span>
+                      </button>
+
+                      <button onClick={() => setVista("beneficios")}>
+                        <img src="/beneficios.png" alt="" />
+                        <span>CLUB PRIETO & CORREA →</span>
                       </button>
                     </div>
                   </div>
@@ -778,11 +1478,11 @@ Estado: ${documento.estado}`);
                     </h3>
 
                     <strong>
-                      {proximaPoliza?.seguro?.nombre || "Seguro pendiente"}
+                      {proximaPoliza?.seguro || "Seguro pendiente"}
                     </strong>
 
                     <h2>
-                      {proximaPoliza?.prima ? `$ ${proximaPoliza.prima}` : "$ 0"}
+                      {proximaPoliza?.prima ? `${proximaPoliza.prima} UF` : "Sin pago informado"}
                     </h2>
 
                     <p>
@@ -797,17 +1497,18 @@ Estado: ${documento.estado}`);
 
                   <div className="pc-help-card">
                     <div>
-                      <h3>¿Necesitas ayuda?</h3>
-                      <p>Estamos aquí para ayudarte en lo que necesites.</p>
+                      <h3>¿Necesitas orientación?</h3>
+                      <p>Consultas rápidas y acompañamiento directo con tu ejecutivo.</p>
+                      <small className="pc-response-time">Tiempo promedio de respuesta: &lt; 15 min</small>
 
                       <button
                         className="pc-whatsapp-button"
                         onClick={() =>
-                          abrirWhatsApp("Hola, necesito hablar con un asesor de Prieto & Correa Seguros.")
+                          abrirWhatsApp("Hola, necesito hablar con mi ejecutivo de Prieto & Correa Seguros.")
                         }
                       >
                         <img src="/whatsapp.png" alt="" />
-                        <span>Hablar con un asesor</span>
+                        <span>Hablar con mi ejecutivo</span>
                       </button>
                     </div>
 
@@ -818,6 +1519,487 @@ Estado: ${documento.estado}`);
                     />
                   </div>
                 </aside>
+              </div>
+            )}
+
+            {vista === "mis-seguros" && (
+              <div className="pc-panel pc-full-panel">
+                <div className="pc-panel-title" style={{ marginBottom: "16px", alignItems: "flex-start" }}>
+                  <div>
+                    <h2 style={{ marginBottom: "6px" }}>Mis Seguros</h2>
+                    <p style={{ margin: 0, color: "#667085", fontSize: "14px", lineHeight: 1.55 }}>
+                      Visualiza tus pólizas, coberturas, beneficiarios y documentos en un solo lugar.
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "inline-flex",
+                    gap: "8px",
+                    padding: "6px",
+                    background: "#f3f6fb",
+                    borderRadius: "14px",
+                    marginBottom: "18px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  {[
+                    ["coberturas", "Coberturas"],
+                    ["beneficiarios", "Beneficiarios"],
+                    ["documentos", "Documentos"],
+                  ].map(([tab, label]) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setTabMisSeguros(tab)}
+                      style={{
+                        height: "40px",
+                        padding: "0 18px",
+                        border: "none",
+                        borderRadius: "11px",
+                        background: tabMisSeguros === tab ? "#07195a" : "transparent",
+                        color: tabMisSeguros === tab ? "#ffffff" : "#07195a",
+                        fontWeight: 900,
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {tabMisSeguros === "coberturas" && (
+                  <div>
+                    <div className="pc-stats" style={{ marginBottom: "14px" }}>
+                      <article>
+                        <strong>{coberturasRegistradas}</strong>
+                        <span>Coberturas registradas</span>
+                      </article>
+
+                      <article>
+                        <strong>{polizasConCoberturas}</strong>
+                        <span>Pólizas asociadas</span>
+                      </article>
+
+                      <article>
+                        <strong>{coberturasIncluidas}</strong>
+                        <span>Incluidas</span>
+                      </article>
+
+                      <article>
+                        <strong>{coberturasExcluidas}</strong>
+                        <span>Excluidas</span>
+                      </article>
+                    </div>
+
+                    <div
+                      style={{
+                        border: "1px solid #e6ebf2",
+                        borderRadius: "18px",
+                        overflow: "hidden",
+                        background: "#ffffff",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1.35fr 1.25fr 0.8fr 0.8fr 0.8fr 0.75fr",
+                          gap: "10px",
+                          padding: "12px 16px",
+                          background: "#f5f7fb",
+                          color: "#07195a",
+                          fontSize: "12px",
+                          fontWeight: 800,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        <span>Cobertura</span>
+                        <span>Seguro / Póliza</span>
+                        <span>Condición</span>
+                        <span>Monto</span>
+                        <span>Deducible</span>
+                        <span>Estado</span>
+                      </div>
+
+                      {coberturasFilas.length === 0 ? (
+                        <div
+                          style={{
+                            padding: "26px",
+                            borderTop: "1px solid #eef2f7",
+                            background: "#f8faff",
+                          }}
+                        >
+                          <h3 style={{ color: "#07195a", marginBottom: "8px" }}>
+                            No tienes coberturas registradas
+                          </h3>
+
+                          <p style={{ color: "#56637a", fontSize: "13px", lineHeight: 1.6, marginBottom: "16px" }}>
+                            Cuando tus pólizas estén activas, verás aquí qué cubre cada seguro,
+                            sus montos, deducibles y exclusiones principales.
+                          </p>
+
+                          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                            <button
+                              type="button"
+                              onClick={() => setVista("cotizaciones")}
+                              style={{
+                                minHeight: "42px",
+                                border: "none",
+                                borderRadius: "12px",
+                                background: "#07195a",
+                                color: "#ffffff",
+                                padding: "0 18px",
+                                fontSize: "12px",
+                                fontWeight: 900,
+                              }}
+                            >
+                              Explorar seguros
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => abrirWhatsApp("Hola, necesito orientación sobre las coberturas de mis seguros.")}
+                              style={{
+                                minHeight: "42px",
+                                border: "1px solid #dfe6f3",
+                                borderRadius: "12px",
+                                background: "#ffffff",
+                                color: "#07195a",
+                                padding: "0 18px",
+                                fontSize: "12px",
+                                fontWeight: 900,
+                              }}
+                            >
+                              Contactar ejecutivo
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        coberturasFilas.map((cobertura) => (
+                          <div
+                            key={cobertura.id}
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1.35fr 1.25fr 0.8fr 0.8fr 0.8fr 0.75fr",
+                              gap: "10px",
+                              alignItems: "center",
+                              padding: "13px 16px",
+                              borderTop: "1px solid #eef2f7",
+                              fontSize: "13px",
+                            }}
+                          >
+                            <strong style={{ color: "#07195a" }}>{cobertura.nombre}</strong>
+                            <span style={{ color: "#475467" }}>{cobertura.seguro} / {cobertura.poliza}</span>
+                            <span style={{ color: "#475467" }}>{cobertura.condicion}</span>
+                            <strong style={{ color: "#07195a" }}>{cobertura.monto}</strong>
+                            <span style={{ color: "#475467" }}>{cobertura.deducible}</span>
+                            <span
+                              style={{
+                                width: "fit-content",
+                                padding: "7px 12px",
+                                borderRadius: "999px",
+                                background:
+                                  cobertura.estado === "incluida"
+                                    ? "rgba(22, 163, 74, 0.12)"
+                                    : "rgba(244, 124, 32, 0.14)",
+                                color:
+                                  cobertura.estado === "incluida"
+                                    ? "#16a34a"
+                                    : "#f47c20",
+                                fontSize: "12px",
+                                fontWeight: 900,
+                              }}
+                            >
+                              {cobertura.estado === "incluida" ? "Incluida" : "Excluida"}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {tabMisSeguros === "beneficiarios" && (
+                  <div>
+                    <div className="pc-stats" style={{ marginBottom: "14px" }}>
+                      <article>
+                        <strong>{beneficiariosTotales}</strong>
+                        <span>Beneficiarios</span>
+                      </article>
+
+                      <article>
+                        <strong>{polizasConBeneficiarios}</strong>
+                        <span>Seguros asociados</span>
+                      </article>
+
+                      <article>
+                        <strong>{beneficiariosActivos}</strong>
+                        <span>Activos</span>
+                      </article>
+
+                      <article>
+                        <strong>{beneficiariosTotales === 0 ? "—" : "Al día"}</strong>
+                        <span>Estado general</span>
+                      </article>
+                    </div>
+
+                    <div
+                      style={{
+                        border: "1px solid #e6ebf2",
+                        borderRadius: "18px",
+                        overflow: "hidden",
+                        background: "#ffffff",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1.2fr 0.85fr 0.9fr 1.25fr 0.55fr 0.75fr",
+                          gap: "10px",
+                          padding: "12px 16px",
+                          background: "#f5f7fb",
+                          color: "#07195a",
+                          fontSize: "12px",
+                          fontWeight: 800,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        <span>Beneficiario</span>
+                        <span>RUT</span>
+                        <span>Relación</span>
+                        <span>Póliza</span>
+                        <span>%</span>
+                        <span>Estado</span>
+                      </div>
+
+                      {beneficiariosMisSeguros.length === 0 ? (
+                        <>
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1.2fr 0.85fr 0.9fr 1.25fr 0.55fr 0.75fr",
+                              gap: "10px",
+                              alignItems: "center",
+                              padding: "15px 16px",
+                              borderTop: "1px solid #eef2f7",
+                              color: "#667085",
+                              fontSize: "13px",
+                              fontWeight: 800,
+                            }}
+                          >
+                            <span>No hay beneficiarios registrados</span>
+                            <span>—</span>
+                            <span>—</span>
+                            <span>—</span>
+                            <span>—</span>
+                            <span>—</span>
+                          </div>
+
+                          <div className="pc-empty" style={{ margin: "14px", padding: "24px" }}>
+                            <h3>Aún no tienes beneficiarios asociados</h3>
+                            <p>
+                              Cuando una póliza incluya beneficiarios, aparecerán aquí automáticamente con su relación, porcentaje y póliza asociada.
+                            </p>
+
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "10px",
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              <button onClick={() => setVista("cotizaciones")}>Explorar seguros</button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  abrirWhatsApp("Hola, necesito ayuda para revisar o registrar beneficiarios en mis seguros.")
+                                }
+                                style={{
+                                  background: "#ffffff",
+                                  color: "#07195a",
+                                  border: "1px solid #dfe6f3",
+                                }}
+                              >
+                                Contactar ejecutivo
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        beneficiariosMisSeguros.map((beneficiario) => (
+                          <div
+                            key={beneficiario.id}
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1.2fr 0.85fr 0.9fr 1.25fr 0.55fr 0.75fr",
+                              gap: "10px",
+                              alignItems: "center",
+                              padding: "13px 16px",
+                              borderTop: "1px solid #eef2f7",
+                              fontSize: "13px",
+                            }}
+                          >
+                            <strong style={{ color: "#07195a" }}>{beneficiario.nombre}</strong>
+                            <span style={{ color: "#475467" }}>{beneficiario.rut}</span>
+                            <span style={{ color: "#475467" }}>{beneficiario.relacion}</span>
+                            <span style={{ color: "#475467" }}>{beneficiario.seguro} / {beneficiario.poliza}</span>
+                            <strong style={{ color: "#07195a" }}>{beneficiario.porcentaje}</strong>
+                            <span className={`pc-status ${normalizarEstado(beneficiario.estado)}`}>
+                              {textoEstado(normalizarEstado(beneficiario.estado))}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {tabMisSeguros === "documentos" && (
+                  <div>
+                    <div className="pc-stats" style={{ marginBottom: "14px" }}>
+                      <article>
+                        <strong>{documentosDemo.length}</strong>
+                        <span>Documentos totales</span>
+                      </article>
+
+                      <article>
+                        <strong>{polizasConDocumentos}</strong>
+                        <span>Pólizas asociadas</span>
+                      </article>
+
+                      <article>
+                        <strong>{documentosDisponibles}</strong>
+                        <span>Disponibles</span>
+                      </article>
+
+                      <article>
+                        <strong>{documentosDemo.length - documentosDisponibles}</strong>
+                        <span>Bajo solicitud</span>
+                      </article>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1.4fr 1fr 0.9fr 0.9fr",
+                        gap: "10px",
+                        marginBottom: "14px",
+                      }}
+                    >
+                      <input
+                        type="text"
+                        name="busqueda"
+                        value={filtrosDocumentos.busqueda}
+                        onChange={actualizarFiltroDocumento}
+                        placeholder="Buscar documento..."
+                        style={{
+                          width: "100%",
+                          height: "42px",
+                          border: "1px solid #d9e1ec",
+                          borderRadius: "12px",
+                          padding: "0 10px",
+                          outline: "none",
+                        }}
+                      />
+
+                      <select name="seguro" value={filtrosDocumentos.seguro} onChange={actualizarFiltroDocumento} style={{ width: "100%", height: "42px", border: "1px solid #d9e1ec", borderRadius: "12px", padding: "0 12px", outline: "none", background: "#ffffff" }}>
+                        {segurosDocumentos.map((seguro) => (
+                          <option key={seguro} value={seguro}>
+                            {seguro === "todos" ? "Todos los seguros" : seguro}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select name="tipo" value={filtrosDocumentos.tipo} onChange={actualizarFiltroDocumento} style={{ width: "100%", height: "42px", border: "1px solid #d9e1ec", borderRadius: "12px", padding: "0 12px", outline: "none", background: "#ffffff" }}>
+                        {tiposDocumentos.map((tipo) => (
+                          <option key={tipo} value={tipo}>
+                            {tipo === "todos" ? "Todos los tipos" : tipo}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select name="estado" value={filtrosDocumentos.estado} onChange={actualizarFiltroDocumento} style={{ width: "100%", height: "42px", border: "1px solid #d9e1ec", borderRadius: "12px", padding: "0 12px", outline: "none", background: "#ffffff" }}>
+                        {estadosDocumentos.map((estado) => (
+                          <option key={estado} value={estado}>
+                            {estado === "todos" ? "Todos los estados" : estado}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div style={{ border: "1px solid #e6ebf2", borderRadius: "18px", overflow: "hidden", background: "#ffffff" }}>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1.2fr 1.35fr 0.75fr 0.8fr 0.75fr 1fr",
+                          gap: "10px",
+                          padding: "12px 16px",
+                          background: "#f5f7fb",
+                          color: "#07195a",
+                          fontSize: "12px",
+                          fontWeight: 800,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        <span>Documento</span>
+                        <span>Seguro / Póliza</span>
+                        <span>Tipo</span>
+                        <span>Estado</span>
+                        <span>Fecha</span>
+                        <span>Acciones</span>
+                      </div>
+
+                      {documentosFiltrados.length === 0 ? (
+                        <div className="pc-empty" style={{ padding: "26px" }}>
+                          <h3>No se encontraron documentos</h3>
+                          <p>Prueba cambiando los filtros o contacta a tu ejecutivo si necesitas apoyo.</p>
+                        </div>
+                      ) : (
+                        documentosFiltrados.map((documento) => (
+                          <div
+                            key={documento.id}
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1.2fr 1.35fr 0.75fr 0.8fr 0.75fr 1fr",
+                              gap: "10px",
+                              alignItems: "center",
+                              padding: "13px 16px",
+                              borderTop: "1px solid #eef2f7",
+                              fontSize: "13px",
+                            }}
+                          >
+                            <strong style={{ color: "#07195a" }}>{documento.nombre}</strong>
+                            <span style={{ color: "#475467" }}>{documento.seguro}</span>
+                            <span>{documento.tipo}</span>
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                justifyContent: "center",
+                                borderRadius: "999px",
+                                padding: "6px 10px",
+                                fontSize: "12px",
+                                fontWeight: 800,
+                                color: documento.estado === "Disponible" ? "#067647" : documento.estado === "En preparación" ? "#b54708" : "#07195a",
+                                background: documento.estado === "Disponible" ? "#ecfdf3" : documento.estado === "En preparación" ? "#fffaeb" : "#eef4ff",
+                              }}
+                            >
+                              {documento.estado}
+                            </span>
+                            <span>{formatearFecha(documento.fecha)}</span>
+                            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                              <button type="button" onClick={() => abrirPreviewDocumento(documento)} style={{ minHeight: "34px", padding: "8px 12px", borderRadius: "10px", border: "none", background: "#07195a", color: "#ffffff", fontWeight: 800, cursor: "pointer" }}>
+                                Ver PDF
+                              </button>
+                              <button type="button" onClick={() => descargarDocumento(documento)} style={{ minHeight: "34px", padding: "8px 12px", borderRadius: "10px", border: "1px solid #f47c20", background: "#ffffff", color: "#f47c20", fontWeight: 800, cursor: "pointer" }}>
+                                {documento.estado === "Disponible" ? "Descargar" : "Ejecutivo"}
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -864,73 +2046,245 @@ Estado: ${documento.estado}`);
               <div className="pc-panel pc-full-panel">
                 {!seguroDetalleId ? (
                   <>
-                    <h2>Cotizaciones</h2>
+                    <section className="pc-seguros-disponibles-v2">
+                      <div className="pc-seguros-v2-head">
+                        <div>
+                          <h2>Seguros Disponibles</h2>
+                          <p>
+                            Explora soluciones de protección disponibles para personas,
+                            familias y empresas con acompañamiento Prieto & Correa.
+                          </p>
+                        </div>
 
-                    {cotizaciones.length > 0 && (
-                      <div className="pc-cotizaciones">
-                        {cotizaciones.map((c) => (
-                          <article key={c.id_cotizacion}>
-                            <strong>{c.seguro?.nombre || "Seguro"}</strong>
-                            <span>Solicitud #{c.id_cotizacion}</span>
-                            <small>Estado: {c.estado || "Pendiente"}</small>
-                            <small>Fecha: {formatearFecha(c.fecha_solicitud)}</small>
-                          </article>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="cotizar-whatsapp-header pc-cotizar-header">
-                      <span>Nueva cotización</span>
-                      <h2>Seguros disponibles para cotizar</h2>
-                      <p>
-                        Revisa los seguros disponibles y solicita atención directa
-                        con un ejecutivo.
-                      </p>
-                    </div>
-
-                    <section className="seguros-bloques portal-seguros-bloques">
-                      {segurosDisponibles.map((seguro, index) => (
-                        <article
-                          className={`seguro-bloque ${
-                            index % 2 !== 0 ? "reverse" : ""
-                          }`}
-                          key={seguro.id}
-                        >
-                          <div className="seguro-bloque-imagen">
-                            <img src={seguro.foto} alt={seguro.nombre} />
+                        <div className="pc-seguros-v2-advice">
+                          <div className="pc-seguros-v2-advice-icon">
+                            <img src="/solicitar-asistencia.png" alt="" />
                           </div>
 
-                          <div className="seguro-bloque-info">
-                            <span>{seguro.categoria}</span>
-                            <h2>{seguro.nombre}</h2>
-                            <p>{seguro.descripcion}</p>
+                          <div>
+                            <strong>¿No sabes cuál elegir?</strong>
+                            <span>
+                              Tu ejecutivo puede ayudarte a encontrar la alternativa adecuada para ti.
+                            </span>
+                          </div>
 
-                            <div className="seguro-precios">
-                              <div>
-                                <small>Valor UF</small>
-                                <strong>{seguro.precioUf}</strong>
-                              </div>
+                          <button
+                            type="button"
+                            className="pc-seguros-v2-orange"
+                            onClick={() =>
+                              abrirWhatsApp("Hola, necesito contactar a mi ejecutivo para revisar una solución de seguro disponible.")
+                            }
+                          >
+                            <img src="/whatsapp.png" alt="" />
+                            Contactar ejecutivo
+                          </button>
+                        </div>
+                      </div>
 
-                              <div>
-                                <small>Valor CLP</small>
-                                <strong>{seguro.precioClp}</strong>
-                              </div>
-                            </div>
+                      {cotizaciones.length > 0 && (
+                        <div className="pc-cotizaciones pc-cotizaciones-v2">
+                          {cotizaciones.map((c) => (
+                            <article key={c.id_cotizacion}>
+                              <strong>{c.seguro?.nombre || "Seguro"}</strong>
+                              <span>Solicitud #{c.id_cotizacion}</span>
+                              <small>Estado: {c.estado || "Pendiente"}</small>
+                              <small>Fecha: {formatearFecha(c.fecha_solicitud)}</small>
+                            </article>
+                          ))}
+                        </div>
+                      )}
 
-                            <div className="seguro-mini-coberturas">
-                              {seguro.cubre.slice(0, 4).map((item) => (
-                                <span key={item}>{item}</span>
-                              ))}
-                            </div>
+                      <div className="pc-seguros-v2-toolbar">
+                        <div>
+                          <h3>¿Qué deseas proteger?</h3>
 
-                            <div className="seguro-bloque-actions">
-                              <button onClick={() => abrirDetalleCotizacion(seguro.id)}>
-                                Ver coberturas
-                              </button>
-                            </div>
+                          <div className="pc-seguros-v2-filters">
+                            <button
+                              type="button"
+                              className={filtroSeguros === "todos" ? "active" : ""}
+                              onClick={() => cambiarFiltroSeguros("todos")}
+                            >
+                              <img src="/proteger.png" alt="" />
+                              Ver todo
+                            </button>
+                            <button
+                              type="button"
+                              className={filtroSeguros === "vehiculos" ? "active" : ""}
+                              onClick={() => cambiarFiltroSeguros("vehiculos")}
+                            >
+                              <img src="/icon-seguro-auto.png" alt="" />
+                              Vehículos
+                            </button>
+                            <button
+                              type="button"
+                              className={filtroSeguros === "personas" ? "active" : ""}
+                              onClick={() => cambiarFiltroSeguros("personas")}
+                            >
+                              <img src="/icon-cliente.png" alt="" />
+                              Personas
+                            </button>
+                            <button
+                              type="button"
+                              className={filtroSeguros === "hogar" ? "active" : ""}
+                              onClick={() => cambiarFiltroSeguros("hogar")}
+                            >
+                              <img src="/icon-hogar.png" alt="" />
+                              Hogar y patrimonio
+                            </button>
+                            <button
+                              type="button"
+                              className={filtroSeguros === "empresas" ? "active" : ""}
+                              onClick={() => cambiarFiltroSeguros("empresas")}
+                            >
+                              <img src="/icon-edificio.png" alt="" />
+                              Empresas
+                            </button>
+                            <button
+                              type="button"
+                              className={filtroSeguros === "internacional" ? "active" : ""}
+                              onClick={() => cambiarFiltroSeguros("internacional")}
+                            >
+                              <img src="/mapa-del-mundo.png" alt="" />
+                              Internacional
+                            </button>
+                          </div>
+                        </div>
+
+                        <label className="pc-seguros-v2-order">
+                          Ordenar por
+                          <select value={ordenSeguros} onChange={(e) => setOrdenSeguros(e.target.value)}>
+                            <option value="recomendados">Recomendados</option>
+                            <option value="precio">Precio</option>
+                            <option value="categoria">Categoría</option>
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="pc-seguros-carousel-shell">
+                        {mostrarFlechasSeguros && (
+                          <button
+                            type="button"
+                            className="pc-seguros-carousel-arrow pc-seguros-carousel-arrow-left"
+                            onClick={retrocederSeguros}
+                            disabled={paginaSeguroActual === 0}
+                            aria-label="Ver seguros anteriores"
+                          >
+                            ‹
+                          </button>
+                        )}
+
+                        <div className="pc-seguros-carousel-viewport">
+                          <section className="seguros-bloques portal-seguros-bloques pc-seguros-grid-v2 pc-seguros-carousel-track">
+                            {segurosVisiblesCarrusel.map((seguro, index) => {
+                              const indiceRealSeguro = paginaSeguroActual * segurosPorVista + index;
+
+                              return (
+                                <article className="seguro-bloque pc-seguro-producto-v2" key={seguro.id}>
+                                <div className="seguro-bloque-imagen">
+                                  <img src={seguro.foto} alt={seguro.nombre} />
+                                  <span className={`pc-product-badge badge-${indiceRealSeguro % 3}`}>
+                                    {indiceRealSeguro === 0 ? "Recomendado" : seguro.categoria}
+                                  </span>
+                                </div>
+
+                                <div className="seguro-bloque-info">
+                                  <h2>{seguro.nombre}</h2>
+                                  <p>{seguro.descripcion}</p>
+
+                                  <div className="seguro-mini-coberturas pc-product-checks">
+                                    {seguro.cubre.slice(0, 3).map((item) => (
+                                      <span key={item}>✓ {item}</span>
+                                    ))}
+                                  </div>
+
+                                  <div className="pc-product-bottom">
+                                    <div>
+                                      <small>Desde</small>
+                                      <strong>{seguro.precioUf.replace("Desde ", "")}</strong>
+                                    </div>
+
+                                    <div className="pc-product-advised">
+                                      <img src="/premium.png" alt="" />
+                                      <span>Asesorado por<br />Prieto & Correa</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="seguro-bloque-actions pc-product-actions">
+                                    <button onClick={() => abrirDetalleCotizacion(seguro.id)}>
+                                      Ver cobertura
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="pc-product-secondary"
+                                      onClick={() => abrirDetalleCotizacion(seguro.id)}
+                                    >
+                                      Solicitar propuesta
+                                    </button>
+                                  </div>
+                                </div>
+                              </article>
+                              );
+                            })}
+                          </section>
+                        </div>
+
+                        {mostrarFlechasSeguros && (
+                          <button
+                            type="button"
+                            className="pc-seguros-carousel-arrow pc-seguros-carousel-arrow-right"
+                            onClick={avanzarSeguros}
+                            disabled={paginaSeguroActual === totalPaginasSeguros - 1}
+                            aria-label="Ver seguros siguientes"
+                          >
+                            ›
+                          </button>
+                        )}
+                      </div>
+
+                      {mostrarFlechasSeguros && (
+                        <div className="pc-seguros-carousel-dots" aria-label="Indicador de seguros disponibles">
+                          {Array.from({ length: totalPaginasSeguros }).map((_, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              className={paginaSeguroActual === index ? "active" : ""}
+                              onClick={() => irASlideSeguro(index)}
+                              aria-label={`Ir al grupo de seguros ${index + 1}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="pc-seguros-v2-trustbar">
+                        <article>
+                          <img src="/proteger.png" alt="" />
+                          <div>
+                            <strong>Acompañamiento experto</strong>
+                            <span>Te asesoramos antes, durante y después de contratar.</span>
                           </div>
                         </article>
-                      ))}
+                        <article>
+                          <img src="/beneficios.png" alt="" />
+                          <div>
+                            <strong>Soluciones a tu medida</strong>
+                            <span>Productos diseñados para adaptarse a tus necesidades.</span>
+                          </div>
+                        </article>
+                        <article>
+                          <img src="/candado.png" alt="" />
+                          <div>
+                            <strong>Confianza y respaldo</strong>
+                            <span>Trabajamos con las mejores aseguradoras del mercado.</span>
+                          </div>
+                        </article>
+                        <article>
+                          <img src="/calendario.png" alt="" />
+                          <div>
+                            <strong>Respuesta ágil</strong>
+                            <span>Cotiza y recibe una propuesta en minutos.</span>
+                          </div>
+                        </article>
+                      </div>
                     </section>
                   </>
                 ) : (
@@ -962,7 +2316,7 @@ Estado: ${documento.estado}`);
                             cursor: "pointer",
                           }}
                         >
-                          ← Volver a cotizaciones
+                          ← Volver a Seguros Disponibles
                         </button>
 
                         <section
@@ -3850,20 +5204,557 @@ Estado: ${documento.estado}`);
               </div>
             )}
 
-            {["beneficiarios", "cuotas"].includes(vista) && (
+            {vista === "cuotas" && (
               <div className="pc-panel pc-full-panel">
-                <h2>
-                  {vista === "beneficiarios" && "Beneficios"}
-                  {vista === "cuotas" && "Pagos y cuotas"}
-                </h2>
+                <h2>Pagos y cuotas</h2>
 
-                <div className="pc-empty">
-                  <h3>Sección en preparación</h3>
-                  <p>
-                    Este apartado quedará conectado al backend en la siguiente
-                    etapa.
-                  </p>
+                <p
+                  style={{
+                    color: "#56637a",
+                    fontSize: "14px",
+                    lineHeight: 1.6,
+                    marginTop: "-12px",
+                    marginBottom: "18px",
+                  }}
+                >
+                  Revisa tus cuotas pendientes, próximos vencimientos y comprobantes asociados a tus pólizas.
+                </p>
+
+                <div className="pc-stats" style={{ marginBottom: "14px" }}>
+                  <article>
+                    <strong>{formatearMoneda(montoPendiente)}</strong>
+                    <span>Monto pendiente</span>
+                  </article>
+
+                  <article>
+                    <strong>{pagosPendientes.length}</strong>
+                    <span>Cuotas próximas</span>
+                  </article>
+
+                  <article>
+                    <strong>{proximoPago ? formatearFecha(proximoPago.fecha_vencimiento) : "—"}</strong>
+                    <span>Próximo vencimiento</span>
+                  </article>
+
+                  <article>
+                    <strong>{pagosRealizados}</strong>
+                    <span>Pagos realizados</span>
+                  </article>
                 </div>
+
+                <div
+                  style={{
+                    border: "1px solid #e6ebf2",
+                    borderRadius: "18px",
+                    overflow: "hidden",
+                    background: "#ffffff",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1.2fr 0.95fr 0.65fr 0.75fr 0.85fr 0.75fr 0.85fr",
+                      gap: "10px",
+                      padding: "12px 16px",
+                      background: "#f5f7fb",
+                      color: "#07195a",
+                      fontSize: "12px",
+                      fontWeight: 800,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    <span>Seguro</span>
+                    <span>Compañía</span>
+                    <span>Cuota</span>
+                    <span>Monto</span>
+                    <span>Vencimiento</span>
+                    <span>Estado</span>
+                    <span>Acción</span>
+                  </div>
+
+                  {pagosNormalizados.length === 0 ? (
+                    <>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1.2fr 0.95fr 0.65fr 0.75fr 0.85fr 0.75fr 0.85fr",
+                          gap: "10px",
+                          alignItems: "center",
+                          padding: "15px 16px",
+                          borderTop: "1px solid #eef2f7",
+                          color: "#667085",
+                          fontSize: "13px",
+                          fontWeight: 800,
+                        }}
+                      >
+                        <span>No tienes pagos pendientes</span>
+                        <span>—</span>
+                        <span>—</span>
+                        <span>—</span>
+                        <span>—</span>
+                        <span>—</span>
+                        <span>—</span>
+                      </div>
+
+                      <div className="pc-empty" style={{ margin: "14px", padding: "24px" }}>
+                        <h3>No tienes pagos pendientes</h3>
+                        <p>
+                          Cuando una póliza tenga pagos, cuotas próximas o comprobantes, podrás gestionarlos aquí automáticamente.
+                        </p>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "10px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <button onClick={() => setVista("cotizaciones")}>Explorar seguros</button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              abrirWhatsApp("Hola, necesito orientación sobre pagos y cuotas de mis seguros.")
+                            }
+                            style={{
+                              background: "#ffffff",
+                              color: "#07195a",
+                              border: "1px solid #dfe6f3",
+                            }}
+                          >
+                            Contactar ejecutivo
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    pagosNormalizados.map((pago) => (
+                      <div
+                        key={pago.id}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1.2fr 0.95fr 0.65fr 0.75fr 0.85fr 0.75fr 0.85fr",
+                          gap: "10px",
+                          alignItems: "center",
+                          padding: "13px 16px",
+                          borderTop: "1px solid #eef2f7",
+                          fontSize: "13px",
+                        }}
+                      >
+                        <div>
+                          <strong style={{ color: "#07195a", display: "block" }}>
+                            {pago.seguro}
+                          </strong>
+                          <small style={{ color: "#667085", fontWeight: 800 }}>
+                            {pago.numero_poliza}
+                          </small>
+                        </div>
+
+                        <span style={{ color: "#475467" }}>{pago.compania}</span>
+                        <strong style={{ color: "#07195a" }}>{pago.cuota}</strong>
+                        <strong style={{ color: "#07195a" }}>
+                          {formatearMoneda(pago.monto, pago.moneda)}
+                        </strong>
+                        <span style={{ color: "#475467" }}>
+                          {formatearFecha(pago.fecha_vencimiento)}
+                        </span>
+                        <span className={`pc-status ${pago.estado}`}>
+                          {textoEstado(pago.estado)}
+                        </span>
+
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                          {["pendiente", "por-vencer", "vigente", "activa"].includes(pago.estado) ? (
+                            <button
+                              type="button"
+                              onClick={() => iniciarPago(pago)}
+                              style={{
+                                border: "none",
+                                background: "#07195a",
+                                color: "#ffffff",
+                                borderRadius: "10px",
+                                padding: "9px 12px",
+                                fontSize: "11px",
+                                fontWeight: 900,
+                              }}
+                            >
+                              Pagar
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                pago.url_comprobante
+                                  ? window.open(pago.url_comprobante, "_blank", "noopener,noreferrer")
+                                  : abrirWhatsApp(`Hola, necesito el comprobante del pago asociado a ${pago.seguro}.`)
+                              }
+                              style={{
+                                border: "1px solid #f47c20",
+                                background: "#ffffff",
+                                color: "#f47c20",
+                                borderRadius: "10px",
+                                padding: "9px 12px",
+                                fontSize: "11px",
+                                fontWeight: 900,
+                              }}
+                            >
+                              Comprobante
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "14px",
+                    padding: "16px",
+                    borderRadius: "16px",
+                    background: "#f8faff",
+                    border: "1px solid #e6ebf2",
+                    color: "#56637a",
+                    fontSize: "13px",
+                    lineHeight: 1.55,
+                  }}
+                >
+                  <strong style={{ color: "#07195a", display: "block", marginBottom: "5px" }}>
+                    Integración preparada
+                  </strong>
+                  El portal queda listo para consumir <strong>/portal/mis-pagos</strong>. Para pagos reales,
+                  el frontend debe solicitar al backend iniciar la transacción y el backend debe conectar con el proveedor de pago.
+                </div>
+              </div>
+            )}
+
+            {vista === "beneficios" && (
+              <div
+                className="pc-panel pc-full-panel"
+                style={{
+                  width: "min(100%, 1480px)",
+                  maxWidth: "1480px",
+                  margin: "0 auto 70px",
+                  padding: "18px",
+                  overflow: "visible",
+                }}
+              >
+                <section
+                  style={{
+                    borderRadius: "22px",
+                    padding: "30px 34px",
+                    marginBottom: "18px",
+                    border: "1px solid #e4e9f3",
+                    background: "linear-gradient(135deg, #ffffff 0%, #fff4ee 100%)",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      padding: "8px 14px",
+                      borderRadius: "999px",
+                      background: "rgba(244, 124, 32, 0.13)",
+                      color: "#f47c20",
+                      fontSize: "11px",
+                      fontWeight: 950,
+                      textTransform: "uppercase",
+                      marginBottom: "14px",
+                    }}
+                  >
+                    Club Prieto & Correa
+                  </span>
+
+                  <h2 style={{ margin: "0 0 10px", color: "#07195a", fontSize: "31px" }}>
+                    Descubre beneficios para clientes
+                  </h2>
+
+                  <p style={{ margin: 0, maxWidth: "740px", color: "#56637a", lineHeight: 1.6, fontSize: "14px" }}>
+                    Accede a descuentos, convenios y promociones asociadas a tu portal de seguros.
+                    Esta sección queda preparada para conectarse al backend mediante <strong>/portal/mis-beneficios</strong>.
+                  </p>
+                </section>
+
+                <section
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "minmax(0, 1fr) 260px",
+                    gap: "16px",
+                    marginBottom: "18px",
+                    alignItems: "stretch",
+                  }}
+                >
+                  <article
+                    style={{
+                      minHeight: "280px",
+                      borderRadius: "22px",
+                      overflow: "hidden",
+                      position: "relative",
+                      display: "grid",
+                      gridTemplateColumns: "1fr 120px",
+                      alignItems: "center",
+                      padding: "34px",
+                      color: "#ffffff",
+                      backgroundImage: `linear-gradient(90deg, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.10)), url(${beneficioPrincipal?.imagen || "/restaurant.jpg"})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  >
+                    <div style={{ position: "relative", zIndex: 2 }}>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          padding: "8px 14px",
+                          borderRadius: "999px",
+                          background: "#f47c20",
+                          color: "#ffffff",
+                          fontSize: "11px",
+                          fontWeight: 950,
+                          textTransform: "uppercase",
+                          marginBottom: "18px",
+                        }}
+                      >
+                        Beneficio destacado
+                      </span>
+
+                      <h3
+                        style={{
+                          margin: "0 0 12px",
+                          fontSize: "33px",
+                          lineHeight: 1.08,
+                          maxWidth: "680px",
+                          color: "#ffffff",
+                          textShadow: "0 4px 22px rgba(0,0,0,0.55)",
+                        }}
+                      >
+                        {beneficioPrincipal?.titulo || "Beneficios disponibles próximamente"}
+                      </h3>
+
+                      <p style={{ margin: "0 0 16px", maxWidth: "560px", color: "rgba(255,255,255,0.9)", fontWeight: 800 }}>
+                        {beneficioPrincipal?.descripcion || beneficioPrincipal?.bajada || "Cuando existan beneficios activos aparecerán aquí."}
+                      </p>
+
+                      <small
+                        style={{
+                          display: "inline-flex",
+                          padding: "8px 13px",
+                          borderRadius: "999px",
+                          background: "rgba(255,255,255,0.14)",
+                          color: "#ffffff",
+                          fontWeight: 950,
+                        }}
+                      >
+                        Vigencia: {formatearFecha(beneficioPrincipal?.vigencia)}
+                      </small>
+
+                      <div style={{ display: "flex", gap: "7px", marginTop: "18px" }}>
+                        {beneficiosDestacados.map((beneficio, index) => (
+                          <button
+                            key={beneficio.id_beneficio || beneficio.id || index}
+                            type="button"
+                            onClick={() => setBeneficioSlide(index)}
+                            aria-label={`Ver beneficio destacado ${index + 1}`}
+                            style={{
+                              width: beneficioSlide % beneficiosDestacados.length === index ? "28px" : "9px",
+                              height: "9px",
+                              border: "none",
+                              borderRadius: "999px",
+                              background: beneficioSlide % beneficiosDestacados.length === index ? "#f47c20" : "rgba(255,255,255,0.55)",
+                              transition: "0.25s ease",
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        width: "86px",
+                        height: "86px",
+                        borderRadius: "22px",
+                        background: "rgba(255,255,255,0.80)",
+                        backdropFilter: "blur(10px)",
+                        display: "grid",
+                        placeItems: "center",
+                        justifySelf: "end",
+                        boxShadow: "0 12px 26px rgba(0,0,0,0.12)",
+                      }}
+                    >
+                      <img
+                        src={beneficioPrincipal?.icono || "/descuento.png"}
+                        alt=""
+                        style={{ width: "42px", height: "42px", objectFit: "contain" }}
+                      />
+                    </div>
+                  </article>
+
+                  <aside style={{ display: "grid", gap: "12px" }}>
+                    {[
+                      [beneficiosBase.length, "Beneficios cargados"],
+                      [beneficiosActivos, "Activos"],
+                      [categoriasBeneficios.length, "Categorías"],
+                    ].map(([valor, label]) => (
+                      <article
+                        key={label}
+                        style={{
+                          background: "#ffffff",
+                          border: "1px solid #e6ebf2",
+                          borderTop: "4px solid #07195a",
+                          borderRadius: "18px",
+                          padding: "20px",
+                          minHeight: "86px",
+                        }}
+                      >
+                        <strong style={{ display: "block", color: "#07195a", fontSize: "30px", marginBottom: "6px" }}>
+                          {valor}
+                        </strong>
+                        <span style={{ color: "#56637a", fontSize: "11px", fontWeight: 950 }}>
+                          {label}
+                        </span>
+                      </article>
+                    ))}
+                  </aside>
+                </section>
+
+                <section
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    border: "1px solid #e6ebf2",
+                    borderRadius: "18px",
+                    padding: "12px",
+                    marginBottom: "18px",
+                    background: "#ffffff",
+                    overflowX: "auto",
+                  }}
+                >
+                  <strong style={{ color: "#07195a", fontSize: "12px", textTransform: "uppercase", marginRight: "8px" }}>
+                    Categorías
+                  </strong>
+
+                  {categoriasBeneficios.map((categoria) => (
+                    <button
+                      key={categoria.id}
+                      type="button"
+                      onClick={() => setCategoriaBeneficioActiva(categoria.id)}
+                      style={{
+                        minWidth: "104px",
+                        height: "66px",
+                        border: "1px solid #dfe6f3",
+                        borderRadius: "14px",
+                        background: categoriaBeneficioActiva === categoria.id ? "#07195a" : "#ffffff",
+                        color: categoriaBeneficioActiva === categoria.id ? "#ffffff" : "#07195a",
+                        display: "grid",
+                        placeItems: "center",
+                        gap: "5px",
+                        fontSize: "11px",
+                        fontWeight: 950,
+                      }}
+                    >
+                      <img
+                        src={categoria.icono}
+                        alt=""
+                        style={{
+                          width: "24px",
+                          height: "24px",
+                          objectFit: "contain",
+                          filter: categoriaBeneficioActiva === categoria.id ? "brightness(0) invert(1)" : "none",
+                        }}
+                      />
+                      {categoria.nombre}
+                    </button>
+                  ))}
+                </section>
+
+                <section
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                    gap: "16px",
+                    paddingBottom: "80px",
+                  }}
+                >
+                  {beneficiosFiltrados.length === 0 ? (
+                    <div className="pc-empty" style={{ gridColumn: "1 / -1" }}>
+                      <h3>No hay beneficios en esta categoría</h3>
+                      <p>Prueba seleccionando otra categoría o revisa nuevamente cuando el backend esté conectado.</p>
+                    </div>
+                  ) : (
+                    beneficiosFiltrados.map((beneficio) => (
+                      <article
+                        key={beneficio.id_beneficio || beneficio.id}
+                        style={{
+                          minHeight: "260px",
+                          border: "1px solid #e6ebf2",
+                          borderRadius: "20px",
+                          padding: "18px",
+                          background: "#ffffff",
+                          display: "grid",
+                          gap: "12px",
+                          boxShadow: "0 10px 28px rgba(7,25,90,0.05)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "54px",
+                            height: "54px",
+                            borderRadius: "14px",
+                            background: "#f3f6fb",
+                            display: "grid",
+                            placeItems: "center",
+                          }}
+                        >
+                          <img
+                            src={beneficio.icono || beneficio.imagen || "/descuento.png"}
+                            alt=""
+                            style={{ width: "28px", height: "28px", objectFit: "contain" }}
+                          />
+                        </div>
+
+                        <div>
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              padding: "5px 10px",
+                              borderRadius: "999px",
+                              background: beneficio.estado === "proximamente" ? "#fff0e6" : "#ecfdf3",
+                              color: beneficio.estado === "proximamente" ? "#f47c20" : "#067647",
+                              fontSize: "11px",
+                              fontWeight: 950,
+                              marginBottom: "10px",
+                            }}
+                          >
+                            {beneficio.estado === "proximamente" ? "Próximamente" : "Activo"}
+                          </span>
+                          <h3 style={{ margin: "0 0 8px", color: "#07195a", fontSize: "18px" }}>
+                            {beneficio.titulo}
+                          </h3>
+                          <p style={{ margin: "0 0 8px", color: "#667085", fontSize: "13px", lineHeight: 1.5 }}>
+                            {beneficio.descripcion || beneficio.bajada || "Beneficio disponible para clientes."}
+                          </p>
+                          <small style={{ color: "#56637a", fontWeight: 900 }}>
+                            Vigencia: {formatearFecha(beneficio.vigencia)}
+                          </small>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => abrirWhatsApp(`Hola, quiero más información sobre el beneficio: ${beneficio.titulo}`)}
+                          style={{
+                            alignSelf: "end",
+                            minHeight: "40px",
+                            border: "none",
+                            borderRadius: "12px",
+                            background: "#07195a",
+                            color: "#ffffff",
+                            fontWeight: 950,
+                          }}
+                        >
+                          Solicitar información
+                        </button>
+                      </article>
+                    ))
+                  )}
+                </section>
               </div>
             )}
           </>

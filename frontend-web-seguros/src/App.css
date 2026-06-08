@@ -3696,3 +3696,1874 @@ FIX DASHBOARD WHATSAPP — V3
 .pc-actions-grid .pc-action-whatsapp:hover img {
   filter: brightness(0) invert(1);
 }
+
+
+/* ==================================================
+SEGUROS DISPONIBLES — VERSIÓN FINAL PREMIUM
+================================================== */
+
+.pc-sidebar-nav button span {
+  line-height: 1.15;
+}
+
+.pc-seguros-disponibles-v2 {
+  width: 100%;
+}
+
+.pc-seguros-disponibles-v2 h2 {
+  margin: 0;
+  color: var(--pc-blue);
+  font-size: 30px;
+  line-height: 1.08;
+}
+
+.pc-seguros-disponibles-v2 p {
+  margin: 12px 0 0;
+  max-width: 620px;
+  color: #53617c;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.pc-seguros-v2-head {
+  display: grid;
+  grid-template-columns: 1fr 520px;
+  gap: 26px;
+  align-items: center;
+  padding-bottom: 28px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid #e8edf6;
+}
+
+.pc-seguros-v2-advice {
+  min-height: 92px;
+  padding: 18px 22px;
+  display: grid;
+  grid-template-columns: 58px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  background: linear-gradient(135deg, #fff7f0 0%, #ffffff 100%);
+  border: 1px solid #f3e6db;
+  border-radius: 20px;
+}
+
+.pc-seguros-v2-advice-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #e9eef8;
+}
+
+.pc-seguros-v2-advice-icon img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(12%) sepia(82%) saturate(2029%) hue-rotate(220deg) brightness(86%) contrast(105%);
+}
+
+.pc-seguros-v2-advice strong {
+  display: block;
+  color: var(--pc-blue);
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.pc-seguros-v2-advice span {
+  display: block;
+  color: #58657f;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.pc-seguros-v2-orange {
+  height: 48px;
+  min-width: 168px;
+  padding: 0 22px;
+  border: none;
+  border-radius: 13px;
+  background: var(--pc-orange);
+  color: white;
+  font-size: 12px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  box-shadow: 0 14px 30px rgba(244, 124, 32, 0.22);
+}
+
+.pc-seguros-v2-orange img {
+  width: 18px;
+  height: 18px;
+  filter: brightness(0) invert(1);
+}
+
+.pc-cotizaciones-v2 {
+  margin-bottom: 22px;
+}
+
+.pc-seguros-v2-toolbar {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 20px;
+  align-items: end;
+  margin-bottom: 26px;
+}
+
+.pc-seguros-v2-toolbar h3 {
+  color: var(--pc-blue);
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+.pc-seguros-v2-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pc-seguros-v2-filters button {
+  height: 44px;
+  padding: 0 20px;
+  border: 1px solid #dfe6f3;
+  border-radius: 14px;
+  background: #ffffff;
+  color: var(--pc-blue);
+  font-size: 12px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 18px rgba(7, 25, 90, 0.035);
+}
+
+.pc-seguros-v2-filters button.active {
+  background: var(--pc-blue);
+  border-color: var(--pc-blue);
+  color: #ffffff;
+}
+
+.pc-seguros-v2-filters button img {
+  width: 19px;
+  height: 19px;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(12%) sepia(82%) saturate(2029%) hue-rotate(220deg) brightness(86%) contrast(105%);
+}
+
+.pc-seguros-v2-filters button.active img {
+  filter: brightness(0) invert(1);
+}
+
+.pc-seguros-v2-order {
+  color: #667085;
+  font-size: 11px;
+  font-weight: 800;
+  display: grid;
+  gap: 7px;
+}
+
+.pc-seguros-v2-order select {
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid #dfe6f3;
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--pc-blue);
+  font-size: 12px;
+  font-weight: 900;
+  outline: none;
+}
+
+.pc-dashboard .portal-seguros-bloques.pc-seguros-grid-v2 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2,
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2.reverse {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 165px auto;
+  min-height: 430px;
+  height: auto;
+  border-radius: 18px;
+  border: 1px solid #e5ebf5;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(7, 25, 90, 0.055);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 22px 48px rgba(7, 25, 90, 0.12);
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-imagen {
+  height: 165px;
+  position: relative;
+  overflow: visible;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-imagen img {
+  width: 100%;
+  height: 165px;
+  object-fit: cover;
+  filter: brightness(0.93);
+  transition: transform 0.25s ease;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2:hover .seguro-bloque-imagen img {
+  transform: scale(1.035);
+}
+
+.pc-product-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 2;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: var(--pc-orange);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+}
+
+.pc-product-badge.badge-1 { background: #27935f; }
+.pc-product-badge.badge-2 { background: #7d62d9; }
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-info {
+  min-height: 265px;
+  padding: 34px 22px 20px;
+  position: relative;
+}
+
+.pc-product-floating-icon {
+  position: absolute;
+  top: -32px;
+  left: 24px;
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #dfe6f3;
+  box-shadow: 0 12px 24px rgba(7, 25, 90, 0.12);
+}
+
+.pc-product-floating-icon img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(12%) sepia(82%) saturate(2029%) hue-rotate(220deg) brightness(86%) contrast(105%);
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-info h2 {
+  color: var(--pc-blue);
+  font-size: 23px;
+  line-height: 1.15;
+  margin: 0 0 10px;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-info > p {
+  color: #5d6a85;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0 0 14px;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-checks {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-checks span {
+  border: none;
+  padding: 0;
+  color: #667085;
+  font-size: 11.5px;
+  font-weight: 800;
+  background: transparent;
+}
+
+.pc-product-bottom {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid #e7ecf3;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: center;
+}
+
+.pc-product-bottom small {
+  color: #667085;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.pc-product-bottom strong {
+  display: block;
+  color: var(--pc-blue);
+  font-size: 21px;
+  line-height: 1.15;
+  margin-top: 3px;
+}
+
+.pc-product-advised {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 14px;
+  border-left: 1px solid #e2e8f0;
+}
+
+.pc-product-advised img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(12%) sepia(82%) saturate(2029%) hue-rotate(220deg) brightness(86%) contrast(105%);
+}
+
+.pc-product-advised span {
+  color: var(--pc-blue);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-actions button {
+  width: 100%;
+  height: 42px;
+  border: none;
+  border-radius: 10px;
+  background: var(--pc-blue);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-actions .pc-product-secondary {
+  height: auto;
+  background: transparent;
+  color: var(--pc-blue);
+  box-shadow: none;
+  padding: 0;
+}
+
+.pc-seguros-v2-trustbar {
+  margin-top: 22px;
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  border: 1px solid #e5ebf5;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(7, 25, 90, 0.045);
+}
+
+.pc-seguros-v2-trustbar article {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-right: 18px;
+  border-right: 1px solid #e4e9f3;
+}
+
+.pc-seguros-v2-trustbar article:last-child {
+  border-right: none;
+}
+
+.pc-seguros-v2-trustbar img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(54%) sepia(88%) saturate(1136%) hue-rotate(346deg) brightness(99%) contrast(94%);
+}
+
+.pc-seguros-v2-trustbar strong {
+  display: block;
+  color: var(--pc-blue);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.pc-seguros-v2-trustbar span {
+  display: block;
+  color: #667085;
+  font-size: 10.5px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+@media (max-width: 1250px) {
+  .pc-seguros-v2-head,
+  .pc-seguros-v2-toolbar,
+  .pc-dashboard .portal-seguros-bloques.pc-seguros-grid-v2,
+  .pc-seguros-v2-trustbar {
+    grid-template-columns: 1fr;
+  }
+
+  .pc-seguros-v2-advice {
+    grid-template-columns: 58px 1fr;
+  }
+
+  .pc-seguros-v2-orange {
+    grid-column: 1 / -1;
+  }
+
+  .pc-seguros-v2-trustbar article {
+    border-right: none;
+    border-bottom: 1px solid #e4e9f3;
+    padding: 0 0 14px;
+  }
+
+  .pc-seguros-v2-trustbar article:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+/* ==================================================
+SEGUROS DISPONIBLES — CARRUSEL PREMIUM CORREGIDO
+Mantiene el mismo diseño y muestra 3 seguros completos por vista.
+================================================== */
+
+.pc-seguros-carousel-shell {
+  position: relative;
+  width: 100%;
+  margin-top: 6px;
+  padding: 0 54px;
+}
+
+.pc-seguros-carousel-viewport {
+  width: 100%;
+  overflow: visible;
+}
+
+.pc-dashboard .portal-seguros-bloques.pc-seguros-grid-v2.pc-seguros-carousel-track {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  width: 100%;
+  transform: none;
+  transition: opacity 0.22s ease;
+}
+
+.pc-seguros-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 8;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #dfe6f3;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--pc-blue);
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 14px 34px rgba(7, 25, 90, 0.12);
+  transform: translateY(-50%);
+  transition: 0.25s ease;
+}
+
+.pc-seguros-carousel-arrow:hover:not(:disabled) {
+  background: var(--pc-orange);
+  border-color: var(--pc-orange);
+  color: #ffffff;
+  transform: translateY(-50%) scale(1.06);
+}
+
+.pc-seguros-carousel-arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.pc-seguros-carousel-arrow-left { left: 0; }
+.pc-seguros-carousel-arrow-right { right: 0; }
+
+.pc-seguros-carousel-dots {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pc-seguros-carousel-dots button {
+  width: 9px;
+  height: 9px;
+  border: none;
+  border-radius: 999px;
+  background: #ccd4e3;
+  transition: 0.25s ease;
+}
+
+.pc-seguros-carousel-dots button.active {
+  width: 28px;
+  background: var(--pc-orange);
+}
+
+@media (max-width: 1250px) {
+  .pc-dashboard .portal-seguros-bloques.pc-seguros-grid-v2.pc-seguros-carousel-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .pc-seguros-carousel-shell {
+    padding: 0 46px;
+  }
+
+  .pc-dashboard .portal-seguros-bloques.pc-seguros-grid-v2.pc-seguros-carousel-track {
+    grid-template-columns: 1fr;
+  }
+
+  .pc-seguros-carousel-arrow {
+    width: 38px;
+    height: 38px;
+    font-size: 30px;
+  }
+}
+
+/* ==================================================
+SEGUROS DISPONIBLES — AJUSTE 10/10
+Filtros funcionales + carrusel por páginas + tarjetas completas.
+================================================== */
+
+.pc-seguros-carousel-viewport {
+  overflow: hidden;
+}
+
+.pc-dashboard .portal-seguros-bloques.pc-seguros-grid-v2.pc-seguros-carousel-track {
+  align-items: stretch;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2,
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2.reverse {
+  height: 468px;
+  min-height: 468px;
+  grid-template-rows: 155px 1fr;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-imagen,
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-imagen img {
+  height: 155px;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-info {
+  min-height: 313px;
+  height: 313px;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 22px 18px;
+  overflow: hidden;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-info h2 {
+  min-height: 54px;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-info > p {
+  min-height: 42px;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-checks {
+  min-height: 62px;
+  margin-bottom: 12px;
+}
+
+.pc-product-bottom {
+  margin-top: auto;
+  min-height: 54px;
+}
+
+.pc-product-bottom strong {
+  font-size: 18px;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-actions {
+  margin-top: 12px;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-actions button:first-child {
+  height: 40px;
+}
+
+.pc-seguros-carousel-dots {
+  margin-top: 14px;
+}
+
+.pc-seguros-carousel-arrow-left {
+  left: 4px;
+}
+
+.pc-seguros-carousel-arrow-right {
+  right: 4px;
+}
+
+.pc-seguros-v2-filters button {
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.pc-seguros-v2-filters button:hover {
+  transform: translateY(-2px);
+  border-color: var(--pc-blue);
+}
+
+.pc-seguros-v2-filters button.active:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 1250px) {
+  .pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2,
+  .pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2.reverse {
+    height: 480px;
+    min-height: 480px;
+  }
+}
+
+@media (max-width: 700px) {
+  .pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2,
+  .pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2.reverse {
+    height: auto;
+    min-height: 460px;
+  }
+
+  .pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-info {
+    height: auto;
+    min-height: 310px;
+  }
+}
+
+
+/* ==================================================
+FIX FINAL — SEGUROS DISPONIBLES
+- quita ícono flotante cortado
+- corrige logos de filtros
+- evita que el botón inferior quede cortado
+================================================== */
+
+.pc-product-floating-icon {
+  display: none !important;
+}
+
+.pc-seguros-carousel-viewport {
+  overflow: visible !important;
+  padding-bottom: 8px;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2,
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2.reverse {
+  height: 492px !important;
+  min-height: 492px !important;
+  grid-template-rows: 145px 1fr !important;
+  overflow: hidden;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-imagen,
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-imagen img {
+  height: 145px !important;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-info {
+  height: 347px !important;
+  min-height: 347px !important;
+  padding: 22px 22px 18px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-info h2 {
+  min-height: 52px !important;
+  margin-bottom: 8px !important;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-info > p {
+  min-height: 42px !important;
+  margin-bottom: 10px !important;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-checks {
+  min-height: 58px !important;
+  margin-bottom: 10px !important;
+}
+
+.pc-product-bottom {
+  min-height: 52px !important;
+  padding-top: 12px !important;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-actions {
+  margin-top: 10px !important;
+  display: grid !important;
+  gap: 8px !important;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-actions button:first-child {
+  height: 40px !important;
+  min-height: 40px !important;
+  flex-shrink: 0;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-actions .pc-product-secondary {
+  min-height: 18px !important;
+  line-height: 18px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.pc-seguros-v2-filters button img {
+  width: 22px !important;
+  height: 22px !important;
+  object-fit: contain !important;
+}
+
+.pc-seguros-v2-filters button.active img {
+  filter: brightness(0) invert(1) !important;
+}
+
+.pc-seguros-v2-trustbar {
+  margin-top: 12px !important;
+}
+
+/* ==================================================
+INICIO PORTAL — AJUSTE PREMIUM 10/10
+================================================== */
+
+.pc-empty-protection {
+  display: grid;
+  gap: 10px;
+}
+
+.pc-empty-protection button {
+  width: fit-content;
+  min-width: 210px;
+  margin-top: 4px;
+  border: none;
+  background: var(--pc-blue);
+  color: #ffffff;
+  border-radius: 13px;
+  padding: 12px 18px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.pc-empty-protection button:hover {
+  background: var(--pc-orange);
+}
+
+.pc-advisor-status {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 1px 0 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.pc-advisor-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #16a34a;
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.12);
+}
+
+.pc-actions-grid-priority {
+  grid-template-columns: 1fr;
+}
+
+.pc-actions-grid-priority button {
+  min-height: 72px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+.pc-actions-grid-priority button img {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.pc-response-time {
+  display: inline-flex;
+  width: fit-content;
+  margin: -4px 0 14px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #f3f6fb;
+  color: var(--pc-blue);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.pc-stats article strong {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 1250px) {
+  .pc-actions-grid-priority {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .pc-actions-grid-priority button {
+    min-height: 92px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 700px) {
+  .pc-actions-grid-priority {
+    grid-template-columns: 1fr;
+  }
+
+  .pc-empty-protection button {
+    width: 100%;
+  }
+}
+
+/* ==================================================
+AJUSTE FINAL — SEGUROS DISPONIBLES FULL WIDTH + SIN SCROLL
+- contenedor más ancho
+- tarjetas más anchas y equilibradas
+- sidebar promo más bajo
+- evita scroll interno/vertical en el módulo
+================================================== */
+
+.pc-main {
+  overflow-y: hidden !important;
+}
+
+.pc-full-panel {
+  width: min(100%, 1480px) !important;
+  max-width: 1480px !important;
+  margin: 0 auto !important;
+}
+
+.pc-seguros-disponibles-v2 {
+  width: 100% !important;
+}
+
+.pc-seguros-v2-head {
+  grid-template-columns: minmax(0, 1fr) 500px !important;
+  padding-bottom: 24px !important;
+  margin-bottom: 18px !important;
+}
+
+.pc-seguros-v2-toolbar {
+  margin-bottom: 20px !important;
+}
+
+.pc-seguros-carousel-shell {
+  padding: 0 48px !important;
+  margin-top: 0 !important;
+}
+
+.pc-seguros-carousel-viewport {
+  overflow: visible !important;
+  padding-bottom: 0 !important;
+}
+
+.pc-dashboard .portal-seguros-bloques.pc-seguros-grid-v2.pc-seguros-carousel-track {
+  grid-template-columns: repeat(3, minmax(360px, 1fr)) !important;
+  gap: 24px !important;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2,
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2.reverse {
+  height: 505px !important;
+  min-height: 505px !important;
+  grid-template-rows: 150px 1fr !important;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-imagen,
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-imagen img {
+  height: 150px !important;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-info {
+  height: 355px !important;
+  min-height: 355px !important;
+  padding: 24px 24px 18px !important;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-info h2 {
+  min-height: 50px !important;
+  font-size: 23px !important;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-seguro-producto-v2 .seguro-bloque-info > p {
+  min-height: 42px !important;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-checks {
+  min-height: 58px !important;
+}
+
+.pc-product-bottom strong {
+  font-size: 18px !important;
+  line-height: 1.08 !important;
+  white-space: normal !important;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-actions button:first-child {
+  height: 38px !important;
+  min-height: 38px !important;
+}
+
+.pc-dashboard .portal-seguros-bloques .pc-product-actions .pc-product-secondary {
+  min-height: 17px !important;
+  line-height: 17px !important;
+}
+
+.pc-seguros-carousel-dots {
+  margin-top: 10px !important;
+}
+
+.pc-seguros-v2-trustbar {
+  margin-top: 14px !important;
+  padding: 15px 18px !important;
+}
+
+.pc-sidebar-promo {
+  min-height: 118px !important;
+  padding: 13px !important;
+}
+
+.pc-sidebar-promo p {
+  font-size: 10px !important;
+  margin-bottom: 8px !important;
+}
+
+.pc-sidebar-promo button {
+  height: 36px !important;
+}
+
+.pc-header h1 {
+  font-size: 30px !important;
+  line-height: 1.05 !important;
+}
+
+.pc-header p {
+  font-size: 13px !important;
+}
+
+@media (max-width: 1250px) {
+  .pc-main {
+    overflow-y: auto !important;
+  }
+
+  .pc-seguros-v2-head {
+    grid-template-columns: 1fr !important;
+  }
+
+  .pc-dashboard .portal-seguros-bloques.pc-seguros-grid-v2.pc-seguros-carousel-track {
+    grid-template-columns: repeat(2, minmax(320px, 1fr)) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .pc-main {
+    overflow-y: auto !important;
+  }
+
+  .pc-dashboard .portal-seguros-bloques.pc-seguros-grid-v2.pc-seguros-carousel-track {
+    grid-template-columns: 1fr !important;
+  }
+
+  .pc-seguros-carousel-shell {
+    padding: 0 42px !important;
+  }
+}
+
+
+/* ==================================================
+MIS SEGUROS — RESUMEN / COBERTURAS / BENEFICIARIOS / DOCUMENTOS
+Ajuste estable: no reemplaza estructura, solo mejora lectura visual.
+================================================== */
+
+.pc-full-panel .pc-empty {
+  min-height: 150px;
+}
+
+.pc-full-panel .pc-empty button {
+  margin-top: 8px;
+}
+
+.pc-full-panel .pc-policy-row {
+  border: 1px solid #e6ebf2;
+  background: #f8faff;
+}
+
+.pc-full-panel input,
+.pc-full-panel select {
+  color: var(--pc-blue);
+  font-weight: 800;
+}
+
+.pc-full-panel table,
+.pc-full-panel .pc-documents-table {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .pc-full-panel [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ==================================================
+BENEFICIOS / CLUB PRIETO & CORREA — PORTAL CLIENTE
+================================================== */
+
+.pc-beneficios-page {
+  display: grid;
+  gap: 22px;
+}
+
+.pc-beneficios-header {
+  padding: 30px;
+  border-radius: 24px;
+  background: radial-gradient(circle at top right, rgba(244, 124, 32, 0.12), transparent 32%), #f7f9ff;
+  border: 1px solid #e5ebfb;
+}
+
+.pc-beneficios-header span {
+  display: inline-flex;
+  width: fit-content;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(244, 124, 32, 0.12);
+  color: var(--pc-orange);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.pc-beneficios-header h2 {
+  margin: 14px 0 10px !important;
+  color: var(--pc-blue);
+  font-size: 34px !important;
+  line-height: 1.08;
+}
+
+.pc-beneficios-header p {
+  max-width: 780px;
+  color: #667085;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.pc-beneficios-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) 330px;
+  gap: 22px;
+  align-items: stretch;
+}
+
+.pc-beneficio-destacado {
+  min-height: 280px;
+  padding: 34px;
+  border-radius: 26px;
+  display: grid;
+  grid-template-columns: 1fr 210px;
+  gap: 30px;
+  align-items: center;
+  background: linear-gradient(120deg, rgba(7, 25, 90, 0.96), rgba(7, 25, 90, 0.72)), url("/Fondo-login.png");
+  background-size: cover;
+  background-position: center;
+  color: white;
+  overflow: hidden;
+  box-shadow: 0 18px 45px rgba(7, 25, 90, 0.14);
+}
+
+.pc-beneficio-badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: var(--pc-orange);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.pc-beneficio-destacado h3 {
+  margin: 18px 0 12px;
+  max-width: 640px;
+  color: white;
+  font-size: 34px;
+  line-height: 1.1;
+}
+
+.pc-beneficio-destacado p {
+  max-width: 560px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.pc-beneficio-destacado small {
+  display: inline-flex;
+  margin-top: 18px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.pc-beneficio-destacado > img {
+  width: 160px;
+  height: 160px;
+  padding: 34px;
+  border-radius: 34px;
+  background: rgba(255, 255, 255, 0.94);
+  object-fit: contain;
+  justify-self: center;
+  filter: none;
+}
+
+.pc-beneficios-resumen {
+  display: grid;
+  gap: 12px;
+}
+
+.pc-beneficios-resumen article {
+  padding: 22px;
+  border-radius: 20px;
+  background: white;
+  border: 1px solid var(--pc-border);
+  border-top: 4px solid var(--pc-blue);
+  box-shadow: 0 10px 28px rgba(7, 25, 90, 0.05);
+}
+
+.pc-beneficios-resumen strong {
+  display: block;
+  color: var(--pc-blue);
+  font-size: 30px;
+  margin-bottom: 6px;
+}
+
+.pc-beneficios-resumen span {
+  color: var(--pc-muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.pc-beneficios-categorias {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 18px;
+  border-radius: 22px;
+  background: white;
+  border: 1px solid var(--pc-border);
+}
+
+.pc-beneficios-categorias > span {
+  margin-right: 6px;
+  color: var(--pc-blue);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.pc-beneficios-categorias button {
+  min-width: 118px;
+  height: 78px;
+  padding: 10px 14px;
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  border: 1px solid #dfe6f3;
+  border-radius: 16px;
+  background: #ffffff;
+  color: var(--pc-blue);
+  font-weight: 900;
+  box-shadow: 0 8px 18px rgba(7, 25, 90, 0.035);
+  transition: 0.25s ease;
+}
+
+.pc-beneficios-categorias button img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(12%) sepia(82%) saturate(2029%) hue-rotate(220deg) brightness(86%) contrast(105%);
+}
+
+.pc-beneficios-categorias button small {
+  font-size: 11px;
+}
+
+.pc-beneficios-categorias button:hover,
+.pc-beneficios-categorias button.active {
+  transform: translateY(-3px);
+  background: var(--pc-blue);
+  border-color: var(--pc-blue);
+  color: white;
+}
+
+.pc-beneficios-categorias button:hover img,
+.pc-beneficios-categorias button.active img {
+  filter: brightness(0) invert(1);
+}
+
+.pc-beneficios-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.pc-beneficio-card {
+  min-height: 270px;
+  padding: 22px;
+  border-radius: 22px;
+  background: white;
+  border: 1px solid var(--pc-border);
+  box-shadow: 0 10px 28px rgba(7, 25, 90, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: 0.25s ease;
+}
+
+.pc-beneficio-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 42px rgba(7, 25, 90, 0.1);
+}
+
+.pc-beneficio-icon {
+  width: px;
+  height: 58px;
+  border-radius: 18px;
+  background: #f3f6fb;
+  display: grid;
+  place-items: center;
+}
+
+.pc-beneficio-icon img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(12%) sepia(82%) saturate(2029%) hue-rotate(220deg) brightness(86%) contrast(105%);
+}
+
+.pc-beneficio-status {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.pc-beneficio-status.proximamente {
+  background: rgba(244, 124, 32, 0.12);
+  color: var(--pc-orange);
+}
+
+.pc-beneficio-card h3 {
+  color: var(--pc-blue);
+  font-size: 18px;
+  line-height: 1.25;
+  margin-bottom: 10px;
+}
+
+.pc-beneficio-card p {
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.pc-beneficio-card small {
+  display: block;
+  margin-top: 10px;
+  color: var(--pc-muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.pc-beneficio-card button {
+  margin-top: auto;
+  width: 100%;
+  height: 42px;
+  border: none;
+  border-radius: 12px;
+  background: var(--pc-blue);
+  color: white;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.pc-beneficio-card button:hover {
+  background: var(--pc-orange);
+}
+
+.pc-beneficios-empty {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1250px) {
+  .pc-beneficios-hero,
+  .pc-beneficios-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pc-beneficio-destacado {
+    grid-template-columns: 1fr;
+  }
+}
+/* FIX BENEFICIOS — evitar corte inferior */
+.pc-main {
+  overflow-y: auto !important;
+  padding-bottom: 60px !important;
+}
+
+.pc-beneficios-page {
+  margin-bottom: 60px !important;
+  padding-bottom: 50px !important;
+}
+
+.pc-beneficios-grid {
+  padding-bottom: 60px !important;
+}
+
+.pc-beneficio-card {
+  min-height: 260px;
+  padding-bottom: 28px !important;
+}
+/* ==========================
+   POLÍTICA PRIVACIDAD
+========================== */
+
+.legal-premium-page{
+background:#f3f6fb;
+
+padding:
+150px
+30px
+100px;
+}
+
+.legal-hero{
+
+max-width:1300px;
+
+margin:auto;
+
+margin-bottom:30px;
+
+padding:60px;
+
+border-radius:34px;
+
+background:
+linear-gradient(
+135deg,
+rgba(7,25,90,.96),
+rgba(3,19,68,.88)
+),
+url("/Fondo-login.png");
+
+background-size:cover;
+
+background-position:center;
+
+color:white;
+
+box-shadow:
+0 30px 80px
+rgba(7,25,90,.18);
+
+}
+
+.legal-hero span{
+
+display:inline-flex;
+
+padding:
+10px
+18px;
+
+background:#f47c20;
+
+border-radius:999px;
+
+font-size:13px;
+
+font-weight:800;
+
+margin-bottom:22px;
+
+}
+
+.legal-hero h1{
+
+font-size:64px;
+
+line-height:1;
+
+margin-bottom:20px;
+
+color:white;
+
+}
+
+.legal-hero p{
+
+max-width:850px;
+
+font-size:18px;
+
+line-height:1.8;
+
+color:
+rgba(
+255,
+255,
+255,
+.85
+);
+
+}
+
+.legal-hero small{
+
+display:block;
+
+margin-top:20px;
+
+font-weight:700;
+
+opacity:.8;
+
+}
+
+.legal-layout{
+
+max-width:1300px;
+
+margin:auto;
+
+display:grid;
+
+grid-template-columns:
+290px
+1fr;
+
+gap:28px;
+
+align-items:start;
+
+}
+
+.legal-index{
+
+position:sticky;
+
+top:120px;
+
+background:white;
+
+padding:28px;
+
+border-radius:30px;
+
+box-shadow:
+0 18px 50px
+rgba(7,25,90,.08);
+
+}
+
+.legal-index h3{
+
+color:#07195a;
+
+margin-bottom:18px;
+
+}
+
+.legal-index a{
+
+display:block;
+
+padding:14px;
+
+border-radius:14px;
+
+text-decoration:none;
+
+font-weight:700;
+
+color:#526072;
+
+}
+
+.legal-index a:hover{
+
+background:#f3f6fb;
+
+color:#07195a;
+
+}
+
+.legal-document{
+
+background:white;
+
+padding:60px;
+
+border-radius:34px;
+
+box-shadow:
+0 22px 70px
+rgba(7,25,90,.08);
+
+}
+
+.legal-document section{
+
+padding-bottom:42px;
+
+margin-bottom:42px;
+
+border-bottom:
+1px solid
+#edf1f7;
+
+}
+
+.legal-document section:last-child{
+
+margin-bottom:0;
+
+border:none;
+
+}
+
+.legal-document h2{
+
+font-size:34px;
+
+color:#07195a;
+
+margin-bottom:20px;
+
+}
+
+.legal-document p{
+
+line-height:2;
+
+color:#526072;
+
+font-size:17px;
+
+}
+
+.legal-document ul{
+
+margin-top:18px;
+
+padding-left:25px;
+
+}
+
+.legal-document li{
+
+margin-bottom:12px;
+
+line-height:1.9;
+
+color:#526072;
+
+}
+
+.legal-contact-box{
+
+background:
+linear-gradient(
+135deg,
+#07195a,
+#031344
+);
+
+padding:40px !important;
+
+border-radius:24px;
+
+}
+
+.legal-contact-box h2,
+.legal-contact-box p,
+.legal-contact-box strong,
+.legal-contact-box span{
+
+color:white;
+
+}
+
+.legal-contact-box strong,
+.legal-contact-box span{
+
+display:block;
+
+margin-top:10px;
+
+}
+
+@media(max-width:980px){
+
+.legal-layout{
+
+grid-template-columns:1fr;
+
+}
+
+.legal-index{
+
+position:relative;
+
+top:auto;
+
+}
+
+.legal-document{
+
+padding:34px;
+
+}
+
+.legal-hero h1{
+
+font-size:42px;
+
+}
+
+}
+/* ==========================
+   POLÍTICA PRIVACIDAD
+========================== */
+
+.legal-premium-page {
+  background: #f3f6fb;
+  padding: 150px 30px 100px;
+}
+
+.legal-hero {
+  max-width: 1300px;
+  margin: auto;
+  margin-bottom: 30px;
+  padding: 60px;
+  border-radius: 34px;
+  background:
+    linear-gradient(135deg, rgba(7, 25, 90, 0.96), rgba(3, 19, 68, 0.88)),
+    url("/Fondo-login.png");
+  background-size: cover;
+  background-position: center;
+  color: white;
+  box-shadow: 0 30px 80px rgba(7, 25, 90, 0.18);
+}
+
+.legal-hero span {
+  display: inline-flex;
+  padding: 10px 18px;
+  background: #f47c20;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 22px;
+  text-transform: uppercase;
+}
+
+.legal-hero h1 {
+  font-size: 64px;
+  line-height: 1;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.legal-hero p {
+  max-width: 850px;
+  font-size: 18px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.legal-hero small {
+  display: block;
+  margin-top: 20px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.legal-layout {
+  max-width: 1300px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.legal-index {
+  position: sticky;
+  top: 120px;
+  background: white;
+  padding: 28px;
+  border-radius: 30px;
+  box-shadow: 0 18px 50px rgba(7, 25, 90, 0.08);
+}
+
+.legal-index h3 {
+  color: #07195a;
+  margin-bottom: 18px;
+}
+
+.legal-index a {
+  display: block;
+  padding: 14px;
+  border-radius: 14px;
+  text-decoration: none;
+  font-weight: 700;
+  color: #526072;
+}
+
+.legal-index a:hover {
+  background: #f3f6fb;
+  color: #07195a;
+}
+
+.legal-document {
+  background: white;
+  padding: 60px;
+  border-radius: 34px;
+  box-shadow: 0 22px 70px rgba(7, 25, 90, 0.08);
+}
+
+.legal-document section {
+  padding-bottom: 42px;
+  margin-bottom: 42px;
+  border-bottom: 1px solid #edf1f7;
+}
+
+.legal-document section:last-child {
+  margin-bottom: 0;
+  border: none;
+}
+
+.legal-document h2 {
+  font-size: 34px;
+  color: #07195a;
+  margin-bottom: 20px;
+}
+
+.legal-document p {
+  line-height: 2;
+  color: #526072;
+  font-size: 17px;
+}
+
+.legal-document ul {
+  margin-top: 18px;
+  padding-left: 25px;
+}
+
+.legal-document li {
+  margin-bottom: 12px;
+  line-height: 1.9;
+  color: #526072;
+}
+
+.legal-document strong {
+  color: #07195a;
+}
+
+.legal-contact-box {
+  background: linear-gradient(135deg, #07195a, #031344);
+  padding: 40px !important;
+  border-radius: 24px;
+}
+
+.legal-contact-box h2,
+.legal-contact-box p,
+.legal-contact-box strong,
+.legal-contact-box span {
+  color: white;
+}
+
+.legal-contact-box strong,
+.legal-contact-box span {
+  display: block;
+  margin-top: 10px;
+}
+
+@media (max-width: 980px) {
+  .legal-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .legal-index {
+    position: relative;
+    top: auto;
+  }
+
+  .legal-document {
+    padding: 34px;
+  }
+
+  .legal-hero h1 {
+    font-size: 42px;
+  }
+}

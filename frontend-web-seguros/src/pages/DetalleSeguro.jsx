@@ -157,7 +157,7 @@ ${formulario.comentario || "Sin comentario adicional"}`;
 
           {!mostrarCotizador && (
             <button onClick={() => setMostrarCotizador(true)}>
-              Solicitar cotización
+              Solicitar propuesta
             </button>
           )}
 

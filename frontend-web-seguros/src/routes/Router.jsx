@@ -9,6 +9,7 @@ import Home from "../pages/Home";
 import Nosotros from "../pages/Nosotros";
 import Seguros from "../pages/Seguros";
 import Contacto from "../pages/Contacto";
+import Privacidad from "../pages/Privacidad";
 
 /* Portal */
 import Clientes from "../pages/Clientes";
@@ -29,7 +30,10 @@ export default function Router() {
 
         {/* Sitio público */}
 
-        <Route path="/" element={<Home />} />
+        <Route
+          path="/"
+          element={<Home />}
+        />
 
         <Route
           path="/nosotros"
@@ -44,6 +48,11 @@ export default function Router() {
         <Route
           path="/contacto"
           element={<Contacto />}
+        />
+
+        <Route
+          path="/privacidad"
+          element={<Privacidad />}
         />
 
         {/* Portal */}

@@ -107,11 +107,6 @@ function Header() {
             className="login-item"
             onClick={cerrarBusqueda}
           >
-            <img
-              src="/icon-edificio.png"
-              alt=""
-              className="login-icon"
-            />
 
             <span>Ejecutivo Comercial</span>
           </Link>
@@ -121,11 +116,6 @@ function Header() {
             className="login-item"
             onClick={cerrarBusqueda}
           >
-            <img
-              src="/icon-cliente.png"
-              alt=""
-              className="login-icon"
-            />
 
             <span>Clientes</span>
           </Link>

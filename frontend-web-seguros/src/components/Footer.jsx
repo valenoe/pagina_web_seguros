@@ -27,8 +27,9 @@ function Footer() {
           <h3>Empresa</h3>
           <Link to="/nosotros">Nosotros</Link>
           <Link to="/seguros">Seguros</Link>
-          <Link to="/clientes">Clientes</Link>
           <Link to="/contacto">Contacto</Link>
+          <Link to="/privacidad">Política de Privacidad</Link>
+          <Link to="/terminos">Términos y Condiciones</Link>
         </div>
 
         <div className="footer-column">
@@ -43,9 +44,7 @@ function Footer() {
             Mi sucursal: Pje. Uno y Medio Nte. 4035
           </a>
 
-          <a
-            href="mailto:amorales@prietocorrea.cl"
-          >
+          <a href="mailto:amorales@prietocorrea.cl">
             <img src="/correo-electronico.png" alt="" />
             amorales@prietocorrea.cl
           </a>
