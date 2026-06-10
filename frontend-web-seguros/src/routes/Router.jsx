@@ -1,46 +1,103 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
 
+import ScrollToTop from "../components/ScrollToTop";
+
+/* Públicas */
 import Home from "../pages/Home";
 import Nosotros from "../pages/Nosotros";
 import Seguros from "../pages/Seguros";
 import Contacto from "../pages/Contacto";
+import Privacidad from "../pages/Privacidad";
+
+/* Portal */
 import Clientes from "../pages/Clientes";
 import LoginClientes from "../pages/LoginClientes";
 import RegistroClientes from "../pages/RegistroClientes";
 import Dashboard from "../pages/Dashboard";
 import DetalleSeguro from "../pages/DetalleSeguro";
+
+/* Cotizaciones */
 import Cotizador from "../pages/Cotizador";
 import CotizacionExitosa from "../pages/CotizacionExitosa";
 
-function Router() {
+export default function Router() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
-        <Route path="/" element={<Home />} />
 
-        <Route path="/nosotros" element={<Nosotros />} />
+        {/* Sitio público */}
 
-        <Route path="/seguros" element={<Seguros />} />
+        <Route
+          path="/"
+          element={<Home />}
+        />
 
-        <Route path="/contacto" element={<Contacto />} />
+        <Route
+          path="/nosotros"
+          element={<Nosotros />}
+        />
 
-        <Route path="/clientes" element={<Clientes />} />
+        <Route
+          path="/seguros"
+          element={<Seguros />}
+        />
 
-        <Route path="/login-clientes" element={<LoginClientes />} />
+        <Route
+          path="/contacto"
+          element={<Contacto />}
+        />
 
-        <Route path="/registro-clientes" element={<RegistroClientes />} />
+        <Route
+          path="/privacidad"
+          element={<Privacidad />}
+        />
 
-        <Route path="/clientes/dashboard" element={<Dashboard />} />
+        {/* Portal */}
 
-        <Route path="/clientes/seguro/:id" element={<DetalleSeguro />} />
-        <Route path="/registro-clientes" element={<RegistroClientes />} />
+        <Route
+          path="/clientes"
+          element={<Clientes />}
+        />
 
-        <Route path="/cotizador" element={<Cotizador />} />
+        <Route
+          path="/login-clientes"
+          element={<LoginClientes />}
+        />
 
-        <Route path="/cotizacion-exitosa" element={<CotizacionExitosa />} />
+        <Route
+          path="/registro-clientes"
+          element={<RegistroClientes />}
+        />
+
+        <Route
+          path="/clientes/dashboard"
+          element={<Dashboard />}
+        />
+
+        <Route
+          path="/clientes/seguro/:id"
+          element={<DetalleSeguro />}
+        />
+
+        {/* Cotizador */}
+
+        <Route
+          path="/cotizador"
+          element={<Cotizador />}
+        />
+
+        <Route
+          path="/cotizacion-exitosa"
+          element={<CotizacionExitosa />}
+        />
+
       </Routes>
+
     </BrowserRouter>
   );
 }
-
-export default Router;

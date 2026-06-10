@@ -1,41 +1,26 @@
-import { useEffect, useState } from "react";
-import { getMiPerfil } from "../services/api";
+function PerfilCliente() {
+  const nombreCliente = localStorage.getItem("nombre_cliente") || "Cliente";
 
-const TIPO_LABEL = { persona: "Persona natural", empresa: "Empresa" };
+  const perfil = {
+    nombre: nombreCliente,
+    rut: localStorage.getItem("rut_cliente") || "12.456.789-3",
+    correo: localStorage.getItem("correo_cliente") || "correo@cliente.cl",
+    telefono: localStorage.getItem("telefono_cliente") || "+56 9 0000 0000",
+    tipoCliente: localStorage.getItem("tipo_cliente") || "Persona natural",
+  };
 
-function PerfilCliente({ perfil: perfilProp }) {
-  const [perfil, setPerfil] = useState(perfilProp || null);
-  const [cargando, setCargando] = useState(!perfilProp);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (perfilProp) {
-      setPerfil(perfilProp);
-      setCargando(false);
-      return;
-    }
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("Sin sesión activa.");
-      setCargando(false);
-      return;
-    }
-    getMiPerfil(token)
-      .then(setPerfil)
-      .catch(() => setError("No se pudo cargar el perfil."))
-      .finally(() => setCargando(false));
-  }, [perfilProp]);
-
-  if (cargando) return <p className="cargando">Cargando perfil...</p>;
-  if (error) return <p className="form-error">{error}</p>;
-  if (!perfil) return null;
+  function cambiarPassword() {
+    alert("Función pendiente de conectar con backend.");
+  }
 
   return (
     <div className="perfil-cliente">
       <div className="perfil-cliente-header">
         <span>Perfil cliente</span>
-        <h2>Hola, {perfil.nombre_o_razon_social}</h2>
-        <p>Revisa tus datos de contacto y la información asociada a tu cuenta.</p>
+        <h2>Hola, {perfil.nombre} 👋</h2>
+        <p>
+          Revisa tus datos de contacto y la información asociada a tu cuenta.
+        </p>
       </div>
 
       <div className="perfil-cliente-grid">
@@ -46,17 +31,17 @@ function PerfilCliente({ perfil: perfilProp }) {
 
         <div className="perfil-cliente-card">
           <small>Correo</small>
-          <strong>{perfil.email || "—"}</strong>
+          <strong>{perfil.correo}</strong>
         </div>
 
         <div className="perfil-cliente-card">
           <small>Teléfono</small>
-          <strong>{perfil.telefono || "—"}</strong>
+          <strong>{perfil.telefono}</strong>
         </div>
 
         <div className="perfil-cliente-card">
           <small>Tipo cliente</small>
-          <strong>{TIPO_LABEL[perfil.tipo_cliente] || perfil.tipo_cliente}</strong>
+          <strong>{perfil.tipoCliente}</strong>
         </div>
       </div>
 
@@ -64,9 +49,13 @@ function PerfilCliente({ perfil: perfilProp }) {
         <div>
           <span>Seguridad</span>
           <h3>Cambiar contraseña</h3>
-          <p>Próximamente podrás actualizar tu contraseña directamente desde el portal.</p>
+          <p>
+            Próximamente podrás actualizar tu contraseña directamente desde el
+            portal.
+          </p>
         </div>
-        <button>Cambiar contraseña</button>
+
+        <button onClick={cambiarPassword}>Cambiar contraseña</button>
       </div>
     </div>
   );

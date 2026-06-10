@@ -1,38 +1,264 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getMisCotizaciones, getMisPolizas, getMiPerfil, obtenerSeguros } from "../services/api";
-import PerfilCliente from "./PerfilClientes";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  getMiCuenta,
+  getMisAlertas,
+  getMisBeneficiarios,
+  getMisBeneficios,
+  getMisCoberturas,
+  getMisCotizaciones,
+  getMisDocumentos,
+  getMisPagos,
+  getMisPolizas,
+  getMisSiniestros,
+  subirFotoPerfil,
+} from "../services/api";
+
+const VISTAS_PERMITIDAS = [
+  "Resumen",
+  "mis-seguros",
+  "polizas",
+  "siniestro",
+  "cuotas",
+  "beneficios",
+  "documentos",
+  "cotizaciones",
+  "beneficiarios",
+  "perfil",
+];
+
+function obtenerVistaDesdeRuta(location) {
+  const params = new URLSearchParams(location.search);
+  const vistaUrl = params.get("vista");
+  const vistaState = location.state?.vista;
+
+  if (VISTAS_PERMITIDAS.includes(vistaState)) return vistaState;
+  if (VISTAS_PERMITIDAS.includes(vistaUrl)) return vistaUrl;
+
+  return null;
+}
 
 function Dashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  function iconoSeguro(nombre) {
-    if (!nombre) return "🛡";
-    const n = nombre.toLowerCase();
-    if (n.includes("auto")) return "🚗";
-    if (n.includes("rci") || n.includes("argentin")) return "🇦🇷";
-    if (n.includes("soap")) return "🛡";
-    if (n.includes("hogar")) return "🏠";
-    if (n.includes("mujer")) return "👩";
-    if (n.includes("accidente")) return "🧑";
-    if (n.includes("viaje")) return "✈️";
-    if (n.includes("mascota")) return "🐾";
-    if (n.includes("garantí") || n.includes("garanti")) return "📄";
-    return "🛡";
-  }
+  const nombreClienteGuardado = localStorage.getItem("nombre_cliente") || "";
+  const nombreCliente =
+    nombreClienteGuardado && !/[0-9]/.test(nombreClienteGuardado)
+      ? nombreClienteGuardado
+      : "Matías";
+  const primerNombreCliente = nombreCliente.split(" ")[0] || "Matías";
 
-  const params = new URLSearchParams(window.location.search);
-  const vistaInicial = params.get("vista") || "resumen";
-
-  const [perfil, setPerfil] = useState(null);
   const [cotizaciones, setCotizaciones] = useState([]);
   const [polizas, setPolizas] = useState([]);
-  const [seguros, setSeguros] = useState([]);
-  const [vista, setVista] = useState(vistaInicial);
+  const [coberturas, setCoberturas] = useState([]);
+  const [beneficiarios, setBeneficiarios] = useState([]);
+  const [beneficios, setBeneficios] = useState([]);
+  const [categoriaBeneficioActiva, setCategoriaBeneficioActiva] =
+    useState("todos");
+  const [beneficioSlide, setBeneficioSlide] = useState(0);
+  const [documentos, setDocumentos] = useState([]);
+  const [pagos, setPagos] = useState([]);
+  const [alertas, setAlertas] = useState([]);
+  const [siniestros, setSiniestros] = useState([]);
+  const [notificacionesAbiertas, setNotificacionesAbiertas] = useState(false);
+  const [vista, setVista] = useState(
+    () => obtenerVistaDesdeRuta(location) || "resumen",
+  );
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [seguroDetalleId, setSeguroDetalleId] = useState(null);
+  const [seguroSlide, setSeguroSlide] = useState(0);
+  const [filtroSeguros, setFiltroSeguros] = useState("todos");
+  const [ordenSeguros, setOrdenSeguros] = useState("recomendados");
+  const [segurosPorVista, setSegurosPorVista] = useState(3);
+  const [cotizacionCompacta, setCotizacionCompacta] = useState({
+    detalle: "",
+    comentario: "",
+  });
 
-  const nombreCliente = perfil?.nombre_o_razon_social || "Cliente";
+  const [filtrosDocumentos, setFiltrosDocumentos] = useState({
+    busqueda: "",
+    seguro: "todos",
+    tipo: "todos",
+    estado: "todos",
+  });
+
+  const [tabMisSeguros, setTabMisSeguros] = useState("coberturas");
+
+  const [documentoSeleccionado, setDocumentoSeleccionado] = useState(null);
+  const [polizaReporteId, setPolizaReporteId] = useState("");
+  const [siniestroSeleccionadoId, setSiniestroSeleccionadoId] = useState("");
+  const [reporteSiniestroActivo, setReporteSiniestroActivo] = useState(false);
+  const [paginaSiniestros, setPaginaSiniestros] = useState(1);
+
+  const [avatarPerfil, setAvatarPerfil] = useState(
+    localStorage.getItem("avatar_cliente") || "",
+  );
+  const [editandoPerfil, setEditandoPerfil] = useState(false);
+  const [modalClaveAbierto, setModalClaveAbierto] = useState(false);
+  const [pasoClave, setPasoClave] = useState("inicio");
+  const [codigoSeguridad, setCodigoSeguridad] = useState("");
+  const [codigoIngresado, setCodigoIngresado] = useState("");
+  const [nuevaClave, setNuevaClave] = useState("");
+  const [confirmarClave, setConfirmarClave] = useState("");
+  const [mensajePerfil, setMensajePerfil] = useState("");
+  const [datosPerfil, setDatosPerfil] = useState(() => ({
+    nombre: localStorage.getItem("nombre_cliente") || "Cliente",
+    rut: localStorage.getItem("rut_cliente") || "",
+    correo: localStorage.getItem("correo_cliente") || "",
+    telefono: localStorage.getItem("telefono_cliente") || "",
+    direccion: localStorage.getItem("direccion_cliente") || "",
+  }));
+  const [preferenciasPerfil, setPreferenciasPerfil] = useState({
+    email: true,
+    whatsapp: true,
+    vencimientos: true,
+    documentos: true,
+    siniestros: true,
+    pagos: false,
+  });
+
+  const nombreVisible = datosPerfil.nombre || nombreCliente || "Cliente";
+  const primerNombreVisible = nombreVisible.split(" ")[0] || "Cliente";
+  const inicialVisible = primerNombreVisible.charAt(0).toUpperCase();
+
+  useEffect(() => {
+    const vistaRuta = obtenerVistaDesdeRuta(location);
+    if (vistaRuta) setVista(vistaRuta);
+  }, [location]);
+
+  useEffect(() => {
+    function ajustarSegurosPorVista() {
+      if (window.innerWidth <= 700) {
+        setSegurosPorVista(1);
+        return;
+      }
+
+      if (window.innerWidth <= 1250) {
+        setSegurosPorVista(2);
+        return;
+      }
+
+      setSegurosPorVista(3);
+    }
+
+    ajustarSegurosPorVista();
+    window.addEventListener("resize", ajustarSegurosPorVista);
+
+    return () => window.removeEventListener("resize", ajustarSegurosPorVista);
+  }, []);
+
+  useEffect(() => {
+    setSeguroSlide(0);
+  }, [filtroSeguros, ordenSeguros, segurosPorVista]);
+
+  useEffect(() => {
+    const intervalo = window.setInterval(() => {
+      setBeneficioSlide((actual) => actual + 1);
+    }, 5000);
+
+    return () => window.clearInterval(intervalo);
+  }, []);
+
+  const segurosDisponibles = [
+    {
+      id: "autos",
+      nombre: "Seguro de Autos",
+      categoria: "Vehículos",
+      descripcion:
+        "Cobertura para accidentes, daños materiales, robo y responsabilidad civil.",
+      foto: "/foto-seguro-auto.png",
+      precioUf: "Desde 2,45 UF / mes",
+      precioClp: "Aprox. $95.130 CLP / mes",
+      cubre: [
+        "Robo",
+        "Accidentes",
+        "Daños materiales",
+        "Responsabilidad civil",
+      ],
+    },
+    {
+      id: "rci-argentina",
+      nombre: "Responsabilidad Civil Internacional",
+      categoria: "Vehículos",
+      descripcion:
+        "Seguro obligatorio para vehículos que cruzan hacia Argentina.",
+      foto: "/foto-RCI.png",
+      precioUf: "Desde 0,17 UF / día",
+      precioClp: "Valor referencial según UF diaria",
+      cubre: [
+        "Daños a terceros",
+        "Ingreso a Argentina",
+        "Cobertura internacional",
+      ],
+    },
+    {
+      id: "soap",
+      nombre: "SOAP",
+      categoria: "Vehículos",
+      descripcion:
+        "Seguro obligatorio para accidentes personales causados por vehículos motorizados.",
+      foto: "/foto-soap.png",
+      precioUf: "Valor anual",
+      precioClp: "Según tipo de vehículo",
+      cubre: ["Muerte accidental", "Gastos médicos", "Incapacidad"],
+    },
+    {
+      id: "hogar",
+      nombre: "Seguro de Hogar",
+      categoria: "Personas",
+      descripcion:
+        "Protección para vivienda, incendio, sismo, daños y asistencias del hogar.",
+      foto: "/foto-hogar.png",
+      precioUf: "Según Evaluación",
+      precioClp: "Según características del hogar",
+      cubre: ["Incendio", "Sismo", "Robo", "Daños en estructura"],
+    },
+    {
+      id: "mascotas",
+      nombre: "Seguro de Mascotas",
+      categoria: "Personas",
+      descripcion:
+        "Cobertura veterinaria para perros y gatos ante accidentes y enfermedades.",
+      foto: "/foto-mascota.png",
+      precioUf: "Desde 0,15 UF / mes",
+      precioClp: "Según plan contratado",
+      cubre: ["Accidentes", "Enfermedades", "Atención veterinaria"],
+    },
+    {
+      id: "viaje",
+      nombre: "Asistencia en Viaje",
+      categoria: "Personas",
+      descripcion:
+        "Asistencia médica, hospitalización, repatriación y apoyo en viajes internacionales.",
+      foto: "/foto-asistencia-viaje-foto.png",
+      precioUf: "Desde 0,32 UF / año",
+      precioClp: "Valor referencial anual",
+      cubre: ["Asistencia médica", "Repatriación", "Pérdida de equipaje"],
+    },
+    {
+      id: "mujer",
+      nombre: "Mujer Segura",
+      categoria: "Personas",
+      descripcion: "Seguro de accidentes personales orientado a mujeres.",
+      foto: "/foto-mujer-segura.png",
+      precioUf: "0,33 UF / año",
+      precioClp: "Valor referencial anual",
+      cubre: ["Muerte accidental", "Incapacidad", "Desmembramiento"],
+    },
+    {
+      id: "garantias",
+      nombre: "Seguro de Garantías",
+      categoria: "Empresas y otros",
+      descripcion:
+        "Cubre compromisos contractuales, licitaciones, obras y obligaciones con terceros.",
+      foto: "/foto-garantia.png",
+      precioUf: "Según evaluación",
+      precioClp: "Cotización personalizada",
+      cubre: ["Fiel cumplimiento", "Licitaciones", "Seriedad de oferta"],
+    },
+  ];
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -44,17 +270,157 @@ function Dashboard() {
 
     async function cargarDatos() {
       try {
-        const [cots, pols, segs, perf] = await Promise.all([
+        const [
+          cuentaResult,
+          alertasResult,
+          cotsResult,
+          polsResult,
+          cobResult,
+          benResult,
+          docsResult,
+          pagosResult,
+          beneficiosResult,
+          siniestrosResult,
+        ] = await Promise.allSettled([
+          getMiCuenta(token),
+          getMisAlertas(token),
           getMisCotizaciones(token),
           getMisPolizas(token),
-          obtenerSeguros(),
-          getMiPerfil(token),
+          getMisCoberturas(token),
+          getMisBeneficiarios(token),
+          getMisDocumentos(token),
+          getMisPagos(token),
+          getMisBeneficios(token),
+          getMisSiniestros(token),
         ]);
 
-        setCotizaciones(Array.isArray(cots) ? cots : []);
-        setPolizas(Array.isArray(pols) ? pols : []);
-        setSeguros(Array.isArray(segs) ? segs : []);
-        setPerfil(perf);
+        if (cuentaResult.status === "fulfilled" && cuentaResult.value) {
+          const cuenta = cuentaResult.value;
+
+          const nombreCuenta =
+            cuenta.nombre ||
+            cuenta.nombre_o_razon_social ||
+            cuenta.razon_social ||
+            cuenta.cliente?.nombre_o_razon_social ||
+            datosPerfil.nombre;
+
+          const rutCuenta =
+            cuenta.rut ||
+            cuenta.rut_cliente ||
+            cuenta.cliente?.rut ||
+            datosPerfil.rut;
+
+          const correoCuenta =
+            cuenta.correo ||
+            cuenta.email ||
+            cuenta.cliente?.email ||
+            datosPerfil.correo;
+
+          const telefonoCuenta =
+            cuenta.telefono ||
+            cuenta.celular ||
+            cuenta.cliente?.telefono ||
+            datosPerfil.telefono;
+
+          const direccionCuenta =
+            cuenta.direccion ||
+            cuenta.domicilio ||
+            cuenta.cliente?.direccion ||
+            datosPerfil.direccion;
+
+          setDatosPerfil((actual) => ({
+            ...actual,
+            nombre: nombreCuenta || actual.nombre,
+            rut: rutCuenta || actual.rut,
+            correo: correoCuenta || actual.correo,
+            telefono: telefonoCuenta || actual.telefono,
+            direccion: direccionCuenta || actual.direccion,
+          }));
+
+          if (nombreCuenta)
+            localStorage.setItem("nombre_cliente", nombreCuenta);
+          if (rutCuenta) localStorage.setItem("rut_cliente", rutCuenta);
+          if (correoCuenta)
+            localStorage.setItem("correo_cliente", correoCuenta);
+          if (telefonoCuenta)
+            localStorage.setItem("telefono_cliente", telefonoCuenta);
+          if (direccionCuenta)
+            localStorage.setItem("direccion_cliente", direccionCuenta);
+
+          const fotoRaw =
+            cuenta.avatar_url ||
+            cuenta.foto_perfil ||
+            cuenta.foto ||
+            cuenta.cliente?.foto_perfil;
+
+          if (fotoRaw) {
+            const API_BASE =
+              import.meta.env.VITE_API_URL || "http://localhost:8000";
+            const fotoCuenta = fotoRaw.startsWith("http")
+              ? fotoRaw
+              : `${API_BASE}${fotoRaw}`;
+            setAvatarPerfil(fotoCuenta);
+            localStorage.setItem("avatar_cliente", fotoCuenta);
+          } else {
+            setAvatarPerfil("");
+            localStorage.removeItem("avatar_cliente");
+          }
+        }
+
+        if (alertasResult.status === "fulfilled") {
+          setAlertas(
+            Array.isArray(alertasResult.value) ? alertasResult.value : [],
+          );
+        }
+
+        if (cotsResult.status === "fulfilled") {
+          setCotizaciones(
+            Array.isArray(cotsResult.value) ? cotsResult.value : [],
+          );
+        }
+
+        if (polsResult.status === "fulfilled") {
+          setPolizas(Array.isArray(polsResult.value) ? polsResult.value : []);
+        }
+
+        if (cobResult.status === "fulfilled") {
+          setCoberturas(Array.isArray(cobResult.value) ? cobResult.value : []);
+        }
+
+        if (benResult.status === "fulfilled") {
+          setBeneficiarios(
+            Array.isArray(benResult.value) ? benResult.value : [],
+          );
+        }
+
+        if (docsResult.status === "fulfilled") {
+          setDocumentos(
+            Array.isArray(docsResult.value) ? docsResult.value : [],
+          );
+        }
+
+        if (pagosResult.status === "fulfilled") {
+          setPagos(Array.isArray(pagosResult.value) ? pagosResult.value : []);
+        }
+
+        if (beneficiosResult.status === "fulfilled") {
+          setBeneficios(
+            Array.isArray(beneficiosResult.value) ? beneficiosResult.value : [],
+          );
+        }
+
+        if (siniestrosResult.status === "fulfilled") {
+          setSiniestros(
+            Array.isArray(siniestrosResult.value) ? siniestrosResult.value : [],
+          );
+        }
+
+        if (
+          cotsResult.status === "rejected" &&
+          polsResult.status === "rejected"
+        ) {
+          throw new Error("Sesión expirada");
+        }
       } catch {
         setError("Sesión expirada. Vuelve a ingresar.");
         localStorage.removeItem("token");
@@ -68,16 +434,29 @@ function Dashboard() {
   }, [navigate]);
 
   function cerrarSesion() {
-    localStorage.removeItem("token");
+    [
+      "token",
+      "nombre_cliente",
+      "rut_cliente",
+      "correo_cliente",
+      "telefono_cliente",
+      "direccion_cliente",
+      "tipo_cliente",
+      "avatar_cliente",
+    ].forEach((k) => localStorage.removeItem(k));
     navigate("/login-clientes");
   }
 
-  function irASeguros() {
-    navigate("/seguros");
-  }
-
-  function verDetalleSeguro(nombreSeguro) {
-    navigate(`/clientes/seguro/${encodeURIComponent(nombreSeguro)}`);
+  function abrirWhatsApp(
+    mensaje = "Hola, necesito ayuda con mi portal de seguros.",
+  ) {
+    const telefono = "56966541939";
+    const texto = encodeURIComponent(mensaje);
+    window.open(
+      `https://wa.me/${telefono}?text=${texto}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   }
 
   function formatearFecha(fecha) {
@@ -86,9 +465,7 @@ function Dashboard() {
   }
 
   function calcularEstado(poliza) {
-    if (!poliza.fecha_vencimiento) {
-      return poliza.estado || "vigente";
-    }
+    if (!poliza.fecha_vencimiento) return poliza.estado || "vigente";
 
     const hoy = new Date();
     const vencimiento = new Date(poliza.fecha_vencimiento);
@@ -105,156 +482,991 @@ function Dashboard() {
     return estado || "Vigente";
   }
 
-  function textoEstadoCotizacion(estado) {
-    if (!estado) return "Pendiente";
+  const segurosFiltrados = segurosDisponibles.filter((seguro) => {
+    if (filtroSeguros === "todos") return true;
+    if (filtroSeguros === "vehiculos") return seguro.categoria === "Vehículos";
+    if (filtroSeguros === "personas") return seguro.categoria === "Personas";
+    if (filtroSeguros === "hogar") return seguro.id === "hogar";
+    if (filtroSeguros === "empresas")
+      return seguro.categoria === "Empresas y otros";
+    if (filtroSeguros === "internacional") {
+      return (
+        seguro.id === "rci-argentina" ||
+        seguro.id === "viaje" ||
+        seguro.nombre.toLowerCase().includes("internacional")
+      );
+    }
 
-    const estadoNormalizado = estado.toLowerCase();
+    return true;
+  });
 
-    if (estadoNormalizado === "pendiente") return "Pendiente";
-    if (estadoNormalizado === "aprobada") return "Aprobada";
-    if (estadoNormalizado === "rechazada") return "Rechazada";
-    if (estadoNormalizado === "en revision") return "En revisión";
-    if (estadoNormalizado === "en_revision") return "En revisión";
-    if (estadoNormalizado === "emitida") return "Emitida";
+  const segurosOrdenados = [...segurosFiltrados].sort((a, b) => {
+    if (ordenSeguros === "categoria")
+      return a.categoria.localeCompare(b.categoria);
+    if (ordenSeguros === "precio") return a.precioUf.localeCompare(b.precioUf);
+    return (
+      segurosDisponibles.findIndex((seguro) => seguro.id === a.id) -
+      segurosDisponibles.findIndex((seguro) => seguro.id === b.id)
+    );
+  });
 
-    return estado;
+  const totalPaginasSeguros = Math.max(
+    Math.ceil(segurosOrdenados.length / segurosPorVista),
+    1,
+  );
+  const paginaSeguroActual = Math.min(seguroSlide, totalPaginasSeguros - 1);
+  const mostrarFlechasSeguros = totalPaginasSeguros > 1;
+  const segurosVisiblesCarrusel = segurosOrdenados.slice(
+    paginaSeguroActual * segurosPorVista,
+    paginaSeguroActual * segurosPorVista + segurosPorVista,
+  );
+
+  function avanzarSeguros() {
+    setSeguroSlide((prev) => Math.min(prev + 1, totalPaginasSeguros - 1));
   }
 
-  function claseEstadoCotizacion(estado) {
-    if (!estado) return "pendiente";
-
-    return estado.toLowerCase().replaceAll(" ", "-").replaceAll("_", "-");
+  function retrocederSeguros() {
+    setSeguroSlide((prev) => Math.max(prev - 1, 0));
   }
 
-  function logoCompania(compania) {
-    if (!compania) return "/Logo Prieto.png";
-
-    const nombre = compania.toLowerCase();
-
-    if (nombre.includes("hdi")) return "/HDI.png";
-    if (nombre.includes("bci")) return "/BCI.png";
-    if (nombre.includes("sura")) return "/SURA.png";
-    if (nombre.includes("mapfre")) return "/MAPFRE.png";
-    if (nombre.includes("zurich")) return "/Zurich.png";
-    if (nombre.includes("chubb")) return "/Chubb.png";
-    if (nombre.includes("consorcio")) return "/Consorcio.png";
-    if (nombre.includes("contempora")) return "/Contempora.png";
-    if (nombre.includes("continental")) return "/Continental.png";
-    if (nombre.includes("fid")) return "/FID Seguros.png";
-    if (nombre.includes("orsan")) return "/Orsan.png";
-    if (nombre.includes("reale")) return "/Reale.png";
-    if (nombre.includes("renta")) return "/Renta Nacional.png";
-    if (nombre.includes("southbridge")) return "/Southbridge.png";
-    if (nombre.includes("avla")) return "/AVLA.png";
-    if (nombre.includes("aspor")) return "/ASPOR.png";
-
-    return "/Logo Prieto.png";
+  function irASlideSeguro(index) {
+    setSeguroSlide(Math.min(Math.max(index, 0), totalPaginasSeguros - 1));
   }
 
-  const polizasActivas = polizas.filter(
-    (p) => p.estado === "activa" || p.estado === "vigente"
+  function cambiarFiltroSeguros(nuevoFiltro) {
+    setFiltroSeguros(nuevoFiltro);
+  }
+
+  function abrirDetalleCotizacion(idSeguro) {
+    setSeguroDetalleId(idSeguro);
+    setVista("cotizaciones");
+  }
+
+  function volverACotizaciones() {
+    setSeguroDetalleId(null);
+    setCotizacionCompacta({
+      detalle: "",
+      comentario: "",
+    });
+  }
+
+  function actualizarCotizacionCompacta(e) {
+    const { name, value } = e.target;
+
+    setCotizacionCompacta((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
+  function crearMensajeCotizacion(seguro) {
+    return `Hola, soy cliente de Prieto & Correa Seguros.
+
+Quiero solicitar una cotización desde mi portal.
+
+Seguro solicitado:
+${seguro.nombre}
+
+Categoría:
+${seguro.categoria}
+
+Datos del cliente:
+Nombre: ${nombreCliente}
+RUT: ${localStorage.getItem("rut_cliente") || "No informado"}
+Correo: ${localStorage.getItem("correo_cliente") || "No informado"}
+Teléfono: ${localStorage.getItem("telefono_cliente") || "No informado"}
+
+Datos principales:
+${cotizacionCompacta.detalle || "No informado"}
+
+Comentario adicional:
+${cotizacionCompacta.comentario || "Sin comentario adicional"}`;
+  }
+
+  function enviarCotizacionCompacta(e, seguro) {
+    e.preventDefault();
+    abrirWhatsApp(crearMensajeCotizacion(seguro));
+  }
+
+  function enviarCotizacionPorCorreo(seguro) {
+    const destinatario = "cotizaciones@prietocorrea.cl";
+    const asunto = `Solicitud de cotización - ${seguro.nombre}`;
+    const cuerpo = crearMensajeCotizacion(seguro);
+
+    window.location.href = `mailto:${destinatario}?subject=${encodeURIComponent(
+      asunto,
+    )}&body=${encodeURIComponent(cuerpo)}`;
+  }
+
+  function actualizarFiltroDocumento(e) {
+    const { name, value } = e.target;
+
+    setFiltrosDocumentos((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
+  function solicitarDocumentoPorCorreo(documento) {
+    const destinatario = "cotizaciones@prietocorrea.cl";
+    const asunto = `Solicitud de documento - ${documento.nombre}`;
+    const cuerpo = `Hola, soy cliente de Prieto & Correa Seguros.
+
+Necesito solicitar el siguiente documento desde mi portal.
+
+Documento:
+${documento.nombre}
+
+Seguro / Póliza:
+${documento.seguro}
+
+Tipo:
+${documento.tipo}
+
+Estado:
+${documento.estado}
+
+Datos del cliente:
+Nombre: ${nombreCliente}
+RUT: ${localStorage.getItem("rut_cliente") || "No informado"}
+Correo: ${localStorage.getItem("correo_cliente") || "No informado"}
+Teléfono: ${localStorage.getItem("telefono_cliente") || "No informado"}
+
+Quedo atento/a a su gestión.`;
+
+    window.location.href = `mailto:${destinatario}?subject=${encodeURIComponent(
+      asunto,
+    )}&body=${encodeURIComponent(cuerpo)}`;
+  }
+
+  function descargarDocumento(documento) {
+    if (documento.estado !== "Disponible") {
+      alert("Este documento todavía no está disponible para descarga.");
+      return;
+    }
+
+    alert(`Descarga simulada: ${documento.nombre}`);
+  }
+
+  function contactarEjecutivoDocumento(documento) {
+    abrirWhatsApp(`Hola, necesito ayuda con un documento de mi portal.
+
+Documento: ${documento.nombre}
+Seguro / Póliza: ${documento.seguro}
+Estado: ${documento.estado}`);
+  }
+
+  function abrirPreviewDocumento(documento) {
+    setDocumentoSeleccionado(documento);
+  }
+
+  function obtenerDetalleSeguro(seguro) {
+    return {
+      coberturas: seguro.cubre || [],
+      beneficios: [
+        "Asesoría directa con ejecutivo",
+        "Cotización con distintas compañías",
+        "Apoyo en renovación de póliza",
+        "Orientación personalizada",
+      ],
+      requisitos: [
+        "Datos del cliente actualizados",
+        "Antecedentes necesarios según el seguro",
+        "Evaluación de la compañía",
+      ],
+    };
+  }
+
+  function normalizarEstado(estado = "") {
+    const estadoLimpio = String(estado || "")
+      .toLowerCase()
+      .trim();
+    if (["activa", "activo", "vigente"].includes(estadoLimpio))
+      return "vigente";
+    if (
+      ["por vencer", "por-vencer", "proxima", "próxima"].includes(estadoLimpio)
+    )
+      return "por-vencer";
+    if (["vencida", "caducada", "inactiva", "anulada"].includes(estadoLimpio))
+      return "vencida";
+    return estadoLimpio || "vigente";
+  }
+
+  function obtenerNombreSeguroDesdePoliza(poliza, index = 0) {
+    return (
+      poliza.seguro?.nombre ||
+      poliza.nombre_seguro ||
+      poliza.seguro_nombre ||
+      `Seguro asociado ${index + 1}`
+    );
+  }
+
+  function obtenerNumeroPoliza(poliza, index = 0) {
+    return (
+      poliza.numero_poliza ||
+      poliza.numero ||
+      `POL-${String(index + 1).padStart(4, "0")}`
+    );
+  }
+
+  function normalizarPoliza(poliza, index = 0) {
+    const nombreSeguro = obtenerNombreSeguroDesdePoliza(poliza, index);
+    const numeroPoliza = obtenerNumeroPoliza(poliza, index);
+
+    return {
+      id: poliza.id_poliza || poliza.id || `poliza-${index}`,
+      id_poliza: poliza.id_poliza || poliza.id,
+      seguro: nombreSeguro,
+      categoria: poliza.seguro?.categoria || poliza.categoria || "Seguro",
+      numero_poliza: numeroPoliza,
+      compania: poliza.compania || "Compañía no informada",
+      estado: normalizarEstado(calcularEstado(poliza) || poliza.estado),
+      fecha_inicio: poliza.fecha_inicio || "",
+      fecha_vencimiento: poliza.fecha_vencimiento || "",
+      prima: poliza.prima || poliza.valor_prima || null,
+      origen: poliza.origen || "portal",
+      raw: poliza,
+    };
+  }
+
+  const polizasNormalizadas = polizas.map(normalizarPoliza);
+
+  const polizasActivas = polizasNormalizadas.filter(
+    (p) => p.estado === "vigente" || p.estado === "activa",
   ).length;
 
   const companiasAsociadas = [
-    ...new Set(polizas.map((p) => p.compania).filter(Boolean)),
+    ...new Set(polizasNormalizadas.map((p) => p.compania).filter(Boolean)),
   ].length;
 
+  const proximaPoliza = [...polizasNormalizadas]
+    .filter((p) => p.fecha_vencimiento)
+    .sort(
+      (a, b) => new Date(a.fecha_vencimiento) - new Date(b.fecha_vencimiento),
+    )[0];
+
+  const beneficiariosNormalizados =
+    beneficiarios.length > 0
+      ? beneficiarios.map((beneficiario, index) => ({
+          id:
+            beneficiario.id_beneficiario ||
+            beneficiario.id ||
+            `beneficiario-${index}`,
+          seguro:
+            beneficiario.seguro ||
+            beneficiario.nombre_seguro ||
+            beneficiario.poliza?.seguro?.nombre ||
+            "Seguro asociado",
+          poliza:
+            beneficiario.numero_poliza ||
+            beneficiario.poliza?.numero_poliza ||
+            beneficiario.poliza ||
+            "—",
+          nombre: beneficiario.nombre || "Beneficiario",
+          rut: beneficiario.rut || "—",
+          relacion: beneficiario.relacion || "No informado",
+          porcentaje: beneficiario.porcentaje
+            ? `${beneficiario.porcentaje}%`
+            : "Según póliza",
+          estado: beneficiario.estado || "activo",
+        }))
+      : polizas.flatMap((poliza, index) => {
+          const nombreSeguro = obtenerNombreSeguroDesdePoliza(poliza, index);
+          const numeroPoliza = obtenerNumeroPoliza(poliza, index);
+          const beneficiariosPoliza = poliza.beneficiarios || [];
+
+          return beneficiariosPoliza.map((beneficiario, bIndex) => ({
+            id:
+              beneficiario.id_beneficiario ||
+              `${poliza.id_poliza || index}-${bIndex}`,
+            seguro: nombreSeguro,
+            poliza: numeroPoliza,
+            nombre: beneficiario.nombre || "Beneficiario",
+            rut: beneficiario.rut || "—",
+            relacion: beneficiario.relacion || "No informado",
+            porcentaje: beneficiario.porcentaje
+              ? `${beneficiario.porcentaje}%`
+              : "Según póliza",
+            estado: beneficiario.estado || "activo",
+          }));
+        });
+
+  const coberturasNormalizadas =
+    coberturas.length > 0
+      ? coberturas.map((item, index) => ({
+          id:
+            item.id_cobertura ||
+            item.id_poliza ||
+            item.id ||
+            `cobertura-${index}`,
+          seguro:
+            item.seguro ||
+            item.nombre_seguro ||
+            item.poliza?.seguro?.nombre ||
+            "Seguro asociado",
+          poliza:
+            item.numero_poliza ||
+            item.poliza?.numero_poliza ||
+            item.poliza ||
+            "—",
+          estado: normalizarEstado(item.estado || item.poliza?.estado),
+          monto:
+            item.monto_asegurado ||
+            item.capital_asegurado ||
+            item.monto ||
+            "Según póliza",
+          deducible: item.deducible || "Según condiciones",
+          coberturas: Array.isArray(item.coberturas)
+            ? item.coberturas
+                .map((c) => (typeof c === "string" ? c : c.nombre || c.detalle))
+                .filter(Boolean)
+            : item.nombre
+              ? [item.nombre]
+              : ["Cobertura principal según póliza"],
+          exclusiones: Array.isArray(item.exclusiones)
+            ? item.exclusiones
+            : ["Revisar condiciones generales del contrato"],
+        }))
+      : polizasNormalizadas.map((poliza) => ({
+          id: poliza.id_poliza || poliza.id,
+          seguro: poliza.seguro,
+          poliza: poliza.numero_poliza,
+          estado: poliza.estado,
+          monto:
+            poliza.raw.monto_cobertura ||
+            poliza.raw.capital_asegurado ||
+            "Según póliza",
+          deducible: poliza.raw.deducible || "Según condiciones",
+          coberturas: Array.isArray(poliza.raw.coberturas)
+            ? poliza.raw.coberturas
+            : [
+                "Cobertura principal según póliza",
+                "Asistencia y acompañamiento Prieto & Correa",
+                "Revisión de vigencia y condiciones contratadas",
+              ],
+          exclusiones: poliza.raw.exclusiones || [
+            "Revisar condiciones generales del contrato",
+          ],
+        }));
+
+  const documentosDesdePolizas = polizasNormalizadas.flatMap((poliza) => [
+    {
+      id: `poliza-${poliza.id}`,
+      nombre: "Póliza vigente",
+      seguro: `${poliza.seguro} / ${poliza.numero_poliza}`,
+      tipo: "Póliza",
+      estado: "Disponible",
+      fecha: poliza.fecha_inicio || poliza.fecha_vencimiento,
+      url_pdf: poliza.raw.url_pdf || "",
+    },
+    {
+      id: `certificado-${poliza.id}`,
+      nombre: "Certificado de cobertura",
+      seguro: `${poliza.seguro} / ${poliza.numero_poliza}`,
+      tipo: "Certificado",
+      estado: "Disponible",
+      fecha: poliza.fecha_inicio || poliza.fecha_vencimiento,
+      url_pdf: poliza.raw.url_certificado || "",
+    },
+    {
+      id: `condiciones-${poliza.id}`,
+      nombre: "Condiciones generales",
+      seguro: `${poliza.seguro} / ${poliza.numero_poliza}`,
+      tipo: "Condiciones",
+      estado: "Disponible",
+      fecha: poliza.fecha_inicio || poliza.fecha_vencimiento,
+      url_pdf: poliza.raw.url_condiciones || "",
+    },
+  ]);
+
+  const documentosNormalizados =
+    documentos.length > 0
+      ? documentos.map((documento, index) => ({
+          id: documento.id_documento || documento.id || `documento-${index}`,
+          nombre: documento.nombre || documento.titulo || "Documento",
+          seguro:
+            documento.seguro ||
+            documento.nombre_seguro ||
+            `${documento.poliza?.seguro?.nombre || "Seguro asociado"} / ${documento.numero_poliza || documento.poliza?.numero_poliza || "—"}`,
+          tipo: documento.tipo || "Documento",
+          estado: documento.estado || "Disponible",
+          fecha:
+            documento.fecha ||
+            documento.fecha_emision ||
+            documento.created_at ||
+            "",
+          url_pdf: documento.url_pdf || documento.url || "",
+        }))
+      : documentosDesdePolizas;
+
+  const documentosDemo = documentosNormalizados;
+
+  const segurosDocumentos = [
+    "todos",
+    ...new Set(documentosDemo.map((d) => d.seguro)),
+  ];
+  const tiposDocumentos = [
+    "todos",
+    ...new Set(documentosDemo.map((d) => d.tipo)),
+  ];
+  const estadosDocumentos = [
+    "todos",
+    ...new Set(documentosDemo.map((d) => d.estado)),
+  ];
+
+  const documentosFiltrados = documentosDemo.filter((documento) => {
+    const busqueda = filtrosDocumentos.busqueda.toLowerCase().trim();
+
+    const coincideBusqueda =
+      !busqueda ||
+      documento.nombre.toLowerCase().includes(busqueda) ||
+      documento.seguro.toLowerCase().includes(busqueda) ||
+      documento.tipo.toLowerCase().includes(busqueda) ||
+      documento.estado.toLowerCase().includes(busqueda);
+
+    const coincideSeguro =
+      filtrosDocumentos.seguro === "todos" ||
+      documento.seguro === filtrosDocumentos.seguro;
+
+    const coincideTipo =
+      filtrosDocumentos.tipo === "todos" ||
+      documento.tipo === filtrosDocumentos.tipo;
+
+    const coincideEstado =
+      filtrosDocumentos.estado === "todos" ||
+      documento.estado === filtrosDocumentos.estado;
+
+    return coincideBusqueda && coincideSeguro && coincideTipo && coincideEstado;
+  });
+
+  const documentosDisponibles = documentosDemo.filter(
+    (documento) => String(documento.estado).toLowerCase() === "disponible",
+  ).length;
+
+  const polizasConDocumentos = new Set(
+    documentosDemo.map((documento) => documento.seguro),
+  ).size;
+
+  const coberturasMisSeguros = coberturasNormalizadas;
+  const beneficiariosMisSeguros = beneficiariosNormalizados;
+
+  const beneficiariosTotales = beneficiariosMisSeguros.length;
+  const beneficiariosActivos = beneficiariosMisSeguros.filter((beneficiario) =>
+    ["activo", "activa", "vigente"].includes(
+      String(beneficiario.estado || "")
+        .toLowerCase()
+        .trim(),
+    ),
+  ).length;
+  const polizasConBeneficiarios = new Set(
+    beneficiariosMisSeguros
+      .map((beneficiario) => beneficiario.poliza || beneficiario.seguro)
+      .filter(Boolean),
+  ).size;
+
+  const coberturasFilas = coberturasMisSeguros.flatMap((item) => {
+    const incluidas = (item.coberturas || []).map((cobertura, index) => ({
+      id: `${item.id}-incluida-${index}`,
+      nombre: cobertura,
+      seguro: item.seguro || "Seguro asociado",
+      poliza: item.poliza || "—",
+      condicion: "Incluida",
+      monto: item.monto || "Según póliza",
+      deducible: item.deducible || "Según condiciones",
+      estado: "incluida",
+    }));
+
+    const excluidas = (item.exclusiones || []).map((exclusion, index) => ({
+      id: `${item.id}-excluida-${index}`,
+      nombre: exclusion,
+      seguro: item.seguro || "Seguro asociado",
+      poliza: item.poliza || "—",
+      condicion: "Exclusión",
+      monto: "No aplica",
+      deducible: "No aplica",
+      estado: "excluida",
+    }));
+
+    return [...incluidas, ...excluidas];
+  });
+
+  const coberturasRegistradas = coberturasFilas.length;
+  const coberturasIncluidas = coberturasFilas.filter(
+    (cobertura) => cobertura.estado === "incluida",
+  ).length;
+  const coberturasExcluidas = coberturasFilas.filter(
+    (cobertura) => cobertura.estado === "excluida",
+  ).length;
+  const polizasConCoberturas = new Set(
+    coberturasMisSeguros
+      .map((cobertura) => cobertura.poliza || cobertura.seguro)
+      .filter(Boolean),
+  ).size;
+
+  function formatearMoneda(valor, moneda = "CLP") {
+    if (valor === null || valor === undefined || valor === "") return "—";
+
+    const numero = Number(valor);
+
+    if (Number.isNaN(numero)) return String(valor);
+
+    if (moneda === "UF") return `${numero.toLocaleString("es-CL")} UF`;
+
+    return numero.toLocaleString("es-CL", {
+      style: "currency",
+      currency: "CLP",
+      maximumFractionDigits: 0,
+    });
+  }
+
+  function normalizarPago(pago, index = 0) {
+    const polizaAsociada =
+      polizasNormalizadas.find(
+        (poliza) =>
+          poliza.id_poliza === pago.id_poliza ||
+          poliza.id_poliza === pago.poliza_id ||
+          poliza.numero_poliza === pago.numero_poliza,
+      ) || {};
+
+    return {
+      id: pago.id_pago || pago.id || `pago-${index}`,
+      id_pago: pago.id_pago || pago.id,
+      id_poliza: pago.id_poliza || pago.poliza_id || polizaAsociada.id_poliza,
+      seguro:
+        pago.seguro ||
+        pago.nombre_seguro ||
+        pago.poliza?.seguro?.nombre ||
+        polizaAsociada.seguro ||
+        "Seguro asociado",
+      compania:
+        pago.compania ||
+        pago.poliza?.compania ||
+        polizaAsociada.compania ||
+        "Compañía no informada",
+      numero_poliza:
+        pago.numero_poliza ||
+        pago.poliza?.numero_poliza ||
+        polizaAsociada.numero_poliza ||
+        "—",
+      cuota:
+        pago.numero_cuota && pago.total_cuotas
+          ? `${pago.numero_cuota}/${pago.total_cuotas}`
+          : pago.cuota || "—",
+      monto: pago.monto ?? pago.total ?? pago.valor ?? 0,
+      moneda: pago.moneda || "CLP",
+      fecha_vencimiento:
+        pago.fecha_vencimiento || pago.vencimiento || pago.fecha_pago || "",
+      fecha_pago: pago.fecha_pago || "",
+      estado: normalizarEstado(pago.estado || "pendiente"),
+      url_pago: pago.url_pago || pago.link_pago || "",
+      url_comprobante: pago.url_comprobante || pago.comprobante || "",
+      raw: pago,
+    };
+  }
+
+  const pagosNormalizados = pagos.map(normalizarPago);
+
+  const pagosPendientes = pagosNormalizados.filter((pago) =>
+    ["pendiente", "por-vencer", "vigente", "activa"].includes(pago.estado),
+  );
+
+  const pagosRealizados = pagosNormalizados.filter((pago) =>
+    ["pagado", "pagada", "completado", "completada"].includes(
+      String(pago.estado || "")
+        .toLowerCase()
+        .trim(),
+    ),
+  ).length;
+
+  const montoPendiente = pagosPendientes.reduce((total, pago) => {
+    const monto = Number(pago.monto);
+    return total + (Number.isNaN(monto) ? 0 : monto);
+  }, 0);
+
+  const proximoPago = [...pagosPendientes]
+    .filter((pago) => pago.fecha_vencimiento)
+    .sort(
+      (a, b) => new Date(a.fecha_vencimiento) - new Date(b.fecha_vencimiento),
+    )[0];
+
+  function iniciarPago(pago) {
+    if (pago.url_pago) {
+      window.open(pago.url_pago, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    abrirWhatsApp(
+      `Hola, necesito ayuda para pagar la cuota ${pago.cuota} de ${pago.seguro}, póliza ${pago.numero_poliza}.`,
+    );
+  }
+
+  const categoriasBeneficios = [
+    { id: "todos", nombre: "Todos", icono: "/descuento.png" },
+    { id: "sabores", nombre: "Sabores", icono: "/sabores.png" },
+    { id: "viajes", nombre: "Viajes", icono: "/viajes.png" },
+    { id: "bienestar", nombre: "Bienestar", icono: "/bienstar.png" },
+    { id: "panoramas", nombre: "Panoramas", icono: "/panoramas.png" },
+    { id: "marcas", nombre: "Marcas", icono: "/marcas.png" },
+    { id: "delivery", nombre: "Delivery", icono: "/delivery.png" },
+    { id: "mascotas", nombre: "Mascotas", icono: "/mascotas.png" },
+    { id: "descuentos", nombre: "Descuentos", icono: "/descuento.png" },
+  ];
+
+  const beneficiosDemo = [
+    {
+      id_beneficio: "sabores-1",
+      titulo: "40% dcto. en restaurantes asociados",
+      descripcion: "Beneficio exclusivo para clientes con pólizas activas.",
+      categoria: "sabores",
+      estado: "activo",
+      vigencia: "2026-06-30",
+      imagen: "/restaurant.jpg",
+      icono: "/sabores.png",
+      destacado: true,
+    },
+    {
+      id_beneficio: "viajes-1",
+      titulo: "Asistencia preferente para viajes",
+      descripcion: "Orientación y acceso rápido a coberturas de viaje.",
+      categoria: "viajes",
+      estado: "activo",
+      vigencia: "2026-12-31",
+      imagen: "/viaje.jpg",
+      icono: "/viajes.png",
+      destacado: true,
+    },
+    {
+      id_beneficio: "panoramas-1",
+      titulo: "Beneficios en panoramas familiares",
+      descripcion:
+        "Promociones para eventos, entretención y actividades seleccionadas.",
+      categoria: "panoramas",
+      estado: "activo",
+      vigencia: "2026-09-30",
+      imagen: "/panorama.jpg",
+      icono: "/panoramas.png",
+      destacado: true,
+    },
+    {
+      id_beneficio: "bienestar-1",
+      titulo: "Convenios de bienestar y vida saludable",
+      descripcion:
+        "Acceso preferente a beneficios de salud, deporte y bienestar.",
+      categoria: "bienestar",
+      estado: "activo",
+      vigencia: "2026-08-31",
+      imagen: "/bienestargym.jpg",
+      icono: "/bienstar.png",
+      destacado: true,
+    },
+    {
+      id_beneficio: "delivery-1",
+      titulo: "Convenios en delivery y compras online",
+      descripcion: "Promociones disponibles para clientes registrados.",
+      categoria: "delivery",
+      estado: "proximamente",
+      vigencia: "Próximamente",
+      imagen: "/delivery.png",
+      icono: "/delivery.png",
+      destacado: false,
+    },
+  ];
+
+  const beneficiosBase = beneficios.length > 0 ? beneficios : beneficiosDemo;
+  const beneficiosFiltrados = beneficiosBase.filter((beneficio) => {
+    if (categoriaBeneficioActiva === "todos") return true;
+    return (
+      String(beneficio.categoria || "").toLowerCase() ===
+      categoriaBeneficioActiva
+    );
+  });
+  const beneficiosDestacados = beneficiosBase.filter(
+    (beneficio) => beneficio.destacado !== false,
+  );
+  const beneficioPrincipal =
+    beneficiosDestacados.length > 0
+      ? beneficiosDestacados[beneficioSlide % beneficiosDestacados.length]
+      : beneficiosBase[0];
+  const beneficiosActivos = beneficiosBase.filter(
+    (beneficio) => beneficio.estado !== "proximamente",
+  ).length;
+
+  function abrirMisSeguros(tab = "coberturas") {
+    setTabMisSeguros(tab);
+    setVista("mis-seguros");
+  }
+
   return (
-    <section className="dashboard privado">
-      <aside className="dashboard-sidebar">
-        <div className="dashboard-logo">
-          <img src="/Logo Prieto.png" alt="Prieto & Correa" />
+    <section className="pc-dashboard">
+      <aside className="pc-sidebar">
+        <div className="pc-sidebar-logo">
+          <img src="/LOGO_TRANSPARENTE.svg" alt="Prieto & Correa" />
         </div>
 
-        <div className="sidebar-cliente">
-          <h2>Portal Clientes</h2>
-          <small>{nombreCliente}</small>
+        <nav className="pc-sidebar-nav">
+          <button
+            className={vista === "resumen" ? "active" : ""}
+            onClick={() => setVista("resumen")}
+          >
+            <img src="/inicio.png" alt="" />
+            <span>Inicio</span>
+          </button>
+        </nav>
+
+        <div className="pc-sidebar-promo">
+          <p>PROTEGEMOS LO QUE MÁS TE IMPORTA</p>
+          <button onClick={() => setVista("cotizaciones")}>Conoce más</button>
         </div>
 
-        <button
-          className={vista === "resumen" ? "activo" : ""}
-          onClick={() => setVista("resumen")}
-        >
-          Resumen
-        </button>
-
-        <button
-          className={vista === "perfil" ? "activo" : ""}
-          onClick={() => setVista("perfil")}
-        >
-          Perfil Cliente
-        </button>
-
-        <button
-          className={vista === "polizas" ? "activo" : ""}
-          onClick={() => setVista("polizas")}
-        >
-          Mis pólizas
-        </button>
-
-        <button
-          className={vista === "cotizaciones" ? "activo" : ""}
-          onClick={() => setVista("cotizaciones")}
-        >
-          Cotizaciones
-        </button>
-
-        <button
-          className={vista === "beneficiarios" ? "activo" : ""}
-          onClick={() => setVista("beneficiarios")}
-        >
-          Beneficiarios
-        </button>
-
-        <button
-          className={vista === "coberturas" ? "activo" : ""}
-          onClick={() => setVista("coberturas")}
-        >
-          Coberturas
-        </button>
-
-        <button
-          className={vista === "vencimientos" ? "activo" : ""}
-          onClick={() => setVista("vencimientos")}
-        >
-          Vencimientos
-        </button>
-
-        <button
-          className={vista === "cuotas" ? "activo" : ""}
-          onClick={() => setVista("cuotas")}
-        >
-          Pagos y cuotas
-        </button>
-
-        <button
-          className={vista === "documentos" ? "activo" : ""}
-          onClick={() => setVista("documentos")}
-        >
-          Documentos
-        </button>
-
-        <button
-          className={vista === "siniestro" ? "activo" : ""}
-          onClick={() => setVista("siniestro")}
-        >
-          Reportar siniestro
-        </button>
-
-        <button className="dashboard-logout" onClick={cerrarSesion}>
-          Cerrar sesión
+        <button className="pc-logout" onClick={cerrarSesion}>
+          <img src="/cerrar-sesion.png" alt="" />
+          <span>Cerrar sesión</span>
         </button>
       </aside>
 
-      <main className="dashboard-main">
-        <div className="dashboard-topbar">
-          <div>
-            <span>Área privada</span>
-            <h1>Mi Portal de Seguros</h1>
+      <main className="pc-main">
+        <header className="pc-header">
+          <div
+            className="pc-header-greeting"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "14px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setVista("perfil")}
+              title="Ir a Mi Cuenta"
+              style={{
+                width: "54px",
+                height: "54px",
+                border: "3px solid #ffffff",
+                borderRadius: "999px",
+                background: "#eef3ff",
+                boxShadow: "0 12px 28px rgba(7, 25, 90, 0.12)",
+                overflow: "hidden",
+                display: "grid",
+                placeItems: "center",
+                color: "#07195a",
+                fontWeight: 900,
+                fontSize: "18px",
+                flexShrink: 0,
+              }}
+            >
+              {avatarPerfil ? (
+                <img
+                  src={avatarPerfil}
+                  alt={`Foto de ${nombreVisible}`}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                <span>{inicialVisible}</span>
+              )}
+            </button>
+
+            <div>
+              <h1>¡Hola, {nombreVisible}!</h1>
+              <p>Nos alegra tenerte de vuelta.</p>
+            </div>
           </div>
 
-          <button onClick={cerrarSesion}>Cerrar sesión</button>
-        </div>
+          <div className="pc-header-user" style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => setNotificacionesAbiertas((abierta) => !abierta)}
+              title="Notificaciones"
+              style={{
+                position: "relative",
+                width: "42px",
+                height: "42px",
+                border: "none",
+                borderRadius: "999px",
+                background: "#ffffff",
+                display: "grid",
+                placeItems: "center",
+                boxShadow: "0 8px 24px rgba(7, 25, 90, 0.08)",
+              }}
+            >
+              <img
+                src="/campana.png"
+                alt="Notificaciones"
+                style={{
+                  width: "20px",
+                  height: "20px",
+                  objectFit: "contain",
+                }}
+              />
+
+              {alertas.length > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "-4px",
+                    right: "-4px",
+                    minWidth: "18px",
+                    height: "18px",
+                    padding: "0 5px",
+                    borderRadius: "999px",
+                    background: "#f47c20",
+                    color: "#ffffff",
+                    fontSize: "10px",
+                    fontWeight: 900,
+                    display: "grid",
+                    placeItems: "center",
+                    border: "2px solid #ffffff",
+                  }}
+                >
+                  {alertas.length}
+                </span>
+              )}
+            </button>
+
+            {notificacionesAbiertas && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "54px",
+                  right: "54px",
+                  width: "340px",
+                  padding: "16px",
+                  background: "#ffffff",
+                  border: "1px solid #e6eaf4",
+                  borderRadius: "18px",
+                  boxShadow: "0 18px 45px rgba(7, 25, 90, 0.16)",
+                  zIndex: 50,
+                }}
+              >
+                <strong
+                  style={{
+                    display: "block",
+                    color: "#07195a",
+                    fontSize: "15px",
+                    marginBottom: "12px",
+                  }}
+                >
+                  Notificaciones
+                </strong>
+
+                {alertas.length > 0 ? (
+                  <div style={{ display: "grid", gap: "10px" }}>
+                    {alertas.slice(0, 5).map((alerta, index) => (
+                      <article
+                        key={alerta.id_alerta || alerta.id || index}
+                        style={{
+                          padding: "12px",
+                          borderRadius: "14px",
+                          background: "#f8faff",
+                          border: "1px solid #e7ecf7",
+                        }}
+                      >
+                        <strong
+                          style={{
+                            display: "block",
+                            color: "#07195a",
+                            fontSize: "12px",
+                            marginBottom: "5px",
+                          }}
+                        >
+                          {alerta.titulo || alerta.tipo || "Nueva notificación"}
+                        </strong>
+
+                        <p
+                          style={{
+                            color: "#56637a",
+                            fontSize: "11px",
+                            lineHeight: 1.5,
+                            margin: 0,
+                          }}
+                        >
+                          {alerta.mensaje ||
+                            alerta.descripcion ||
+                            "Tienes una actualización pendiente en tu portal."}
+                        </p>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p
+                    style={{
+                      color: "#56637a",
+                      fontSize: "12px",
+                      lineHeight: 1.5,
+                      margin: 0,
+                    }}
+                  >
+                    No tienes notificaciones pendientes.
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div
+              style={{
+                display: "grid",
+                justifyItems: "center",
+                gap: "4px",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setVista("perfil")}
+                title="Editar perfil"
+                aria-label="Editar perfil"
+                style={{
+                  width: "42px",
+                  height: "42px",
+                  border: "2px solid #ffffff",
+                  borderRadius: "999px",
+                  background: "#eef3ff",
+                  boxShadow: "0 8px 24px rgba(7, 25, 90, 0.08)",
+                  overflow: "hidden",
+                  display: "grid",
+                  placeItems: "center",
+                  color: "#07195a",
+                  fontWeight: 900,
+                  fontSize: "14px",
+                  flexShrink: 0,
+                }}
+              >
+                {avatarPerfil ? (
+                  <img
+                    src={avatarPerfil}
+                    alt={`Foto de ${nombreVisible}`}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      filter: "none",
+                    }}
+                  />
+                ) : (
+                  <span>{inicialVisible}</span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setVista("perfil")}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  color: "#07195a",
+                  fontSize: "10px",
+                  fontWeight: 900,
+                  lineHeight: 1,
+                  padding: 0,
+                }}
+              >
+                Editar perfil
+              </button>
+            </div>
+          </div>
+        </header>
 
         {cargando ? (
           <p className="cargando">Cargando...</p>
@@ -263,447 +1475,5388 @@ function Dashboard() {
         ) : (
           <>
             {vista === "resumen" && (
-              <>
-                <div className="dashboard-banner">
-                  <span>Bienvenido</span>
-                  <h1>Hola, {nombreCliente}</h1>
-                  <p>
-                    Consulta tus seguros, solicitudes y próximos movimientos.
-                  </p>
-                </div>
+              <div className="pc-dashboard-grid">
+                <section className="pc-left-column">
+                  <div className="pc-hero-card">
+                    <div>
+                      <span className="pc-title-icon">
+                        <img src="/proteger.png" alt="" />
+                        Centro de protección
+                      </span>
 
-                <div className="dashboard-grid dashboard-grid-resumen">
-                  <div className="dashboard-card">
-                    <h2>{polizasActivas}</h2>
-                    <p>Pólizas activas</p>
-                  </div>
+                      <h2>Tu protección está al día</h2>
 
-                  <div className="dashboard-card">
-                    <h2>{polizas.length}</h2>
-                    <p>Total pólizas</p>
-                  </div>
+                      <p>
+                        Todo bajo control. Prieto & Correa monitorea tu respaldo
+                        para que sepas qué tienes protegido y qué revisar.
+                      </p>
 
-                  <div className="dashboard-card">
-                    <h2>{cotizaciones.length}</h2>
-                    <p>Cotizaciones</p>
-                  </div>
-
-                  <div className="dashboard-card">
-                    <h2>{companiasAsociadas}</h2>
-                    <p>Compañías</p>
-                  </div>
-                </div>
-
-                <div className="dashboard-visual">
-                  <div className="dashboard-visual-card">
-                    <h2>Resumen visual</h2>
-                    <p>Estado general de tu portal de seguros.</p>
-
-                    <div className="barra-item">
-                      <div>
-                        <strong>Pólizas</strong>
-                        <span>{polizas.length}</span>
-                      </div>
-                      <div className="barra">
-                        <div
-                          style={{
-                            width: `${Math.min(polizas.length * 20, 100)}%`,
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    <div className="barra-item">
-                      <div>
-                        <strong>Cotizaciones</strong>
-                        <span>{cotizaciones.length}</span>
-                      </div>
-                      <div className="barra">
-                        <div
-                          style={{
-                            width: `${Math.min(cotizaciones.length * 20, 100)}%`,
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    <div className="barra-item">
-                      <div>
-                        <strong>Compañías</strong>
-                        <span>{companiasAsociadas}</span>
-                      </div>
-                      <div className="barra">
-                        <div
-                          style={{
-                            width: `${Math.min(companiasAsociadas * 25, 100)}%`,
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="dashboard-visual-card estado-portal">
-                    <span className="estado-portal-tag">
-                      {polizas.length === 0
-                        ? "Sin seguros activos"
-                        : "Portal activo"}
-                    </span>
-
-                    <h2>Estado del portal</h2>
-
-                    <p>
-                      {polizas.length === 0
-                        ? "Aún no existen pólizas registradas para esta cuenta. Puedes explorar nuestros seguros y solicitar una cotización."
-                        : "Tu portal ya cuenta con pólizas registradas y disponibles para consulta."}
-                    </p>
-
-                    {polizas.length === 0 ? (
-                      <button className="estado-portal-btn" onClick={irASeguros}>
-                        Ver seguros
+                      <button onClick={() => abrirMisSeguros("coberturas")}>
+                        Revisar cobertura
                       </button>
+                    </div>
+
+                    <div className="pc-hero-empty"></div>
+                  </div>
+
+                  <div className="pc-stats">
+                    <article>
+                      <strong>{polizasActivas}</strong>
+                      <span>Protecciones activas</span>
+                    </article>
+
+                    <article>
+                      <strong>
+                        {proximaPoliza?.fecha_vencimiento
+                          ? formatearFecha(proximaPoliza.fecha_vencimiento)
+                          : "—"}
+                      </strong>
+                      <span>Próximo vencimiento</span>
+                    </article>
+
+                    <article>
+                      <strong>0</strong>
+                      <span>Casos abiertos</span>
+                    </article>
+
+                    <article>
+                      <strong>
+                        {companiasAsociadas > 0 ? companiasAsociadas : "—"}
+                      </strong>
+                      <span>Compañías asociadas</span>
+                    </article>
+                  </div>
+
+                  <div className="pc-panel">
+                    <div className="pc-panel-title">
+                      <h3>
+                        <img src="/mis-polizas-activas.png" alt="" />
+                        Mis pólizas activas
+                      </h3>
+
+                      <button onClick={() => abrirMisSeguros("coberturas")}>
+                        Ver todas
+                      </button>
+                    </div>
+
+                    {polizasNormalizadas.length === 0 ? (
+                      <div className="pc-empty pc-empty-protection">
+                        <h3>Aún no tienes pólizas visibles</h3>
+                        <p>
+                          Tu ejecutivo puede ayudarte a revisar tu protección
+                          actual y activar tus pólizas en el portal.
+                        </p>
+                        <button onClick={() => setVista("cotizaciones")}>
+                          Explorar seguros disponibles
+                        </button>
+                      </div>
                     ) : (
-                      <button
-                        className="estado-portal-btn"
-                        onClick={() => setVista("polizas")}
-                      >
-                        Revisar pólizas
-                      </button>
+                      polizas.slice(0, 3).map((p) => (
+                        <div className="pc-policy-row" key={p.id_poliza}>
+                          <div className="pc-policy-icon">
+                            <img src="/proteger.png" alt="" />
+                          </div>
+
+                          <div>
+                            <strong>{p.seguro?.nombre || "Seguro"}</strong>
+                            <small>
+                              Póliza: {p.numero_poliza || "Sin número"}
+                            </small>
+                          </div>
+
+                          <span className={`pc-status ${calcularEstado(p)}`}>
+                            {textoEstado(calcularEstado(p))}
+                          </span>
+
+                          <small>
+                            Vence el {formatearFecha(p.fecha_vencimiento)}
+                          </small>
+                        </div>
+                      ))
                     )}
                   </div>
-                </div>
-              </>
+
+                  <div className="pc-advisor-card">
+                    <div className="pc-advisor-avatar">
+                      <img src="/icon-cliente.png" alt="" />
+                    </div>
+
+                    <div>
+                      <small>Tu corredor asignado</small>
+                      <strong>Ejecutivo Prieto & Correa</strong>
+                      <span className="pc-advisor-status">
+                        Disponible ahora
+                      </span>
+
+                      <p className="contacto-corredor">
+                        <img src="/telefono.png" alt="" />
+                        +56 9 6654 1939
+                        <img src="/correo-electronico.png" alt="" />
+                        cotizaciones@prietocorrea.cl
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                <aside className="pc-right-column">
+                  <div className="pc-panel">
+                    <h3 className="titulo-icono">
+                      <img src="/accion-rapida.png" alt="" />
+                      Acciones rápidas
+                    </h3>
+
+                    <div className="pc-actions-grid pc-actions-grid-priority">
+                      <button onClick={() => setVista("siniestro")}>
+                        <img src="/reportar-siniestro.png" alt="" />
+                        <span>Reportar siniestro →</span>
+                      </button>
+
+                      <button onClick={() => abrirMisSeguros("documentos")}>
+                        <img src="/documentos.png" alt="" />
+                        <span>Ver documentos →</span>
+                      </button>
+
+                      <button onClick={() => setVista("beneficios")}>
+                        <img src="/beneficios.png" alt="" />
+                        <span>CLUB PRIETO & CORREA →</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pc-panel pc-next-payment">
+                    <h3 className="titulo-icono">
+                      <img src="/calendario.png" alt="" />
+                      Próximo pago
+                    </h3>
+
+                    <strong>
+                      {proximaPoliza?.seguro || "Seguro pendiente"}
+                    </strong>
+
+                    <h2>
+                      {proximaPoliza?.prima
+                        ? `${proximaPoliza.prima} UF`
+                        : "Sin pago informado"}
+                    </h2>
+
+                    <p>
+                      Vencimiento{" "}
+                      {formatearFecha(proximaPoliza?.fecha_vencimiento)}
+                    </p>
+
+                    <button onClick={() => setVista("cuotas")}>
+                      Realizar pago
+                    </button>
+                  </div>
+
+                  <div className="pc-help-card">
+                    <div>
+                      <h3>¿Necesitas orientación?</h3>
+                      <p>
+                        Consultas rápidas y acompañamiento directo con tu
+                        ejecutivo.
+                      </p>
+                      <small className="pc-response-time">
+                        Tiempo promedio de respuesta: &lt; 15 min
+                      </small>
+
+                      <button
+                        className="pc-whatsapp-button"
+                        onClick={() =>
+                          abrirWhatsApp(
+                            "Hola, necesito hablar con mi ejecutivo de Prieto & Correa Seguros.",
+                          )
+                        }
+                      >
+                        <img src="/whatsapp.png" alt="" />
+                        <span>Hablar con mi ejecutivo</span>
+                      </button>
+                    </div>
+
+                    <img
+                      src="/solicitar-asistencia.png"
+                      alt=""
+                      className="premium-icon"
+                    />
+                  </div>
+                </aside>
+              </div>
             )}
 
-            {vista === "perfil" && (
-              <div className="dashboard-lista">
-                <PerfilCliente perfil={perfil} />
+            {vista === "mis-seguros" && (
+              <div className="pc-panel pc-full-panel">
+                <div
+                  className="pc-panel-title"
+                  style={{ marginBottom: "16px", alignItems: "flex-start" }}
+                >
+                  <div>
+                    <h2 style={{ marginBottom: "6px" }}>Mis Seguros</h2>
+                    <p
+                      style={{
+                        margin: 0,
+                        color: "#667085",
+                        fontSize: "14px",
+                        lineHeight: 1.55,
+                      }}
+                    >
+                      Visualiza tus pólizas, coberturas, beneficiarios y
+                      documentos en un solo lugar.
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "inline-flex",
+                    gap: "8px",
+                    padding: "6px",
+                    background: "#f3f6fb",
+                    borderRadius: "14px",
+                    marginBottom: "18px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  {[
+                    ["coberturas", "Coberturas"],
+                    ["beneficiarios", "Beneficiarios"],
+                    ["documentos", "Documentos"],
+                  ].map(([tab, label]) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setTabMisSeguros(tab)}
+                      style={{
+                        height: "40px",
+                        padding: "0 18px",
+                        border: "none",
+                        borderRadius: "11px",
+                        background:
+                          tabMisSeguros === tab ? "#07195a" : "transparent",
+                        color: tabMisSeguros === tab ? "#ffffff" : "#07195a",
+                        fontWeight: 900,
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {tabMisSeguros === "coberturas" && (
+                  <div>
+                    <div className="pc-stats" style={{ marginBottom: "14px" }}>
+                      <article>
+                        <strong>{coberturasRegistradas}</strong>
+                        <span>Coberturas registradas</span>
+                      </article>
+
+                      <article>
+                        <strong>{polizasConCoberturas}</strong>
+                        <span>Pólizas asociadas</span>
+                      </article>
+
+                      <article>
+                        <strong>{coberturasIncluidas}</strong>
+                        <span>Incluidas</span>
+                      </article>
+
+                      <article>
+                        <strong>{coberturasExcluidas}</strong>
+                        <span>Excluidas</span>
+                      </article>
+                    </div>
+
+                    <div
+                      style={{
+                        border: "1px solid #e6ebf2",
+                        borderRadius: "18px",
+                        overflow: "hidden",
+                        background: "#ffffff",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "1.35fr 1.25fr 0.8fr 0.8fr 0.8fr 0.75fr",
+                          gap: "10px",
+                          padding: "12px 16px",
+                          background: "#f5f7fb",
+                          color: "#07195a",
+                          fontSize: "12px",
+                          fontWeight: 800,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        <span>Cobertura</span>
+                        <span>Seguro / Póliza</span>
+                        <span>Condición</span>
+                        <span>Monto</span>
+                        <span>Deducible</span>
+                        <span>Estado</span>
+                      </div>
+
+                      {coberturasFilas.length === 0 ? (
+                        <div
+                          style={{
+                            padding: "26px",
+                            borderTop: "1px solid #eef2f7",
+                            background: "#f8faff",
+                          }}
+                        >
+                          <h3 style={{ color: "#07195a", marginBottom: "8px" }}>
+                            No tienes coberturas registradas
+                          </h3>
+
+                          <p
+                            style={{
+                              color: "#56637a",
+                              fontSize: "13px",
+                              lineHeight: 1.6,
+                              marginBottom: "16px",
+                            }}
+                          >
+                            Cuando tus pólizas estén activas, verás aquí qué
+                            cubre cada seguro, sus montos, deducibles y
+                            exclusiones principales.
+                          </p>
+
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "10px",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setVista("cotizaciones")}
+                              style={{
+                                minHeight: "42px",
+                                border: "none",
+                                borderRadius: "12px",
+                                background: "#07195a",
+                                color: "#ffffff",
+                                padding: "0 18px",
+                                fontSize: "12px",
+                                fontWeight: 900,
+                              }}
+                            >
+                              Explorar seguros
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                abrirWhatsApp(
+                                  "Hola, necesito orientación sobre las coberturas de mis seguros.",
+                                )
+                              }
+                              style={{
+                                minHeight: "42px",
+                                border: "1px solid #dfe6f3",
+                                borderRadius: "12px",
+                                background: "#ffffff",
+                                color: "#07195a",
+                                padding: "0 18px",
+                                fontSize: "12px",
+                                fontWeight: 900,
+                              }}
+                            >
+                              Contactar ejecutivo
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        coberturasFilas.map((cobertura) => (
+                          <div
+                            key={cobertura.id}
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                "1.35fr 1.25fr 0.8fr 0.8fr 0.8fr 0.75fr",
+                              gap: "10px",
+                              alignItems: "center",
+                              padding: "13px 16px",
+                              borderTop: "1px solid #eef2f7",
+                              fontSize: "13px",
+                            }}
+                          >
+                            <strong style={{ color: "#07195a" }}>
+                              {cobertura.nombre}
+                            </strong>
+                            <span style={{ color: "#475467" }}>
+                              {cobertura.seguro} / {cobertura.poliza}
+                            </span>
+                            <span style={{ color: "#475467" }}>
+                              {cobertura.condicion}
+                            </span>
+                            <strong style={{ color: "#07195a" }}>
+                              {cobertura.monto}
+                            </strong>
+                            <span style={{ color: "#475467" }}>
+                              {cobertura.deducible}
+                            </span>
+                            <span
+                              style={{
+                                width: "fit-content",
+                                padding: "7px 12px",
+                                borderRadius: "999px",
+                                background:
+                                  cobertura.estado === "incluida"
+                                    ? "rgba(22, 163, 74, 0.12)"
+                                    : "rgba(244, 124, 32, 0.14)",
+                                color:
+                                  cobertura.estado === "incluida"
+                                    ? "#16a34a"
+                                    : "#f47c20",
+                                fontSize: "12px",
+                                fontWeight: 900,
+                              }}
+                            >
+                              {cobertura.estado === "incluida"
+                                ? "Incluida"
+                                : "Excluida"}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {tabMisSeguros === "beneficiarios" && (
+                  <div>
+                    <div className="pc-stats" style={{ marginBottom: "14px" }}>
+                      <article>
+                        <strong>{beneficiariosTotales}</strong>
+                        <span>Beneficiarios</span>
+                      </article>
+
+                      <article>
+                        <strong>{polizasConBeneficiarios}</strong>
+                        <span>Seguros asociados</span>
+                      </article>
+
+                      <article>
+                        <strong>{beneficiariosActivos}</strong>
+                        <span>Activos</span>
+                      </article>
+
+                      <article>
+                        <strong>
+                          {beneficiariosTotales === 0 ? "—" : "Al día"}
+                        </strong>
+                        <span>Estado general</span>
+                      </article>
+                    </div>
+
+                    <div
+                      style={{
+                        border: "1px solid #e6ebf2",
+                        borderRadius: "18px",
+                        overflow: "hidden",
+                        background: "#ffffff",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "1.2fr 0.85fr 0.9fr 1.25fr 0.55fr 0.75fr",
+                          gap: "10px",
+                          padding: "12px 16px",
+                          background: "#f5f7fb",
+                          color: "#07195a",
+                          fontSize: "12px",
+                          fontWeight: 800,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        <span>Beneficiario</span>
+                        <span>RUT</span>
+                        <span>Relación</span>
+                        <span>Póliza</span>
+                        <span>%</span>
+                        <span>Estado</span>
+                      </div>
+
+                      {beneficiariosMisSeguros.length === 0 ? (
+                        <>
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                "1.2fr 0.85fr 0.9fr 1.25fr 0.55fr 0.75fr",
+                              gap: "10px",
+                              alignItems: "center",
+                              padding: "15px 16px",
+                              borderTop: "1px solid #eef2f7",
+                              color: "#667085",
+                              fontSize: "13px",
+                              fontWeight: 800,
+                            }}
+                          >
+                            <span>No hay beneficiarios registrados</span>
+                            <span>—</span>
+                            <span>—</span>
+                            <span>—</span>
+                            <span>—</span>
+                            <span>—</span>
+                          </div>
+
+                          <div
+                            className="pc-empty"
+                            style={{ margin: "14px", padding: "24px" }}
+                          >
+                            <h3>Aún no tienes beneficiarios asociados</h3>
+                            <p>
+                              Cuando una póliza incluya beneficiarios,
+                              aparecerán aquí automáticamente con su relación,
+                              porcentaje y póliza asociada.
+                            </p>
+
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "10px",
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              <button onClick={() => setVista("cotizaciones")}>
+                                Explorar seguros
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  abrirWhatsApp(
+                                    "Hola, necesito ayuda para revisar o registrar beneficiarios en mis seguros.",
+                                  )
+                                }
+                                style={{
+                                  background: "#ffffff",
+                                  color: "#07195a",
+                                  border: "1px solid #dfe6f3",
+                                }}
+                              >
+                                Contactar ejecutivo
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        beneficiariosMisSeguros.map((beneficiario) => (
+                          <div
+                            key={beneficiario.id}
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                "1.2fr 0.85fr 0.9fr 1.25fr 0.55fr 0.75fr",
+                              gap: "10px",
+                              alignItems: "center",
+                              padding: "13px 16px",
+                              borderTop: "1px solid #eef2f7",
+                              fontSize: "13px",
+                            }}
+                          >
+                            <strong style={{ color: "#07195a" }}>
+                              {beneficiario.nombre}
+                            </strong>
+                            <span style={{ color: "#475467" }}>
+                              {beneficiario.rut}
+                            </span>
+                            <span style={{ color: "#475467" }}>
+                              {beneficiario.relacion}
+                            </span>
+                            <span style={{ color: "#475467" }}>
+                              {beneficiario.seguro} / {beneficiario.poliza}
+                            </span>
+                            <strong style={{ color: "#07195a" }}>
+                              {beneficiario.porcentaje}
+                            </strong>
+                            <span
+                              className={`pc-status ${normalizarEstado(beneficiario.estado)}`}
+                            >
+                              {textoEstado(
+                                normalizarEstado(beneficiario.estado),
+                              )}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {tabMisSeguros === "documentos" && (
+                  <div>
+                    <div className="pc-stats" style={{ marginBottom: "14px" }}>
+                      <article>
+                        <strong>{documentosDemo.length}</strong>
+                        <span>Documentos totales</span>
+                      </article>
+
+                      <article>
+                        <strong>{polizasConDocumentos}</strong>
+                        <span>Pólizas asociadas</span>
+                      </article>
+
+                      <article>
+                        <strong>{documentosDisponibles}</strong>
+                        <span>Disponibles</span>
+                      </article>
+
+                      <article>
+                        <strong>
+                          {documentosDemo.length - documentosDisponibles}
+                        </strong>
+                        <span>Bajo solicitud</span>
+                      </article>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1.4fr 1fr 0.9fr 0.9fr",
+                        gap: "10px",
+                        marginBottom: "14px",
+                      }}
+                    >
+                      <input
+                        type="text"
+                        name="busqueda"
+                        value={filtrosDocumentos.busqueda}
+                        onChange={actualizarFiltroDocumento}
+                        placeholder="Buscar documento..."
+                        style={{
+                          width: "100%",
+                          height: "42px",
+                          border: "1px solid #d9e1ec",
+                          borderRadius: "12px",
+                          padding: "0 10px",
+                          outline: "none",
+                        }}
+                      />
+
+                      <select
+                        name="seguro"
+                        value={filtrosDocumentos.seguro}
+                        onChange={actualizarFiltroDocumento}
+                        style={{
+                          width: "100%",
+                          height: "42px",
+                          border: "1px solid #d9e1ec",
+                          borderRadius: "12px",
+                          padding: "0 12px",
+                          outline: "none",
+                          background: "#ffffff",
+                        }}
+                      >
+                        {segurosDocumentos.map((seguro) => (
+                          <option key={seguro} value={seguro}>
+                            {seguro === "todos" ? "Todos los seguros" : seguro}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select
+                        name="tipo"
+                        value={filtrosDocumentos.tipo}
+                        onChange={actualizarFiltroDocumento}
+                        style={{
+                          width: "100%",
+                          height: "42px",
+                          border: "1px solid #d9e1ec",
+                          borderRadius: "12px",
+                          padding: "0 12px",
+                          outline: "none",
+                          background: "#ffffff",
+                        }}
+                      >
+                        {tiposDocumentos.map((tipo) => (
+                          <option key={tipo} value={tipo}>
+                            {tipo === "todos" ? "Todos los tipos" : tipo}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select
+                        name="estado"
+                        value={filtrosDocumentos.estado}
+                        onChange={actualizarFiltroDocumento}
+                        style={{
+                          width: "100%",
+                          height: "42px",
+                          border: "1px solid #d9e1ec",
+                          borderRadius: "12px",
+                          padding: "0 12px",
+                          outline: "none",
+                          background: "#ffffff",
+                        }}
+                      >
+                        {estadosDocumentos.map((estado) => (
+                          <option key={estado} value={estado}>
+                            {estado === "todos" ? "Todos los estados" : estado}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div
+                      style={{
+                        border: "1px solid #e6ebf2",
+                        borderRadius: "18px",
+                        overflow: "hidden",
+                        background: "#ffffff",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "1.2fr 1.35fr 0.75fr 0.8fr 0.75fr 1fr",
+                          gap: "10px",
+                          padding: "12px 16px",
+                          background: "#f5f7fb",
+                          color: "#07195a",
+                          fontSize: "12px",
+                          fontWeight: 800,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        <span>Documento</span>
+                        <span>Seguro / Póliza</span>
+                        <span>Tipo</span>
+                        <span>Estado</span>
+                        <span>Fecha</span>
+                        <span>Acciones</span>
+                      </div>
+
+                      {documentosFiltrados.length === 0 ? (
+                        <div className="pc-empty" style={{ padding: "26px" }}>
+                          <h3>No se encontraron documentos</h3>
+                          <p>
+                            Prueba cambiando los filtros o contacta a tu
+                            ejecutivo si necesitas apoyo.
+                          </p>
+                        </div>
+                      ) : (
+                        documentosFiltrados.map((documento) => (
+                          <div
+                            key={documento.id}
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                "1.2fr 1.35fr 0.75fr 0.8fr 0.75fr 1fr",
+                              gap: "10px",
+                              alignItems: "center",
+                              padding: "13px 16px",
+                              borderTop: "1px solid #eef2f7",
+                              fontSize: "13px",
+                            }}
+                          >
+                            <strong style={{ color: "#07195a" }}>
+                              {documento.nombre}
+                            </strong>
+                            <span style={{ color: "#475467" }}>
+                              {documento.seguro}
+                            </span>
+                            <span>{documento.tipo}</span>
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                justifyContent: "center",
+                                borderRadius: "999px",
+                                padding: "6px 10px",
+                                fontSize: "12px",
+                                fontWeight: 800,
+                                color:
+                                  documento.estado === "Disponible"
+                                    ? "#067647"
+                                    : documento.estado === "En preparación"
+                                      ? "#b54708"
+                                      : "#07195a",
+                                background:
+                                  documento.estado === "Disponible"
+                                    ? "#ecfdf3"
+                                    : documento.estado === "En preparación"
+                                      ? "#fffaeb"
+                                      : "#eef4ff",
+                              }}
+                            >
+                              {documento.estado}
+                            </span>
+                            <span>{formatearFecha(documento.fecha)}</span>
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "8px",
+                                justifyContent: "flex-end",
+                              }}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => abrirPreviewDocumento(documento)}
+                                style={{
+                                  minHeight: "34px",
+                                  padding: "8px 12px",
+                                  borderRadius: "10px",
+                                  border: "none",
+                                  background: "#07195a",
+                                  color: "#ffffff",
+                                  fontWeight: 800,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Ver PDF
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => descargarDocumento(documento)}
+                                style={{
+                                  minHeight: "34px",
+                                  padding: "8px 12px",
+                                  borderRadius: "10px",
+                                  border: "1px solid #f47c20",
+                                  background: "#ffffff",
+                                  color: "#f47c20",
+                                  fontWeight: 800,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {documento.estado === "Disponible"
+                                  ? "Descargar"
+                                  : "Ejecutivo"}
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
             {vista === "polizas" && (
-              <div className="dashboard-lista">
+              <div className="pc-panel pc-full-panel">
                 <h2>Mis pólizas</h2>
 
                 {polizas.length === 0 ? (
-                  <div className="empty-polizas">
-                    <h3>🛡 No tienes pólizas registradas</h3>
+                  <div className="pc-empty">
+                    <h3>No tienes pólizas registradas</h3>
                     <p>Todavía no existen seguros asociados a esta cuenta.</p>
-
-                    <ul className="empty-polizas-list">
-                      <li>Compañía aseguradora</li>
-                      <li>Estado de vigencia</li>
-                      <li>Fecha de vencimiento</li>
-                      <li>Cobertura UF y CLP</li>
-                      <li>Beneficiarios</li>
-                      <li>Pagos y renovaciones</li>
-                    </ul>
-
-                    <button className="empty-action" onClick={irASeguros}>
-                      Ver seguros →
+                    <button onClick={() => setVista("cotizaciones")}>
+                      Ver seguros disponibles
                     </button>
                   </div>
                 ) : (
-                  <>
-                    <div className="polizas-header polizas-header-logo">
-                      <span>Seguro</span>
-                      <span>Compañía</span>
-                      <span>N° Póliza</span>
-                      <span>Estado</span>
-                      <span>Vencimiento</span>
+                  polizas.map((p) => (
+                    <div className="pc-policy-row" key={p.id_poliza}>
+                      <div className="pc-policy-icon">
+                        <img src="/proteger.png" alt="" />
+                      </div>
+
+                      <div>
+                        <strong>{p.seguro?.nombre || "Seguro"}</strong>
+                        <small>Póliza: {p.numero_poliza || "Sin número"}</small>
+                      </div>
+
+                      <span>{p.compania || "Sin compañía"}</span>
+
+                      <span className={`pc-status ${calcularEstado(p)}`}>
+                        {textoEstado(calcularEstado(p))}
+                      </span>
+
+                      <small>
+                        Vence el {formatearFecha(p.fecha_vencimiento)}
+                      </small>
                     </div>
-
-                    {polizas.map((p) => {
-                      const estado = calcularEstado(p);
-
-                      return (
-                        <div
-                          className="poliza-card-row poliza-card-row-logo"
-                          key={p.id_poliza}
-                        >
-                          <div className="poliza-seguro-info">
-                            <img
-                              src={logoCompania(p.compania)}
-                              alt={p.compania || "Compañía"}
-                              className="poliza-compania-logo"
-                            />
-
-                            <div>
-                              <strong>{p.seguro?.nombre || "Seguro"}</strong>
-                              <small>Tipo de póliza</small>
-                            </div>
-                          </div>
-
-                          <span>{p.compania || "—"}</span>
-                          <span>{p.numero_poliza || "—"}</span>
-
-                          <span className={`estado-badge ${estado}`}>
-                            {textoEstado(estado)}
-                          </span>
-
-                          <span>{formatearFecha(p.fecha_vencimiento)}</span>
-                        </div>
-                      );
-                    })}
-                  </>
+                  ))
                 )}
               </div>
             )}
 
             {vista === "cotizaciones" && (
-              <div className="dashboard-lista">
-                <h2>Mis cotizaciones</h2>
+              <div className="pc-panel pc-full-panel">
+                {!seguroDetalleId ? (
+                  <>
+                    <section className="pc-seguros-disponibles-v2">
+                      <div className="pc-seguros-v2-head">
+                        <div>
+                          <h2>Seguros Disponibles</h2>
+                          <p>
+                            Explora soluciones de protección disponibles para
+                            personas, familias y empresas con acompañamiento
+                            Prieto & Correa.
+                          </p>
+                        </div>
 
-                {cotizaciones.length > 0 && (
-                  <div className="cotizaciones-grid">
-                    {cotizaciones.map((c) => {
-                      const estadoCotizacion = claseEstadoCotizacion(c.estado);
+                        <div className="pc-seguros-v2-advice">
+                          <div className="pc-seguros-v2-advice-icon">
+                            <img src="/solicitar-asistencia.png" alt="" />
+                          </div>
 
-                      return (
-                        <article
-                          className="cotizacion-card-portal"
-                          key={c.id_cotizacion}
-                        >
-                          <div className="cotizacion-card-top">
-                            <div className="cotizacion-icono">🧾</div>
+                          <div>
+                            <strong>¿No sabes cuál elegir?</strong>
+                            <span>
+                              Tu ejecutivo puede ayudarte a encontrar la
+                              alternativa adecuada para ti.
+                            </span>
+                          </div>
 
-                            <div>
+                          <button
+                            type="button"
+                            className="pc-seguros-v2-orange"
+                            onClick={() =>
+                              abrirWhatsApp(
+                                "Hola, necesito contactar a mi ejecutivo para revisar una solución de seguro disponible.",
+                              )
+                            }
+                          >
+                            <img src="/whatsapp.png" alt="" />
+                            Contactar ejecutivo
+                          </button>
+                        </div>
+                      </div>
+
+                      {cotizaciones.length > 0 && (
+                        <div className="pc-cotizaciones pc-cotizaciones-v2">
+                          {cotizaciones.map((c) => (
+                            <article key={c.id_cotizacion}>
                               <strong>{c.seguro?.nombre || "Seguro"}</strong>
                               <span>Solicitud #{c.id_cotizacion}</span>
-                            </div>
-                          </div>
-
-                          <div className="cotizacion-card-info">
-                            <div>
-                              <small>Estado</small>
-                              <span
-                                className={`cotizacion-estado ${estadoCotizacion}`}
-                              >
-                                {textoEstadoCotizacion(c.estado)}
-                              </span>
-                            </div>
-
-                            <div>
-                              <small>Fecha solicitud</small>
-                              <strong>{formatearFecha(c.fecha_solicitud)}</strong>
-                            </div>
-
-                            <div>
-                              <small>Canal</small>
-                              <strong>{c.canal || "Portal web"}</strong>
-                            </div>
-                          </div>
-
-                          <button className="cotizacion-card-button">
-                            Ver seguimiento
-                          </button>
-                        </article>
-                      );
-                    })}
-                  </div>
-                )}
-
-                <div className="cotizar-whatsapp-section">
-                  <div className="cotizar-whatsapp-header">
-                    <span>Nueva cotización</span>
-                    <h2>Seguros disponibles para cotizar</h2>
-                    <p>
-                      Revisa los seguros disponibles, entra al detalle de cada
-                      producto y solicita atención directa con un ejecutivo.
-                    </p>
-                  </div>
-
-                  <div className="seguros-whatsapp-grid">
-                    {seguros.map((seguro) => (
-                      <article className="seguro-whatsapp-card" key={seguro.id_seguro}>
-                        <div className="seguro-whatsapp-icono">
-                          {iconoSeguro(seguro.nombre)}
+                              <small>Estado: {c.estado || "Pendiente"}</small>
+                              <small>
+                                Fecha: {formatearFecha(c.fecha_solicitud)}
+                              </small>
+                            </article>
+                          ))}
                         </div>
+                      )}
 
+                      <div className="pc-seguros-v2-toolbar">
                         <div>
-                          <span>{seguro.categoria}</span>
-                          <h3>{seguro.nombre}</h3>
-                          <p>{seguro.descripcion}</p>
+                          <h3>¿Qué deseas proteger?</h3>
+
+                          <div className="pc-seguros-v2-filters">
+                            <button
+                              type="button"
+                              className={
+                                filtroSeguros === "todos" ? "active" : ""
+                              }
+                              onClick={() => cambiarFiltroSeguros("todos")}
+                            >
+                              <img src="/proteger.png" alt="" />
+                              Ver todo
+                            </button>
+                            <button
+                              type="button"
+                              className={
+                                filtroSeguros === "vehiculos" ? "active" : ""
+                              }
+                              onClick={() => cambiarFiltroSeguros("vehiculos")}
+                            >
+                              <img src="/icon-seguro-auto.png" alt="" />
+                              Vehículos
+                            </button>
+                            <button
+                              type="button"
+                              className={
+                                filtroSeguros === "personas" ? "active" : ""
+                              }
+                              onClick={() => cambiarFiltroSeguros("personas")}
+                            >
+                              <img src="/icon-cliente.png" alt="" />
+                              Personas
+                            </button>
+                            <button
+                              type="button"
+                              className={
+                                filtroSeguros === "hogar" ? "active" : ""
+                              }
+                              onClick={() => cambiarFiltroSeguros("hogar")}
+                            >
+                              <img src="/icon-hogar.png" alt="" />
+                              Hogar y patrimonio
+                            </button>
+                            <button
+                              type="button"
+                              className={
+                                filtroSeguros === "empresas" ? "active" : ""
+                              }
+                              onClick={() => cambiarFiltroSeguros("empresas")}
+                            >
+                              <img src="/icon-edificio.png" alt="" />
+                              Empresas
+                            </button>
+                            <button
+                              type="button"
+                              className={
+                                filtroSeguros === "internacional"
+                                  ? "active"
+                                  : ""
+                              }
+                              onClick={() =>
+                                cambiarFiltroSeguros("internacional")
+                              }
+                            >
+                              <img src="/mapa-del-mundo.png" alt="" />
+                              Internacional
+                            </button>
+                          </div>
                         </div>
 
-                        <div className="seguro-whatsapp-actions">
-                          <button
-                            className="detalle-seguro-btn full"
-                            onClick={() => verDetalleSeguro(seguro.nombre)}
+                        <label className="pc-seguros-v2-order">
+                          Ordenar por
+                          <select
+                            value={ordenSeguros}
+                            onChange={(e) => setOrdenSeguros(e.target.value)}
                           >
-                            Ver detalle →
+                            <option value="recomendados">Recomendados</option>
+                            <option value="precio">Precio</option>
+                            <option value="categoria">Categoría</option>
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="pc-seguros-carousel-shell">
+                        {mostrarFlechasSeguros && (
+                          <button
+                            type="button"
+                            className="pc-seguros-carousel-arrow pc-seguros-carousel-arrow-left"
+                            onClick={retrocederSeguros}
+                            disabled={paginaSeguroActual === 0}
+                            aria-label="Ver seguros anteriores"
+                          >
+                            ‹
                           </button>
+                        )}
+
+                        <div className="pc-seguros-carousel-viewport">
+                          <section className="seguros-bloques portal-seguros-bloques pc-seguros-grid-v2 pc-seguros-carousel-track">
+                            {segurosVisiblesCarrusel.map((seguro, index) => {
+                              const indiceRealSeguro =
+                                paginaSeguroActual * segurosPorVista + index;
+
+                              return (
+                                <article
+                                  className="seguro-bloque pc-seguro-producto-v2"
+                                  key={seguro.id}
+                                >
+                                  <div className="seguro-bloque-imagen">
+                                    <img
+                                      src={seguro.foto}
+                                      alt={seguro.nombre}
+                                    />
+                                    <span
+                                      className={`pc-product-badge badge-${indiceRealSeguro % 3}`}
+                                    >
+                                      {indiceRealSeguro === 0
+                                        ? "Recomendado"
+                                        : seguro.categoria}
+                                    </span>
+                                  </div>
+
+                                  <div className="seguro-bloque-info">
+                                    <h2>{seguro.nombre}</h2>
+                                    <p>{seguro.descripcion}</p>
+
+                                    <div className="seguro-mini-coberturas pc-product-checks">
+                                      {seguro.cubre.slice(0, 3).map((item) => (
+                                        <span key={item}>✓ {item}</span>
+                                      ))}
+                                    </div>
+
+                                    <div className="pc-product-bottom">
+                                      <div>
+                                        <small>Desde</small>
+                                        <strong>
+                                          {seguro.precioUf.replace(
+                                            "Desde ",
+                                            "",
+                                          )}
+                                        </strong>
+                                      </div>
+
+                                      <div className="pc-product-advised">
+                                        <img src="/premium.png" alt="" />
+                                        <span>
+                                          Asesorado por
+                                          <br />
+                                          Prieto & Correa
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <div className="seguro-bloque-actions pc-product-actions">
+                                      <button
+                                        onClick={() =>
+                                          abrirDetalleCotizacion(seguro.id)
+                                        }
+                                      >
+                                        Ver cobertura
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="pc-product-secondary"
+                                        onClick={() =>
+                                          abrirDetalleCotizacion(seguro.id)
+                                        }
+                                      >
+                                        Solicitar propuesta
+                                      </button>
+                                    </div>
+                                  </div>
+                                </article>
+                              );
+                            })}
+                          </section>
                         </div>
-                      </article>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
 
-            {vista === "beneficiarios" && (
-              <div className="dashboard-lista">
-                <h2>Beneficiarios</h2>
-                <div className="empty-polizas">
-                  <h3>Sin beneficiarios visibles por ahora</h3>
-                  <p>
-                    Cuando se conecte el detalle de cada póliza, aquí se
-                    mostrarán los beneficiarios asociados a tus seguros.
-                  </p>
-                </div>
-              </div>
-            )}
+                        {mostrarFlechasSeguros && (
+                          <button
+                            type="button"
+                            className="pc-seguros-carousel-arrow pc-seguros-carousel-arrow-right"
+                            onClick={avanzarSeguros}
+                            disabled={
+                              paginaSeguroActual === totalPaginasSeguros - 1
+                            }
+                            aria-label="Ver seguros siguientes"
+                          >
+                            ›
+                          </button>
+                        )}
+                      </div>
 
-            {vista === "coberturas" && (
-              <div className="dashboard-lista">
-                <h2>Coberturas</h2>
-                <div className="empty-polizas">
-                  <h3>Coberturas en preparación</h3>
-                  <p>
-                    Aquí podrás revisar qué cubre cada seguro, montos asegurados,
-                    exclusiones y condiciones principales.
-                  </p>
-                </div>
-              </div>
-            )}
+                      {mostrarFlechasSeguros && (
+                        <div
+                          className="pc-seguros-carousel-dots"
+                          aria-label="Indicador de seguros disponibles"
+                        >
+                          {Array.from({ length: totalPaginasSeguros }).map(
+                            (_, index) => (
+                              <button
+                                key={index}
+                                type="button"
+                                className={
+                                  paginaSeguroActual === index ? "active" : ""
+                                }
+                                onClick={() => irASlideSeguro(index)}
+                                aria-label={`Ir al grupo de seguros ${index + 1}`}
+                              />
+                            ),
+                          )}
+                        </div>
+                      )}
 
-            {vista === "vencimientos" && (
-              <div className="dashboard-lista">
-                <h2>Vencimientos</h2>
-                <div className="empty-polizas">
-                  <h3>No tienes vencimientos próximos</h3>
-                  <p>
-                    Cuando una póliza esté próxima a caducar, aparecerá aquí una
-                    alerta con la fecha de renovación recomendada.
-                  </p>
-                </div>
-              </div>
-            )}
+                      <div className="pc-seguros-v2-trustbar">
+                        <article>
+                          <img src="/proteger.png" alt="" />
+                          <div>
+                            <strong>Acompañamiento experto</strong>
+                            <span>
+                              Te asesoramos antes, durante y después de
+                              contratar.
+                            </span>
+                          </div>
+                        </article>
+                        <article>
+                          <img src="/beneficios.png" alt="" />
+                          <div>
+                            <strong>Soluciones a tu medida</strong>
+                            <span>
+                              Productos diseñados para adaptarse a tus
+                              necesidades.
+                            </span>
+                          </div>
+                        </article>
+                        <article>
+                          <img src="/candado.png" alt="" />
+                          <div>
+                            <strong>Confianza y respaldo</strong>
+                            <span>
+                              Trabajamos con las mejores aseguradoras del
+                              mercado.
+                            </span>
+                          </div>
+                        </article>
+                        <article>
+                          <img src="/calendario.png" alt="" />
+                          <div>
+                            <strong>Respuesta ágil</strong>
+                            <span>
+                              Cotiza y recibe una propuesta en minutos.
+                            </span>
+                          </div>
+                        </article>
+                      </div>
+                    </section>
+                  </>
+                ) : (
+                  (() => {
+                    const seguro = segurosDisponibles.find(
+                      (item) => item.id === seguroDetalleId,
+                    );
+                    const detalle = obtenerDetalleSeguro(
+                      seguro || segurosDisponibles[0],
+                    );
 
-            {vista === "cuotas" && (
-              <div className="dashboard-lista">
-                <h2>Pagos y cuotas</h2>
-                <div className="empty-polizas">
-                  <h3>Información de pagos no disponible todavía</h3>
-                  <p>
-                    En esta sección se mostrarán cuotas pendientes, fechas de
-                    pago y estado de cada compromiso asociado a tus seguros.
-                  </p>
-                </div>
+                    if (!seguro) return null;
+
+                    return (
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: "12px",
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={volverACotizaciones}
+                          style={{
+                            width: "fit-content",
+                            border: "0",
+                            borderRadius: "999px",
+                            padding: "8px 16px",
+                            background: "#ffffff",
+                            color: "#07195a",
+                            fontWeight: 900,
+                            boxShadow: "0 12px 30px rgba(7, 25, 90, 0.1)",
+                            cursor: "pointer",
+                          }}
+                        >
+                          ← Volver a Seguros Disponibles
+                        </button>
+
+                        <section
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "0.9fr 1.1fr",
+                            gap: "8px",
+                            alignItems: "stretch",
+                          }}
+                        >
+                          <article
+                            style={{
+                              background:
+                                "linear-gradient(135deg, #ffffff 0%, #ffffff 58%, #fff0e6 100%)",
+                              borderRadius: "24px",
+                              padding: "22px",
+                              boxShadow: "0 20px 45px rgba(7, 25, 90, 0.08)",
+                            }}
+                          >
+                            <span
+                              style={{
+                                color: "#f47c20",
+                                fontWeight: 900,
+                                textTransform: "uppercase",
+                                fontSize: "11.5px",
+                              }}
+                            >
+                              {seguro.categoria}
+                            </span>
+
+                            <h2
+                              style={{
+                                margin: "8px 0 10px",
+                                color: "#07195a",
+                                fontSize: "30px",
+                                lineHeight: 1,
+                              }}
+                            >
+                              {seguro.nombre}
+                            </h2>
+
+                            <p
+                              style={{
+                                margin: 0,
+                                color: "#4c5876",
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              {seguro.descripcion}
+                            </p>
+
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "1fr 1fr",
+                                gap: "12px",
+                                marginTop: "14px",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  background: "#f5f7fb",
+                                  borderRadius: "16px",
+                                  padding: "11px",
+                                }}
+                              >
+                                <small
+                                  style={{ color: "#6c7488", fontWeight: 800 }}
+                                >
+                                  Valor UF
+                                </small>
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    color: "#07195a",
+                                    marginTop: "4px",
+                                  }}
+                                >
+                                  {seguro.precioUf}
+                                </strong>
+                              </div>
+
+                              <div
+                                style={{
+                                  background: "#f5f7fb",
+                                  borderRadius: "16px",
+                                  padding: "11px",
+                                }}
+                              >
+                                <small
+                                  style={{ color: "#6c7488", fontWeight: 800 }}
+                                >
+                                  Valor CLP
+                                </small>
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    color: "#07195a",
+                                    marginTop: "4px",
+                                  }}
+                                >
+                                  {seguro.precioClp}
+                                </strong>
+                              </div>
+                            </div>
+
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(3, 1fr)",
+                                gap: "8px",
+                                marginTop: "12px",
+                              }}
+                            >
+                              {[
+                                ["Qué cubre", detalle.coberturas],
+                                ["Beneficios", detalle.beneficios],
+                                ["Requisitos", detalle.requisitos],
+                              ].map(([titulo, items]) => (
+                                <div
+                                  key={titulo}
+                                  style={{
+                                    background: "#ffffff",
+                                    border: "1px solid #e8edf6",
+                                    borderRadius: "16px",
+                                    padding: "11px",
+                                  }}
+                                >
+                                  <h3
+                                    style={{
+                                      margin: "0 0 5px",
+                                      color: "#07195a",
+                                      fontSize: "14px",
+                                    }}
+                                  >
+                                    {titulo}
+                                  </h3>
+
+                                  {items.slice(0, 3).map((item) => (
+                                    <p
+                                      key={item}
+                                      style={{
+                                        margin: "5px 0",
+                                        color: "#4c5876",
+                                        fontWeight: 700,
+                                        fontSize: "11.5px",
+                                      }}
+                                    >
+                                      <span style={{ color: "#f47c20" }}>
+                                        ✓
+                                      </span>{" "}
+                                      {item}
+                                    </p>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          </article>
+
+                          <article
+                            style={{
+                              background: "#07195a",
+                              borderRadius: "24px",
+                              padding: "20px",
+                              color: "#ffffff",
+                              display: "grid",
+                              alignContent: "start",
+                              gap: "8px",
+                            }}
+                          >
+                            <div>
+                              <span
+                                style={{
+                                  color: "#f47c20",
+                                  fontWeight: 900,
+                                  textTransform: "uppercase",
+                                  fontSize: "11.5px",
+                                }}
+                              >
+                                Cotización personalizada
+                              </span>
+
+                              <h2
+                                style={{
+                                  margin: "6px 0 6px",
+                                  fontSize: "19px",
+                                  lineHeight: 1.1,
+                                }}
+                              >
+                                Solicita esta cotización
+                              </h2>
+
+                              <p
+                                style={{
+                                  margin: 0,
+                                  color: "rgba(255,255,255,0.78)",
+                                  lineHeight: 1.45,
+                                }}
+                              >
+                                Completa la información y envía tu solicitud por
+                                WhatsApp o correo.
+                              </p>
+                            </div>
+
+                            <form
+                              onSubmit={(e) =>
+                                enviarCotizacionCompacta(e, seguro)
+                              }
+                              style={{
+                                display: "grid",
+                                gap: "8px",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "1fr 1fr",
+                                  gap: "8px",
+                                }}
+                              >
+                                <div>
+                                  <small style={{ fontWeight: 900 }}>
+                                    Nombre
+                                  </small>
+                                  <input
+                                    value={nombreCliente}
+                                    readOnly
+                                    style={{
+                                      width: "100%",
+                                      height: "36px",
+                                      border: "0",
+                                      borderRadius: "10px",
+                                      padding: "0 12px",
+                                      marginTop: "4px",
+                                      fontWeight: 800,
+                                    }}
+                                  />
+                                </div>
+
+                                <div>
+                                  <small style={{ fontWeight: 900 }}>RUT</small>
+                                  <input
+                                    value={
+                                      localStorage.getItem("rut_cliente") || ""
+                                    }
+                                    readOnly
+                                    style={{
+                                      width: "100%",
+                                      height: "36px",
+                                      border: "0",
+                                      borderRadius: "10px",
+                                      padding: "0 12px",
+                                      marginTop: "4px",
+                                      fontWeight: 800,
+                                    }}
+                                  />
+                                </div>
+                              </div>
+
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "1fr 1fr",
+                                  gap: "8px",
+                                }}
+                              >
+                                <div>
+                                  <small style={{ fontWeight: 900 }}>
+                                    Correo
+                                  </small>
+                                  <input
+                                    value={
+                                      localStorage.getItem("correo_cliente") ||
+                                      ""
+                                    }
+                                    readOnly
+                                    style={{
+                                      width: "100%",
+                                      height: "36px",
+                                      border: "0",
+                                      borderRadius: "10px",
+                                      padding: "0 12px",
+                                      marginTop: "4px",
+                                      fontWeight: 800,
+                                    }}
+                                  />
+                                </div>
+
+                                <div>
+                                  <small style={{ fontWeight: 900 }}>
+                                    Teléfono
+                                  </small>
+                                  <input
+                                    value={
+                                      localStorage.getItem(
+                                        "telefono_cliente",
+                                      ) || ""
+                                    }
+                                    readOnly
+                                    style={{
+                                      width: "100%",
+                                      height: "36px",
+                                      border: "0",
+                                      borderRadius: "10px",
+                                      padding: "0 12px",
+                                      marginTop: "4px",
+                                      fontWeight: 800,
+                                    }}
+                                  />
+                                </div>
+                              </div>
+
+                              <div>
+                                <small style={{ fontWeight: 900 }}>
+                                  Datos principales para cotizar
+                                </small>
+                                <textarea
+                                  name="detalle"
+                                  value={cotizacionCompacta.detalle}
+                                  onChange={actualizarCotizacionCompacta}
+                                  placeholder="Ej: patente, dirección, destino, monto requerido, etc."
+                                  required
+                                  rows="1"
+                                  style={{
+                                    width: "100%",
+                                    border: "0",
+                                    borderRadius: "12px",
+                                    padding: "9px 11px",
+                                    marginTop: "4px",
+                                    resize: "none",
+                                    fontWeight: 700,
+                                  }}
+                                />
+                              </div>
+
+                              <div>
+                                <small style={{ fontWeight: 900 }}>
+                                  Comentario adicional
+                                </small>
+                                <textarea
+                                  name="comentario"
+                                  value={cotizacionCompacta.comentario}
+                                  onChange={actualizarCotizacionCompacta}
+                                  placeholder="Información adicional para el ejecutivo."
+                                  rows="1"
+                                  style={{
+                                    width: "100%",
+                                    border: "0",
+                                    borderRadius: "12px",
+                                    padding: "9px 11px",
+                                    marginTop: "4px",
+                                    resize: "none",
+                                    fontWeight: 700,
+                                  }}
+                                />
+                              </div>
+
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "1fr 1fr",
+                                  gap: "8px",
+                                  marginTop: "2px",
+                                }}
+                              >
+                                <button
+                                  type="submit"
+                                  style={{
+                                    height: "40px",
+                                    border: "0",
+                                    borderRadius: "999px",
+                                    background: "#f47c20",
+                                    color: "#ffffff",
+                                    fontWeight: 900,
+                                    cursor: "pointer",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: "7px",
+                                    fontSize: "13px",
+                                  }}
+                                >
+                                  <img
+                                    src="/whatsapp.png"
+                                    alt=""
+                                    style={{ width: "17px", height: "17px" }}
+                                  />
+                                  WhatsApp
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    enviarCotizacionPorCorreo(seguro)
+                                  }
+                                  style={{
+                                    height: "40px",
+                                    border: "1px solid rgba(255,255,255,0.35)",
+                                    borderRadius: "999px",
+                                    background: "rgba(255,255,255,0.12)",
+                                    color: "#ffffff",
+                                    fontWeight: 900,
+                                    cursor: "pointer",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: "7px",
+                                    fontSize: "13px",
+                                  }}
+                                >
+                                  <img
+                                    src="/correo-electronico.png"
+                                    alt=""
+                                    style={{
+                                      width: "17px",
+                                      height: "17px",
+                                      filter: "brightness(0) invert(1)",
+                                    }}
+                                  />
+                                  Correo
+                                </button>
+                              </div>
+                            </form>
+                          </article>
+                        </section>
+                      </div>
+                    );
+                  })()
+                )}
               </div>
             )}
 
             {vista === "documentos" && (
-              <div className="dashboard-lista">
-                <h2>Centro de documentos</h2>
-
-                <div className="documentos-grid">
-                  <div className="documento-card">
-                    <div className="documento-icono">📄</div>
-                    <h3>Pólizas</h3>
-                    <p>Visualiza y descarga tus pólizas.</p>
-                    <button>Ver documentos</button>
-                  </div>
-
-                  <div className="documento-card">
-                    <div className="documento-icono">🧾</div>
-                    <h3>Certificados</h3>
-                    <p>Accede a certificados disponibles.</p>
-                    <button>Descargar</button>
-                  </div>
-
-                  <div className="documento-card">
-                    <div className="documento-icono">🚗</div>
-                    <h3>SOAP</h3>
-                    <p>Consulta y descarga tu SOAP.</p>
-                    <button>Ver SOAP</button>
-                  </div>
-
-                  <div className="documento-card">
-                    <div className="documento-icono">🕓</div>
-                    <h3>Historial</h3>
-                    <p>Revisa documentos anteriores.</p>
-                    <button>Abrir historial</button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {vista === "siniestro" && (
-              <div className="dashboard-lista">
-                <h2>Reportar siniestro</h2>
-
-                <p className="subtitulo-panel">
-                  Selecciona una póliza para iniciar el reporte.
-                </p>
-
-                {polizas.length === 0 ? (
-                  <div className="empty-polizas">
-                    <h3>No existen seguros disponibles para reportar</h3>
-                    <p>
-                      Cuando contrates una póliza con Prieto & Correa podrás
-                      gestionar siniestros y recibir apoyo directo desde este
-                      portal.
+              <div className="pc-panel pc-full-panel">
+                <div
+                  className="pc-panel-title"
+                  style={{ marginBottom: "14px" }}
+                >
+                  <div>
+                    <h3>
+                      <img src="/documentos.png" alt="" />
+                      Mis documentos
+                    </h3>
+                    <p
+                      style={{
+                        margin: "6px 0 0",
+                        color: "#667085",
+                        fontSize: "14px",
+                      }}
+                    >
+                      Revisa, abre y descarga los documentos asociados a tus
+                      seguros.
                     </p>
                   </div>
-                ) : (
-                  <div className="siniestro-polizas">
-                    {polizas.map((p) => (
-                      <div className="siniestro-poliza-card" key={p.id_poliza}>
-                        <div className="siniestro-poliza-top">
-                          <div>
-                            <h3>{p.seguro?.nombre || "Seguro"}</h3>
-                            <span>{p.compania || "Prieto & Correa"}</span>
-                          </div>
+                </div>
 
-                          <div className={`estado-badge ${calcularEstado(p)}`}>
-                            {textoEstado(calcularEstado(p))}
+                <div className="pc-stats" style={{ marginBottom: "14px" }}>
+                  <article>
+                    <strong>{documentosDemo.length}</strong>
+                    <span>Documentos totales</span>
+                  </article>
+
+                  <article>
+                    <strong>{polizasConDocumentos}</strong>
+                    <span>Pólizas asociadas</span>
+                  </article>
+
+                  <article>
+                    <strong>{documentosDisponibles}</strong>
+                    <span>Disponibles</span>
+                  </article>
+
+                  <article>
+                    <strong>
+                      {documentosDemo.length - documentosDisponibles}
+                    </strong>
+                    <span>Bajo solicitud</span>
+                  </article>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1.4fr 1fr 0.9fr 0.9fr",
+                    gap: "10px",
+                    marginBottom: "14px",
+                  }}
+                >
+                  <input
+                    type="text"
+                    name="busqueda"
+                    value={filtrosDocumentos.busqueda}
+                    onChange={actualizarFiltroDocumento}
+                    placeholder="Buscar documento..."
+                    style={{
+                      width: "100%",
+                      height: "42px",
+                      border: "1px solid #d9e1ec",
+                      borderRadius: "12px",
+                      padding: "0 10px",
+                      outline: "none",
+                    }}
+                  />
+
+                  <select
+                    name="seguro"
+                    value={filtrosDocumentos.seguro}
+                    onChange={actualizarFiltroDocumento}
+                    style={{
+                      width: "100%",
+                      height: "42px",
+                      border: "1px solid #d9e1ec",
+                      borderRadius: "12px",
+                      padding: "0 12px",
+                      outline: "none",
+                      background: "#ffffff",
+                    }}
+                  >
+                    {segurosDocumentos.map((seguro) => (
+                      <option key={seguro} value={seguro}>
+                        {seguro === "todos" ? "Todos los seguros" : seguro}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    name="tipo"
+                    value={filtrosDocumentos.tipo}
+                    onChange={actualizarFiltroDocumento}
+                    style={{
+                      width: "100%",
+                      height: "42px",
+                      border: "1px solid #d9e1ec",
+                      borderRadius: "12px",
+                      padding: "0 12px",
+                      outline: "none",
+                      background: "#ffffff",
+                    }}
+                  >
+                    {tiposDocumentos.map((tipo) => (
+                      <option key={tipo} value={tipo}>
+                        {tipo === "todos" ? "Todos los tipos" : tipo}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    name="estado"
+                    value={filtrosDocumentos.estado}
+                    onChange={actualizarFiltroDocumento}
+                    style={{
+                      width: "100%",
+                      height: "42px",
+                      border: "1px solid #d9e1ec",
+                      borderRadius: "12px",
+                      padding: "0 12px",
+                      outline: "none",
+                      background: "#ffffff",
+                    }}
+                  >
+                    {estadosDocumentos.map((estado) => (
+                      <option key={estado} value={estado}>
+                        {estado === "todos" ? "Todos los estados" : estado}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: documentoSeleccionado
+                      ? "1fr 320px"
+                      : "1fr",
+                    gap: "14px",
+                    alignItems: "stretch",
+                  }}
+                >
+                  <div
+                    style={{
+                      border: "1px solid #e6ebf2",
+                      borderRadius: "18px",
+                      overflow: "hidden",
+                      background: "#ffffff",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "1.2fr 1.35fr 0.75fr 0.8fr 0.75fr 1fr",
+                        gap: "10px",
+                        padding: "12px 16px",
+                        background: "#f5f7fb",
+                        color: "#07195a",
+                        fontSize: "12px",
+                        fontWeight: 800,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      <span>Documento</span>
+                      <span>Seguro / Póliza</span>
+                      <span>Tipo</span>
+                      <span>Estado</span>
+                      <span>Fecha</span>
+                      <span>Acciones</span>
+                    </div>
+
+                    {documentosFiltrados.length === 0 ? (
+                      <div className="pc-empty" style={{ padding: "26px" }}>
+                        <h3>No se encontraron documentos</h3>
+                        <p>
+                          Prueba cambiando los filtros o contacta a tu ejecutivo
+                          si necesitas apoyo.
+                        </p>
+                      </div>
+                    ) : (
+                      documentosFiltrados.map((documento) => (
+                        <div
+                          key={documento.id}
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                              "1.2fr 1.35fr 0.75fr 0.8fr 0.75fr 1fr",
+                            gap: "10px",
+                            alignItems: "center",
+                            padding: "13px 16px",
+                            borderTop: "1px solid #eef2f7",
+                            fontSize: "13px",
+                          }}
+                        >
+                          <strong style={{ color: "#07195a" }}>
+                            {documento.nombre}
+                          </strong>
+                          <span style={{ color: "#475467" }}>
+                            {documento.seguro}
+                          </span>
+                          <span>{documento.tipo}</span>
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              justifyContent: "center",
+                              borderRadius: "999px",
+                              padding: "6px 10px",
+                              fontSize: "12px",
+                              fontWeight: 800,
+                              color:
+                                documento.estado === "Disponible"
+                                  ? "#067647"
+                                  : documento.estado === "En preparación"
+                                    ? "#b54708"
+                                    : "#07195a",
+                              background:
+                                documento.estado === "Disponible"
+                                  ? "#ecfdf3"
+                                  : documento.estado === "En preparación"
+                                    ? "#fffaeb"
+                                    : "#eef4ff",
+                            }}
+                          >
+                            {documento.estado}
+                          </span>
+                          <span>{formatearFecha(documento.fecha)}</span>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "8px",
+                              justifyContent: "flex-end",
+                            }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => abrirPreviewDocumento(documento)}
+                              style={{
+                                minHeight: "34px",
+                                padding: "8px 12px",
+                                borderRadius: "10px",
+                                border: "none",
+                                background: "#07195a",
+                                color: "#ffffff",
+                                fontWeight: 800,
+                                cursor: "pointer",
+                              }}
+                            >
+                              Ver PDF
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                documento.estado === "Disponible"
+                                  ? descargarDocumento(documento)
+                                  : contactarEjecutivoDocumento(documento)
+                              }
+                              style={{
+                                minHeight: "34px",
+                                padding: "8px 12px",
+                                borderRadius: "10px",
+                                border: "1px solid #f47c20",
+                                background: "#ffffff",
+                                color: "#f47c20",
+                                fontWeight: 800,
+                                cursor: "pointer",
+                              }}
+                            >
+                              {documento.estado === "Disponible"
+                                ? "Descargar"
+                                : "Ejecutivo"}
+                            </button>
                           </div>
                         </div>
+                      ))
+                    )}
+                  </div>
 
-                        <div className="siniestro-info">
+                  {documentoSeleccionado && (
+                    <aside
+                      style={{
+                        borderRadius: "18px",
+                        border: "1px solid #dfe7f3",
+                        background:
+                          "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
+                        padding: "16px",
+                        minHeight: "100%",
+                        boxShadow: "0 12px 28px rgba(7, 25, 90, 0.08)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        <strong style={{ color: "#07195a", fontSize: "15px" }}>
+                          Vista previa
+                        </strong>
+
+                        <button
+                          type="button"
+                          onClick={() => setDocumentoSeleccionado(null)}
+                          style={{
+                            border: "none",
+                            background: "#eef2f7",
+                            color: "#07195a",
+                            borderRadius: "999px",
+                            width: "28px",
+                            height: "28px",
+                            cursor: "pointer",
+                            fontWeight: 900,
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+
+                      <div
+                        style={{
+                          borderRadius: "16px",
+                          background: "#07195a",
+                          color: "#ffffff",
+                          padding: "18px",
+                          marginBottom: "14px",
+                          minHeight: "170px",
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <div>
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              borderRadius: "999px",
+                              background: "rgba(244, 124, 32, 0.16)",
+                              color: "#f47c20",
+                              padding: "5px 9px",
+                              fontSize: "11px",
+                              fontWeight: 900,
+                              marginBottom: "12px",
+                            }}
+                          >
+                            PDF
+                          </span>
+
+                          <h3 style={{ margin: "0 0 8px", fontSize: "18px" }}>
+                            {documentoSeleccionado.nombre}
+                          </h3>
+
+                          <p
+                            style={{
+                              margin: 0,
+                              color: "rgba(255,255,255,0.78)",
+                              fontSize: "12px",
+                            }}
+                          >
+                            Documento asociado a tu portal de cliente.
+                          </p>
+                        </div>
+
+                        <small style={{ color: "rgba(255,255,255,0.65)" }}>
+                          Prieto & Correa Seguros
+                        </small>
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: "9px",
+                          fontSize: "12px",
+                        }}
+                      >
+                        <div>
+                          <span style={{ color: "#667085", display: "block" }}>
+                            Seguro / Póliza
+                          </span>
+                          <strong style={{ color: "#07195a" }}>
+                            {documentoSeleccionado.seguro}
+                          </strong>
+                        </div>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: "10px",
+                          }}
+                        >
                           <div>
-                            <label>N° póliza</label>
-                            <strong>{p.numero_poliza || "Sin número"}</strong>
+                            <span
+                              style={{ color: "#667085", display: "block" }}
+                            >
+                              Tipo
+                            </span>
+                            <strong style={{ color: "#07195a" }}>
+                              {documentoSeleccionado.tipo}
+                            </strong>
                           </div>
 
                           <div>
-                            <label>Vencimiento</label>
-                            <strong>
-                              {formatearFecha(p.fecha_vencimiento)}
+                            <span
+                              style={{ color: "#667085", display: "block" }}
+                            >
+                              Fecha
+                            </span>
+                            <strong style={{ color: "#07195a" }}>
+                              {formatearFecha(documentoSeleccionado.fecha)}
                             </strong>
                           </div>
                         </div>
 
+                        <div>
+                          <span style={{ color: "#667085", display: "block" }}>
+                            Estado
+                          </span>
+                          <strong style={{ color: "#07195a" }}>
+                            {documentoSeleccionado.estado}
+                          </strong>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: "8px",
+                          marginTop: "16px",
+                        }}
+                      >
                         <button
-                          className="reportar-btn"
-                          onClick={() => {
-                            const mensaje = `Hola.
-Soy cliente del portal.
-
-Quiero reportar un siniestro.
-
-Seguro:
-${p.seguro?.nombre || "Seguro"}
-
-Compañía:
-${p.compania || "Sin compañía"}
-
-Póliza:
-${p.numero_poliza || "Sin número"}`;
-
-                            window.open(
-                              `https://wa.me/56966541939?text=${encodeURIComponent(
-                                mensaje
-                              )}`
-                            );
+                          type="button"
+                          onClick={() =>
+                            descargarDocumento(documentoSeleccionado)
+                          }
+                          style={{
+                            minHeight: "38px",
+                            borderRadius: "12px",
+                            border: "none",
+                            background: "#07195a",
+                            color: "#ffffff",
+                            fontWeight: 900,
+                            cursor: "pointer",
                           }}
                         >
-                          Reportar siniestro
+                          Descargar PDF
+                        </button>
+
+                        {documentoSeleccionado.estado !== "Disponible" && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              contactarEjecutivoDocumento(documentoSeleccionado)
+                            }
+                            style={{
+                              minHeight: "38px",
+                              borderRadius: "12px",
+                              border: "1px solid #f47c20",
+                              background: "#ffffff",
+                              color: "#f47c20",
+                              fontWeight: 900,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Contactar ejecutivo
+                          </button>
+                        )}
+                      </div>
+                    </aside>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {vista === "perfil" && (
+              <div
+                className="pc-panel pc-full-panel"
+                style={{
+                  width: "min(calc(100vw - 280px), 1660px)",
+                  maxWidth: "1660px",
+                  margin: "0 auto",
+                  padding: "16px 18px",
+                }}
+              >
+                {(() => {
+                  const rutCliente =
+                    datosPerfil.rut ||
+                    localStorage.getItem("rut_cliente") ||
+                    "—";
+                  const correoCliente =
+                    datosPerfil.correo ||
+                    localStorage.getItem("correo_cliente") ||
+                    "Sin correo registrado";
+                  const telefonoCliente =
+                    datosPerfil.telefono ||
+                    localStorage.getItem("telefono_cliente") ||
+                    "Sin teléfono registrado";
+                  const inicialCliente = (
+                    datosPerfil.nombre ||
+                    nombreCliente ||
+                    "C"
+                  )
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase();
+
+                  const actualizarDatoPerfil = (campo, valor) => {
+                    setDatosPerfil((actual) => ({
+                      ...actual,
+                      [campo]: valor,
+                    }));
+                  };
+
+                  const guardarPerfil = () => {
+                    localStorage.setItem(
+                      "nombre_cliente",
+                      datosPerfil.nombre || "Cliente",
+                    );
+                    localStorage.setItem(
+                      "correo_cliente",
+                      datosPerfil.correo || "",
+                    );
+                    localStorage.setItem(
+                      "telefono_cliente",
+                      datosPerfil.telefono || "",
+                    );
+                    localStorage.setItem(
+                      "direccion_cliente",
+                      datosPerfil.direccion || "",
+                    );
+                    setEditandoPerfil(false);
+                    setMensajePerfil(
+                      "Datos actualizados correctamente. Cuando conectes backend, este cambio quedará guardado en la cuenta.",
+                    );
+                    setTimeout(() => setMensajePerfil(""), 4200);
+                  };
+
+                  const manejarAvatar = async (event) => {
+                    const archivo = event.target.files?.[0];
+                    if (!archivo) return;
+
+                    const urlPrevia = URL.createObjectURL(archivo);
+                    setAvatarPerfil(urlPrevia);
+
+                    try {
+                      const token = localStorage.getItem("token");
+                      const perfil = await subirFotoPerfil(token, archivo);
+                      const urlServidor = `${import.meta.env.VITE_API_URL || "http://localhost:8000"}${perfil.foto_perfil}`;
+                      setAvatarPerfil(urlServidor);
+                      localStorage.setItem("avatar_cliente", urlServidor);
+                      setMensajePerfil(
+                        "Foto de perfil actualizada correctamente.",
+                      );
+                    } catch {
+                      localStorage.setItem("avatar_cliente", urlPrevia);
+                      setMensajePerfil("No se pudo subir la foto al servidor.");
+                    }
+                    setTimeout(() => setMensajePerfil(""), 3600);
+                  };
+
+                  const limpiarAvatar = () => {
+                    setAvatarPerfil("");
+                    localStorage.removeItem("avatar_cliente");
+                    setMensajePerfil("Foto de perfil eliminada.");
+                    setTimeout(() => setMensajePerfil(""), 3200);
+                  };
+
+                  const generarCodigoSeguridad = () => {
+                    const codigo = String(
+                      Math.floor(100000 + Math.random() * 900000),
+                    );
+                    setCodigoSeguridad(codigo);
+                    setCodigoIngresado("");
+                    setNuevaClave("");
+                    setConfirmarClave("");
+                    setPasoClave("codigo");
+                    setMensajePerfil(
+                      `Código de seguridad generado para prueba frontend: ${codigo}`,
+                    );
+                    setTimeout(() => setMensajePerfil(""), 6500);
+                  };
+
+                  const validarCodigo = () => {
+                    if (codigoIngresado.trim() !== codigoSeguridad) {
+                      setMensajePerfil("El código ingresado no coincide.");
+                      setTimeout(() => setMensajePerfil(""), 3500);
+                      return;
+                    }
+
+                    setPasoClave("clave");
+                    setMensajePerfil(
+                      "Código validado. Ingresa tu nueva contraseña.",
+                    );
+                    setTimeout(() => setMensajePerfil(""), 3500);
+                  };
+
+                  const actualizarClave = () => {
+                    if (nuevaClave.length < 8) {
+                      setMensajePerfil(
+                        "La contraseña debe tener al menos 8 caracteres.",
+                      );
+                      setTimeout(() => setMensajePerfil(""), 3500);
+                      return;
+                    }
+
+                    if (nuevaClave !== confirmarClave) {
+                      setMensajePerfil("Las contraseñas no coinciden.");
+                      setTimeout(() => setMensajePerfil(""), 3500);
+                      return;
+                    }
+
+                    setModalClaveAbierto(false);
+                    setPasoClave("inicio");
+                    setCodigoSeguridad("");
+                    setCodigoIngresado("");
+                    setNuevaClave("");
+                    setConfirmarClave("");
+                    setMensajePerfil(
+                      "Contraseña actualizada en modo frontend. Después se conectará al backend con OTP real.",
+                    );
+                    setTimeout(() => setMensajePerfil(""), 5000);
+                  };
+
+                  const alternarPreferencia = (clave) => {
+                    setPreferenciasPerfil((actual) => ({
+                      ...actual,
+                      [clave]: !actual[clave],
+                    }));
+                  };
+
+                  const inputPerfil = (
+                    label,
+                    campo,
+                    tipo = "text",
+                    bloqueado = false,
+                  ) => (
+                    <label
+                      style={{
+                        display: "grid",
+                        gap: "7px",
+                        background: "#f5f7fb",
+                        border: "1px solid rgba(7, 25, 90, 0.08)",
+                        borderRadius: "14px",
+                        padding: "11px 12px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#667085",
+                          fontSize: "10px",
+                          fontWeight: 950,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        {label}
+                      </span>
+
+                      {editandoPerfil && !bloqueado ? (
+                        <input
+                          type={tipo}
+                          value={datosPerfil[campo] || ""}
+                          onChange={(event) =>
+                            actualizarDatoPerfil(campo, event.target.value)
+                          }
+                          style={{
+                            width: "100%",
+                            border: "1px solid #d9e2ef",
+                            background: "#ffffff",
+                            color: "#07195a",
+                            borderRadius: "10px",
+                            padding: "9px 10px",
+                            fontWeight: 900,
+                            outline: "none",
+                          }}
+                        />
+                      ) : (
+                        <strong
+                          style={{
+                            color: "#07195a",
+                            fontSize: "14px",
+                            fontWeight: 950,
+                            wordBreak: "break-word",
+                          }}
+                        >
+                          {datosPerfil[campo] || "Pendiente"}
+                        </strong>
+                      )}
+                    </label>
+                  );
+
+                  const switchPerfil = (clave, titulo, bajada) => (
+                    <button
+                      type="button"
+                      onClick={() => alternarPreferencia(clave)}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "12px",
+                        border: "none",
+                        background: "#f5f7fb",
+                        borderRadius: "13px",
+                        padding: "11px 12px",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <span>
+                        <strong
+                          style={{
+                            display: "block",
+                            color: "#07195a",
+                            fontSize: "12px",
+                            fontWeight: 950,
+                          }}
+                        >
+                          {titulo}
+                        </strong>
+                        <small
+                          style={{
+                            color: "#667085",
+                            fontSize: "11px",
+                            fontWeight: 750,
+                          }}
+                        >
+                          {bajada}
+                        </small>
+                      </span>
+
+                      <span
+                        style={{
+                          width: "42px",
+                          height: "24px",
+                          borderRadius: "999px",
+                          padding: "3px",
+                          background: preferenciasPerfil[clave]
+                            ? "#07195a"
+                            : "#d9e2ef",
+                          display: "flex",
+                          justifyContent: preferenciasPerfil[clave]
+                            ? "flex-end"
+                            : "flex-start",
+                          transition: "0.2s ease",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "999px",
+                            background: "#ffffff",
+                            display: "block",
+                          }}
+                        />
+                      </span>
+                    </button>
+                  );
+
+                  return (
+                    <div style={{ display: "grid", gap: "12px" }}>
+                      {mensajePerfil && (
+                        <div
+                          style={{
+                            background: "rgba(244, 124, 32, 0.12)",
+                            color: "#07195a",
+                            border: "1px solid rgba(244, 124, 32, 0.24)",
+                            borderRadius: "14px",
+                            padding: "10px 12px",
+                            fontSize: "12px",
+                            fontWeight: 850,
+                          }}
+                        >
+                          {mensajePerfil}
+                        </div>
+                      )}
+
+                      <section
+                        style={{
+                          background: "#07195a",
+                          borderRadius: "22px",
+                          padding: "18px",
+                          color: "#ffffff",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "18px",
+                          boxShadow: "0 18px 40px rgba(7, 25, 90, 0.18)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "16px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "82px",
+                              height: "82px",
+                              borderRadius: "22px",
+                              overflow: "hidden",
+                              background: "rgba(255,255,255,0.12)",
+                              border: "1px solid rgba(255,255,255,0.24)",
+                              display: "grid",
+                              placeItems: "center",
+                              flex: "0 0 auto",
+                            }}
+                          >
+                            {avatarPerfil ? (
+                              <img
+                                src={avatarPerfil}
+                                alt="Foto de perfil"
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                            ) : (
+                              <strong
+                                style={{ fontSize: "34px", fontWeight: 950 }}
+                              >
+                                {inicialCliente}
+                              </strong>
+                            )}
+                          </div>
+
+                          <div>
+                            <small
+                              style={{
+                                fontSize: "12px",
+                                fontWeight: 850,
+                                opacity: 0.8,
+                              }}
+                            >
+                              Mi cuenta
+                            </small>
+                            <h2
+                              style={{
+                                margin: "4px 0 8px",
+                                fontSize: "28px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              {datosPerfil.nombre || nombreCliente}
+                            </h2>
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "8px",
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              {[
+                                `RUT ${rutCliente}`,
+                                "Cliente activo",
+                                "Persona natural",
+                                "Backend ready",
+                              ].map((item) => (
+                                <span
+                                  key={item}
+                                  style={{
+                                    background: "rgba(255,255,255,0.14)",
+                                    border: "1px solid rgba(255,255,255,0.16)",
+                                    borderRadius: "999px",
+                                    padding: "6px 10px",
+                                    fontSize: "11px",
+                                    fontWeight: 900,
+                                  }}
+                                >
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "10px",
+                            alignItems: "center",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <label
+                            style={{
+                              background: "#ffffff",
+                              color: "#07195a",
+                              borderRadius: "14px",
+                              padding: "11px 14px",
+                              fontSize: "12px",
+                              fontWeight: 950,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Subir foto
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={manejarAvatar}
+                              style={{ display: "none" }}
+                            />
+                          </label>
+
+                          {avatarPerfil && (
+                            <button
+                              type="button"
+                              onClick={limpiarAvatar}
+                              style={{
+                                border: "1px solid rgba(255,255,255,0.24)",
+                                background: "transparent",
+                                color: "#ffffff",
+                                borderRadius: "14px",
+                                padding: "11px 14px",
+                                fontSize: "12px",
+                                fontWeight: 950,
+                                cursor: "pointer",
+                              }}
+                            >
+                              Quitar foto
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              editandoPerfil
+                                ? guardarPerfil()
+                                : setEditandoPerfil(true)
+                            }
+                            style={{
+                              border: "none",
+                              background: "#f47c20",
+                              color: "#ffffff",
+                              borderRadius: "14px",
+                              padding: "12px 16px",
+                              fontSize: "12px",
+                              fontWeight: 950,
+                              cursor: "pointer",
+                            }}
+                          >
+                            {editandoPerfil
+                              ? "Guardar cambios"
+                              : "Editar perfil"}
+                          </button>
+                        </div>
+                      </section>
+
+                      <section
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                          gap: "10px",
+                        }}
+                      >
+                        {[
+                          ["Último acceso", "Hoy", "Portal clientes"],
+                          ["Estado", "Activo", "Cliente Prieto & Correa"],
+                          [
+                            "Seguridad",
+                            "Protegida",
+                            "Código para cambios sensibles",
+                          ],
+                          [
+                            "Notificaciones",
+                            "Activas",
+                            "Preferencias configurables",
+                          ],
+                        ].map(([titulo, valor, bajada]) => (
+                          <article
+                            key={titulo}
+                            style={{
+                              background: "#ffffff",
+                              borderRadius: "17px",
+                              padding: "14px",
+                              border: "1px solid rgba(7, 25, 90, 0.08)",
+                            }}
+                          >
+                            <small
+                              style={{
+                                display: "block",
+                                color: "#667085",
+                                fontSize: "10px",
+                                fontWeight: 950,
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              {titulo}
+                            </small>
+                            <strong
+                              style={{
+                                display: "block",
+                                marginTop: "5px",
+                                color:
+                                  valor === "Activo" ? "#15803d" : "#07195a",
+                                fontSize: "20px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              {valor}
+                            </strong>
+                            <span
+                              style={{
+                                color: "#667085",
+                                fontSize: "11px",
+                                fontWeight: 750,
+                              }}
+                            >
+                              {bajada}
+                            </span>
+                          </article>
+                        ))}
+                      </section>
+
+                      <section
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1.55fr 0.95fr",
+                          gap: "12px",
+                          alignItems: "start",
+                        }}
+                      >
+                        <div style={{ display: "grid", gap: "12px" }}>
+                          <article
+                            style={{
+                              background: "#ffffff",
+                              borderRadius: "18px",
+                              padding: "16px",
+                              border: "1px solid rgba(7, 25, 90, 0.08)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                gap: "12px",
+                                alignItems: "center",
+                                marginBottom: "12px",
+                              }}
+                            >
+                              <div>
+                                <h3
+                                  style={{
+                                    margin: 0,
+                                    color: "#07195a",
+                                    fontSize: "19px",
+                                    fontWeight: 950,
+                                  }}
+                                >
+                                  Datos personales
+                                </h3>
+                                <p
+                                  style={{
+                                    margin: "4px 0 0",
+                                    color: "#667085",
+                                    fontSize: "12px",
+                                    fontWeight: 750,
+                                  }}
+                                >
+                                  Edita tus datos y confirma cambios sensibles
+                                  cuando se conecte el backend.
+                                </p>
+                              </div>
+
+                              {editandoPerfil && (
+                                <button
+                                  type="button"
+                                  onClick={() => setEditandoPerfil(false)}
+                                  style={{
+                                    border: "1px solid #d9e2ef",
+                                    background: "#ffffff",
+                                    color: "#07195a",
+                                    borderRadius: "12px",
+                                    padding: "9px 12px",
+                                    fontSize: "12px",
+                                    fontWeight: 950,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Cancelar
+                                </button>
+                              )}
+                            </div>
+
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns:
+                                  "repeat(2, minmax(0, 1fr))",
+                                gap: "10px",
+                              }}
+                            >
+                              {inputPerfil("Nombre / razón social", "nombre")}
+                              {inputPerfil("RUT", "rut", "text", true)}
+                              {inputPerfil("Correo", "correo", "email")}
+                              {inputPerfil("Teléfono", "telefono")}
+                              {inputPerfil("Dirección", "direccion")}
+                              <div
+                                style={{
+                                  background: "#f5f7fb",
+                                  border: "1px solid rgba(7, 25, 90, 0.08)",
+                                  borderRadius: "14px",
+                                  padding: "11px 12px",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    color: "#667085",
+                                    fontSize: "10px",
+                                    fontWeight: 950,
+                                    textTransform: "uppercase",
+                                  }}
+                                >
+                                  Tipo cliente
+                                </span>
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    marginTop: "7px",
+                                    color: "#07195a",
+                                    fontSize: "14px",
+                                    fontWeight: 950,
+                                  }}
+                                >
+                                  Persona natural
+                                </strong>
+                              </div>
+                            </div>
+                          </article>
+
+                          <article
+                            style={{
+                              background: "#ffffff",
+                              borderRadius: "18px",
+                              padding: "16px",
+                              border: "1px solid rgba(7, 25, 90, 0.08)",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                margin: "0 0 12px",
+                                color: "#07195a",
+                                fontSize: "19px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              Preferencias de notificación
+                            </h3>
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns:
+                                  "repeat(2, minmax(0, 1fr))",
+                                gap: "9px",
+                              }}
+                            >
+                              {switchPerfil(
+                                "email",
+                                "Correo electrónico",
+                                "Avisos y comunicaciones generales",
+                              )}
+                              {switchPerfil(
+                                "whatsapp",
+                                "WhatsApp",
+                                "Recordatorios y asistencia",
+                              )}
+                              {switchPerfil(
+                                "vencimientos",
+                                "Vencimientos",
+                                "Alertas de pólizas y pagos",
+                              )}
+                              {switchPerfil(
+                                "documentos",
+                                "Documentos",
+                                "Aviso de documentos disponibles",
+                              )}
+                              {switchPerfil(
+                                "siniestros",
+                                "Siniestros",
+                                "Seguimiento de casos",
+                              )}
+                              {switchPerfil(
+                                "pagos",
+                                "Pagos",
+                                "Recordatorios de cuotas",
+                              )}
+                            </div>
+                          </article>
+                        </div>
+
+                        <aside style={{ display: "grid", gap: "12px" }}>
+                          <article
+                            style={{
+                              background: "#07195a",
+                              color: "#ffffff",
+                              borderRadius: "18px",
+                              padding: "16px",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                margin: "0 0 8px",
+                                fontSize: "18px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              Seguridad de cuenta
+                            </h3>
+                            <p
+                              style={{
+                                margin: "0 0 12px",
+                                color: "rgba(255,255,255,0.78)",
+                                fontSize: "12px",
+                                lineHeight: 1.45,
+                                fontWeight: 750,
+                              }}
+                            >
+                              Cambia tu contraseña usando un código de
+                              seguridad. En backend se enviará por correo o SMS.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setModalClaveAbierto(true);
+                                setPasoClave("inicio");
+                              }}
+                              style={{
+                                width: "100%",
+                                border: "none",
+                                background: "#f47c20",
+                                color: "#ffffff",
+                                borderRadius: "13px",
+                                padding: "12px 14px",
+                                fontSize: "12px",
+                                fontWeight: 950,
+                                cursor: "pointer",
+                              }}
+                            >
+                              Cambiar contraseña
+                            </button>
+                          </article>
+
+                          <article
+                            style={{
+                              background: "#ffffff",
+                              borderRadius: "18px",
+                              padding: "16px",
+                              border: "1px solid rgba(7, 25, 90, 0.08)",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                margin: "0 0 12px",
+                                color: "#07195a",
+                                fontSize: "18px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              Sesiones y actividad
+                            </h3>
+
+                            {[
+                              ["Inicio de sesión", "Hoy · Portal clientes"],
+                              ["Actualización de perfil", "Pendiente backend"],
+                              ["Cambio de contraseña", "Requiere código"],
+                            ].map(([titulo, texto]) => (
+                              <div
+                                key={titulo}
+                                style={{
+                                  background: "#f5f7fb",
+                                  borderRadius: "13px",
+                                  padding: "10px 11px",
+                                  marginBottom: "8px",
+                                }}
+                              >
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    color: "#07195a",
+                                    fontSize: "12px",
+                                    fontWeight: 950,
+                                  }}
+                                >
+                                  {titulo}
+                                </strong>
+                                <span
+                                  style={{
+                                    color: "#667085",
+                                    fontSize: "11px",
+                                    fontWeight: 750,
+                                  }}
+                                >
+                                  {texto}
+                                </span>
+                              </div>
+                            ))}
+                          </article>
+
+                          <article
+                            style={{
+                              background: "#ffffff",
+                              borderRadius: "18px",
+                              padding: "16px",
+                              border: "1px solid rgba(7, 25, 90, 0.08)",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                margin: "0 0 12px",
+                                color: "#07195a",
+                                fontSize: "18px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              Privacidad y documentos
+                            </h3>
+                            {[
+                              "Política de privacidad",
+                              "Términos del portal",
+                              "Consentimiento de datos",
+                            ].map((item) => (
+                              <div
+                                key={item}
+                                style={{
+                                  background: "#f5f7fb",
+                                  borderRadius: "13px",
+                                  padding: "10px 11px",
+                                  marginBottom: "8px",
+                                }}
+                              >
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    color: "#07195a",
+                                    fontSize: "12px",
+                                    fontWeight: 950,
+                                  }}
+                                >
+                                  {item}
+                                </strong>
+                                <span
+                                  style={{
+                                    color: "#667085",
+                                    fontSize: "11px",
+                                    fontWeight: 750,
+                                  }}
+                                >
+                                  Disponible próximamente
+                                </span>
+                              </div>
+                            ))}
+                          </article>
+                        </aside>
+                      </section>
+
+                      {modalClaveAbierto && (
+                        <div
+                          style={{
+                            position: "fixed",
+                            inset: 0,
+                            background: "rgba(3, 19, 68, 0.55)",
+                            zIndex: 80,
+                            display: "grid",
+                            placeItems: "center",
+                            padding: "20px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "min(520px, 100%)",
+                              background: "#ffffff",
+                              borderRadius: "22px",
+                              padding: "22px",
+                              boxShadow: "0 24px 70px rgba(3, 19, 68, 0.25)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                gap: "16px",
+                                alignItems: "flex-start",
+                                marginBottom: "16px",
+                              }}
+                            >
+                              <div>
+                                <h3
+                                  style={{
+                                    margin: 0,
+                                    color: "#07195a",
+                                    fontSize: "22px",
+                                    fontWeight: 950,
+                                  }}
+                                >
+                                  Cambiar contraseña
+                                </h3>
+                                <p
+                                  style={{
+                                    margin: "6px 0 0",
+                                    color: "#667085",
+                                    fontSize: "13px",
+                                    fontWeight: 750,
+                                  }}
+                                >
+                                  Flujo preparado para código de seguridad.
+                                </p>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => setModalClaveAbierto(false)}
+                                style={{
+                                  border: "none",
+                                  background: "#f5f7fb",
+                                  color: "#07195a",
+                                  borderRadius: "12px",
+                                  width: "36px",
+                                  height: "36px",
+                                  fontWeight: 950,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                ×
+                              </button>
+                            </div>
+
+                            {pasoClave === "inicio" && (
+                              <div>
+                                <p
+                                  style={{
+                                    margin: "0 0 14px",
+                                    color: "#667085",
+                                    fontSize: "13px",
+                                    lineHeight: 1.5,
+                                    fontWeight: 750,
+                                  }}
+                                >
+                                  Para proteger tu cuenta, primero se genera un
+                                  código de seguridad.
+                                </p>
+
+                                <button
+                                  type="button"
+                                  onClick={generarCodigoSeguridad}
+                                  style={{
+                                    width: "100%",
+                                    border: "none",
+                                    background: "#f47c20",
+                                    color: "#ffffff",
+                                    borderRadius: "14px",
+                                    padding: "13px 16px",
+                                    fontWeight: 950,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Generar código de seguridad
+                                </button>
+                              </div>
+                            )}
+
+                            {pasoClave === "codigo" && (
+                              <div style={{ display: "grid", gap: "12px" }}>
+                                <label style={{ display: "grid", gap: "7px" }}>
+                                  <span
+                                    style={{
+                                      color: "#07195a",
+                                      fontSize: "12px",
+                                      fontWeight: 950,
+                                    }}
+                                  >
+                                    Código de seguridad
+                                  </span>
+                                  <input
+                                    value={codigoIngresado}
+                                    onChange={(event) =>
+                                      setCodigoIngresado(event.target.value)
+                                    }
+                                    placeholder="Ingresa el código de 6 dígitos"
+                                    style={{
+                                      border: "1px solid #d9e2ef",
+                                      borderRadius: "13px",
+                                      padding: "12px",
+                                      fontWeight: 900,
+                                      outline: "none",
+                                    }}
+                                  />
+                                </label>
+
+                                <button
+                                  type="button"
+                                  onClick={validarCodigo}
+                                  style={{
+                                    border: "none",
+                                    background: "#07195a",
+                                    color: "#ffffff",
+                                    borderRadius: "14px",
+                                    padding: "13px 16px",
+                                    fontWeight: 950,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Validar código
+                                </button>
+                              </div>
+                            )}
+
+                            {pasoClave === "clave" && (
+                              <div style={{ display: "grid", gap: "12px" }}>
+                                <label style={{ display: "grid", gap: "7px" }}>
+                                  <span
+                                    style={{
+                                      color: "#07195a",
+                                      fontSize: "12px",
+                                      fontWeight: 950,
+                                    }}
+                                  >
+                                    Nueva contraseña
+                                  </span>
+                                  <input
+                                    type="password"
+                                    value={nuevaClave}
+                                    onChange={(event) =>
+                                      setNuevaClave(event.target.value)
+                                    }
+                                    placeholder="Mínimo 8 caracteres"
+                                    style={{
+                                      border: "1px solid #d9e2ef",
+                                      borderRadius: "13px",
+                                      padding: "12px",
+                                      fontWeight: 900,
+                                      outline: "none",
+                                    }}
+                                  />
+                                </label>
+
+                                <label style={{ display: "grid", gap: "7px" }}>
+                                  <span
+                                    style={{
+                                      color: "#07195a",
+                                      fontSize: "12px",
+                                      fontWeight: 950,
+                                    }}
+                                  >
+                                    Confirmar contraseña
+                                  </span>
+                                  <input
+                                    type="password"
+                                    value={confirmarClave}
+                                    onChange={(event) =>
+                                      setConfirmarClave(event.target.value)
+                                    }
+                                    placeholder="Repite tu nueva contraseña"
+                                    style={{
+                                      border: "1px solid #d9e2ef",
+                                      borderRadius: "13px",
+                                      padding: "12px",
+                                      fontWeight: 900,
+                                      outline: "none",
+                                    }}
+                                  />
+                                </label>
+
+                                <button
+                                  type="button"
+                                  onClick={actualizarClave}
+                                  style={{
+                                    border: "none",
+                                    background: "#f47c20",
+                                    color: "#ffffff",
+                                    borderRadius: "14px",
+                                    padding: "13px 16px",
+                                    fontWeight: 950,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Actualizar contraseña
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {vista === "siniestro" && (
+              <div
+                className="pc-panel pc-full-panel"
+                style={{
+                  width: "min(calc(100vw - 300px), 1600px)",
+                  maxWidth: "1600px",
+                  margin: "0 auto",
+                  padding: "18px 20px",
+                }}
+              >
+                {(() => {
+                  const ICONOS = {
+                    upload: "/subir-documento.png",
+                    tick: "/tick.png",
+                    reloj: "/reloj-de-arena.png",
+                    carpeta: "/carpeta.png",
+                    reporte: "/reportar-siniestro.png",
+                  };
+
+                  const siniestrosBackend = siniestros.map((s) => ({
+                    id: String(s.id_siniestro),
+                    poliza: s.numero_poliza || `Póliza ${s.poliza_id}`,
+                    tipoEstado: s.estado,
+                    etapaActual: s.etapa,
+                    tipo: s.tipo,
+                    descripcion: s.descripcion,
+                    fecha_ocurrencia: s.fecha_ocurrencia,
+                    seguro: s.seguro_nombre,
+                  }));
+
+                  const siniestrosCliente = siniestrosBackend;
+
+                  const CASOS_POR_PAGINA = 5;
+                  const totalSiniestros = siniestrosCliente.length;
+                  const totalPaginasSiniestros = Math.max(
+                    1,
+                    Math.ceil(totalSiniestros / CASOS_POR_PAGINA),
+                  );
+                  const paginaActualSiniestros = Math.min(
+                    paginaSiniestros,
+                    totalPaginasSiniestros,
+                  );
+                  const indiceInicioSiniestros =
+                    (paginaActualSiniestros - 1) * CASOS_POR_PAGINA;
+                  const indiceFinSiniestros =
+                    indiceInicioSiniestros + CASOS_POR_PAGINA;
+                  const siniestrosPaginados = siniestrosCliente.slice(
+                    indiceInicioSiniestros,
+                    indiceFinSiniestros,
+                  );
+                  const desdeSiniestro =
+                    totalSiniestros === 0 ? 0 : indiceInicioSiniestros + 1;
+                  const hastaSiniestro = Math.min(
+                    indiceFinSiniestros,
+                    totalSiniestros,
+                  );
+
+                  const polizasReportables = polizas.map((poliza, index) => ({
+                    id: String(
+                      poliza.id_poliza || poliza.numero_poliza || index,
+                    ),
+                    nombre:
+                      poliza.seguro?.nombre ||
+                      poliza.nombre ||
+                      "Seguro contratado",
+                    categoria:
+                      poliza.seguro?.categoria ||
+                      poliza.categoria ||
+                      "Pólizas vigentes",
+                    poliza: poliza.numero_poliza || `Póliza ${index + 1}`,
+                  }));
+
+                  const polizaSeleccionada =
+                    polizasReportables.find(
+                      (item) => item.id === polizaReporteId,
+                    ) || polizasReportables[0];
+
+                  const siniestroPorPoliza = siniestrosCliente.find(
+                    (item) => item.poliza === polizaSeleccionada?.poliza,
+                  );
+
+                  const siniestroSeleccionado =
+                    siniestrosCliente.find(
+                      (item) => item.id === siniestroSeleccionadoId,
+                    ) ||
+                    siniestroPorPoliza ||
+                    null;
+
+                  const etapaActual =
+                    siniestroSeleccionado?.etapaActual ||
+                    (reporteSiniestroActivo ? 1 : 0);
+
+                  const categoriasReportables = polizasReportables.reduce(
+                    (acc, item) => {
+                      if (!acc[item.categoria]) acc[item.categoria] = [];
+                      acc[item.categoria].push(item);
+                      return acc;
+                    },
+                    {},
+                  );
+
+                  const seleccionarPoliza = (idPoliza) => {
+                    setPolizaReporteId(idPoliza);
+                    setReporteSiniestroActivo(false);
+                    setPaginaSiniestros(1);
+
+                    const nuevaPoliza = polizasReportables.find(
+                      (item) => item.id === idPoliza,
+                    );
+                    const caso = siniestrosCliente.find(
+                      (item) => item.poliza === nuevaPoliza?.poliza,
+                    );
+                    setSiniestroSeleccionadoId(caso?.id || "");
+                  };
+
+                  const seleccionarCaso = (caso) => {
+                    setSiniestroSeleccionadoId(caso.id);
+                    const polizaCaso = polizasReportables.find(
+                      (item) => item.poliza === caso.poliza,
+                    );
+                    if (polizaCaso) setPolizaReporteId(polizaCaso.id);
+                    setReporteSiniestroActivo(false);
+                  };
+
+                  const reportarSiniestro = () => {
+                    if (!polizaSeleccionada) return;
+                    setReporteSiniestroActivo(true);
+                    const caso = siniestrosCliente.find(
+                      (item) => item.poliza === polizaSeleccionada.poliza,
+                    );
+                    setSiniestroSeleccionadoId(caso?.id || "");
+                  };
+
+                  const casosActivos = siniestrosCliente.filter(
+                    (item) => item.tipoEstado !== "cerrado",
+                  ).length;
+                  const enGestion = siniestrosCliente.filter(
+                    (item) => item.tipoEstado === "gestion",
+                  ).length;
+                  const pendientes = siniestrosCliente.filter(
+                    (item) => item.tipoEstado === "pendiente",
+                  ).length;
+                  const cerrados = siniestrosCliente.filter(
+                    (item) => item.tipoEstado === "cerrado",
+                  ).length;
+
+                  const estadoMeta = (tipoEstado) => {
+                    if (tipoEstado === "gestion") {
+                      return {
+                        icono: ICONOS.reloj,
+                        texto: "En gestión",
+                        color: "#c2410c",
+                        background: "rgba(244, 124, 32, 0.12)",
+                        border: "rgba(244, 124, 32, 0.32)",
+                      };
+                    }
+
+                    if (tipoEstado === "pendiente") {
+                      return {
+                        icono: ICONOS.carpeta,
+                        texto: "Pendiente respaldo",
+                        color: "#07195a",
+                        background: "#eef4ff",
+                        border: "#cfddf8",
+                      };
+                    }
+
+                    return {
+                      icono: ICONOS.tick,
+                      texto: "Cerrado",
+                      color: "#067647",
+                      background: "#ecfdf3",
+                      border: "#bfead1",
+                    };
+                  };
+
+                  const kpisSiniestro = [
+                    {
+                      titulo: "Casos activos",
+                      valor: casosActivos,
+                      bajada: "Sin casos registrados",
+                      icono: ICONOS.reporte,
+                      fondo: "#eef4ff",
+                      color: "#07195a",
+                    },
+                    {
+                      titulo: "En gestión",
+                      valor: enGestion,
+                      bajada: "En revisión por la compañía",
+                      icono: ICONOS.reloj,
+                      fondo: "rgba(244, 124, 32, 0.14)",
+                      color: "#f47c20",
+                    },
+                    {
+                      titulo: "Pendiente documentos",
+                      valor: pendientes,
+                      bajada: "Requiere tu respaldo",
+                      icono: ICONOS.carpeta,
+                      fondo: "rgba(244, 174, 32, 0.16)",
+                      color: "#f47c20",
+                    },
+                    {
+                      titulo: "Cerrados",
+                      valor: cerrados,
+                      bajada: "Casos finalizados",
+                      icono: ICONOS.tick,
+                      fondo: "rgba(22, 163, 74, 0.14)",
+                      color: "#067647",
+                    },
+                  ];
+
+                  const pasosSiniestro = [
+                    { numero: 1, titulo: "Reportado", texto: "Caso ingresado" },
+                    {
+                      numero: 2,
+                      titulo: "En revisión",
+                      texto: "Evaluación inicial",
+                    },
+                    {
+                      numero: 3,
+                      titulo: "Documentación",
+                      texto: "Respaldo del cliente",
+                    },
+                    {
+                      numero: 4,
+                      titulo: "Resolución",
+                      texto: "Cierre del caso",
+                    },
+                  ].map((paso) => ({
+                    ...paso,
+                    estado:
+                      paso.numero < etapaActual
+                        ? "completado"
+                        : paso.numero === etapaActual
+                          ? "actual"
+                          : "pendiente",
+                  }));
+
+                  const fechaFormateada = (fecha) => {
+                    if (!fecha) return "—";
+                    const partes = String(fecha).split("-");
+                    if (partes.length !== 3) return fecha;
+                    return `${partes[2]}-${partes[1]}-${partes[0]}`;
+                  };
+
+                  const uploadRequerido =
+                    siniestroSeleccionado?.tipoEstado === "pendiente" ||
+                    reporteSiniestroActivo;
+                  const estadoActual = siniestroSeleccionado
+                    ? estadoMeta(siniestroSeleccionado.tipoEstado)
+                    : {
+                        texto: reporteSiniestroActivo
+                          ? "Reporte iniciado"
+                          : "Sin caso activo",
+                      };
+
+                  return (
+                    <>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: "16px",
+                          alignItems: "center",
+                          marginBottom: "14px",
+                        }}
+                      >
+                        <div>
+                          <h2
+                            style={{
+                              margin: 0,
+                              color: "#07195a",
+                              fontSize: "23px",
+                              fontWeight: 950,
+                              letterSpacing: "-0.04em",
+                              lineHeight: 1,
+                            }}
+                          >
+                            Siniestros
+                          </h2>
+
+                          <p
+                            style={{
+                              margin: "6px 0 0",
+                              color: "#667085",
+                              fontSize: "13px",
+                              lineHeight: 1.45,
+                            }}
+                          >
+                            Reporta, revisa y da seguimiento a tus casos
+                            asociados a tus pólizas.
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={reportarSiniestro}
+                          disabled={!polizaSeleccionada}
+                          title={
+                            !polizaSeleccionada
+                              ? "Selecciona una póliza para reportar"
+                              : "Iniciar reporte para la póliza seleccionada"
+                          }
+                          style={{
+                            border: "none",
+                            borderRadius: "15px",
+                            background: polizaSeleccionada
+                              ? "#f47c20"
+                              : "#cbd5e1",
+                            color: "#ffffff",
+                            padding: "11px 18px",
+                            fontWeight: 950,
+                            cursor: polizaSeleccionada
+                              ? "pointer"
+                              : "not-allowed",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "9px",
+                            boxShadow: polizaSeleccionada
+                              ? "0 12px 30px rgba(244, 124, 32, 0.25)"
+                              : "none",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <span style={{ fontSize: "17px", lineHeight: 1 }}>
+                            +
+                          </span>
+                          <span>Reportar siniestro</span>
                         </button>
                       </div>
-                    ))}
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                          gap: "12px",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        {kpisSiniestro.map((kpi) => (
+                          <article
+                            key={kpi.titulo}
+                            style={{
+                              minHeight: "70px",
+                              border: "1px solid #e6ebf2",
+                              borderRadius: "16px",
+                              background: "#ffffff",
+                              padding: "12px 15px",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "14px",
+                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.05)",
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: "44px",
+                                height: "44px",
+                                borderRadius: "999px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                background: kpi.fondo,
+                                flex: "0 0 auto",
+                              }}
+                            >
+                              <img
+                                src={kpi.icono}
+                                alt=""
+                                style={{
+                                  width: "25px",
+                                  height: "25px",
+                                  objectFit: "contain",
+                                }}
+                              />
+                            </span>
+
+                            <span>
+                              <strong
+                                style={{
+                                  display: "block",
+                                  color: "#07195a",
+                                  fontSize: "19px",
+                                  lineHeight: 1,
+                                  fontWeight: 950,
+                                }}
+                              >
+                                {kpi.valor}
+                              </strong>
+
+                              <small
+                                style={{
+                                  display: "block",
+                                  marginTop: "4px",
+                                  color: "#07195a",
+                                  fontSize: "12px",
+                                  fontWeight: 950,
+                                }}
+                              >
+                                {kpi.titulo}
+                              </small>
+
+                              <small
+                                style={{
+                                  display: "block",
+                                  marginTop: "1px",
+                                  color: kpi.color,
+                                  fontSize: "11px",
+                                  fontWeight: 780,
+                                }}
+                              >
+                                {kpi.bajada}
+                              </small>
+                            </span>
+                          </article>
+                        ))}
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "2.18fr 0.82fr",
+                          gap: "12px",
+                          alignItems: "start",
+                        }}
+                      >
+                        <div style={{ display: "grid", gap: "10px" }}>
+                          <section
+                            style={{
+                              border: "1px solid #e6ebf2",
+                              borderRadius: "18px",
+                              background: "#ffffff",
+                              padding: "14px 16px 12px",
+                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.04)",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                margin: "0 0 12px",
+                                color: "#07195a",
+                                fontSize: "17px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              Seguimiento del proceso
+                            </h3>
+
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns:
+                                  "repeat(4, minmax(0, 1fr))",
+                                position: "relative",
+                                alignItems: "start",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  top: "23px",
+                                  left: "10%",
+                                  right: "10%",
+                                  height: "3px",
+                                  background: "#d9e2ef",
+                                  borderRadius: "99px",
+                                  overflow: "hidden",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    display: "block",
+                                    width: `${Math.max(0, Math.min(100, ((etapaActual - 1) / 3) * 100))}%`,
+                                    height: "100%",
+                                    background:
+                                      etapaActual >= 3 ? "#f47c20" : "#07195a",
+                                  }}
+                                />
+                              </div>
+
+                              {pasosSiniestro.map((paso) => {
+                                const esActual = paso.estado === "actual";
+                                const completado = paso.estado === "completado";
+
+                                return (
+                                  <div
+                                    key={paso.numero}
+                                    style={{
+                                      position: "relative",
+                                      zIndex: 1,
+                                      textAlign: "center",
+                                      display: "grid",
+                                      justifyItems: "center",
+                                      gap: "7px",
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        width: esActual ? "48px" : "43px",
+                                        height: esActual ? "48px" : "43px",
+                                        borderRadius: "999px",
+                                        display: "grid",
+                                        placeItems: "center",
+                                        background: esActual
+                                          ? "#f47c20"
+                                          : completado
+                                            ? "#07195a"
+                                            : "#ffffff",
+                                        color:
+                                          esActual || completado
+                                            ? "#ffffff"
+                                            : "#07195a",
+                                        border: esActual
+                                          ? "2px solid #f47c20"
+                                          : "2px solid #d9e2ef",
+                                        fontWeight: 950,
+                                        fontSize: "16px",
+                                        boxShadow: esActual
+                                          ? "0 0 0 7px rgba(244, 124, 32, 0.12)"
+                                          : "none",
+                                        position: "relative",
+                                      }}
+                                    >
+                                      {paso.numero}
+                                      {completado && (
+                                        <span
+                                          style={{
+                                            position: "absolute",
+                                            right: "-3px",
+                                            top: "-4px",
+                                            width: "14px",
+                                            height: "14px",
+                                            borderRadius: "999px",
+                                            background: "#22c55e",
+                                            border: "2px solid #ffffff",
+                                          }}
+                                        />
+                                      )}
+                                    </span>
+
+                                    <div
+                                      style={{
+                                        minWidth: "120px",
+                                        borderRadius: "12px",
+                                        padding: esActual ? "6px 8px" : "0",
+                                        background: esActual
+                                          ? "rgba(244, 124, 32, 0.08)"
+                                          : "transparent",
+                                      }}
+                                    >
+                                      <strong
+                                        style={{
+                                          display: "block",
+                                          color: "#07195a",
+                                          fontSize: "12px",
+                                          fontWeight: 950,
+                                        }}
+                                      >
+                                        {paso.titulo}
+                                      </strong>
+
+                                      <span
+                                        style={{
+                                          display: "block",
+                                          marginTop: "2px",
+                                          color: "#667085",
+                                          fontSize: "11px",
+                                          fontWeight: 750,
+                                        }}
+                                      >
+                                        {paso.texto}
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </section>
+
+                          <section
+                            style={{
+                              border: "1px solid #e6ebf2",
+                              borderRadius: "18px",
+                              background: "#ffffff",
+                              padding: "13px 14px 11px",
+                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.04)",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                margin: "0 0 8px",
+                                color: "#07195a",
+                                fontSize: "18px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              Mis casos
+                            </h3>
+
+                            <div style={{ overflowX: "auto" }}>
+                              <table
+                                style={{
+                                  width: "100%",
+                                  minWidth: "820px",
+                                  borderCollapse: "separate",
+                                  borderSpacing: 0,
+                                  overflow: "hidden",
+                                  borderRadius: "14px",
+                                  border: "1px solid #e6ebf2",
+                                }}
+                              >
+                                <thead>
+                                  <tr style={{ background: "#f5f7fb" }}>
+                                    {[
+                                      "N° Caso",
+                                      "Seguro / póliza",
+                                      "Estado",
+                                      "Ejecutivo",
+                                      "Fecha",
+                                    ].map((titulo) => (
+                                      <th
+                                        key={titulo}
+                                        style={{
+                                          textAlign: "left",
+                                          padding: "9px 10px",
+                                          color: "#07195a",
+                                          fontSize: "11px",
+                                          fontWeight: 950,
+                                          textTransform: "uppercase",
+                                          letterSpacing: "0.02em",
+                                          borderBottom: "1px solid #e6ebf2",
+                                          whiteSpace: "nowrap",
+                                        }}
+                                      >
+                                        {titulo}
+                                      </th>
+                                    ))}
+                                  </tr>
+                                </thead>
+
+                                <tbody>
+                                  {siniestrosCliente.length === 0 ? (
+                                    <tr>
+                                      <td
+                                        colSpan="5"
+                                        style={{
+                                          padding: "24px 16px",
+                                          textAlign: "center",
+                                          color: "#667085",
+                                          fontSize: "12px",
+                                          fontWeight: 850,
+                                          borderBottom: "1px solid #e6ebf2",
+                                        }}
+                                      >
+                                        <strong
+                                          style={{
+                                            display: "block",
+                                            color: "#07195a",
+                                            fontSize: "14px",
+                                            fontWeight: 950,
+                                            marginBottom: "5px",
+                                          }}
+                                        >
+                                          No tienes siniestros registrados.
+                                        </strong>
+                                        Selecciona una póliza vigente y presiona
+                                        “Reportar siniestro” para iniciar un
+                                        caso.
+                                      </td>
+                                    </tr>
+                                  ) : (
+                                    siniestrosPaginados.map((siniestro) => {
+                                      const activo =
+                                        siniestroSeleccionado?.id ===
+                                        siniestro.id;
+                                      const meta = estadoMeta(
+                                        siniestro.tipoEstado,
+                                      );
+
+                                      return (
+                                        <tr
+                                          key={siniestro.id}
+                                          onClick={() =>
+                                            seleccionarCaso(siniestro)
+                                          }
+                                          style={{
+                                            cursor: "pointer",
+                                            background: activo
+                                              ? "#fff7ed"
+                                              : "#ffffff",
+                                            outline: activo
+                                              ? "1px solid rgba(244, 124, 32, 0.42)"
+                                              : "none",
+                                          }}
+                                        >
+                                          <td
+                                            style={{
+                                              padding: "9px 10px",
+                                              borderBottom: "1px solid #e6ebf2",
+                                              color: "#07195a",
+                                              fontSize: "12px",
+                                              fontWeight: 950,
+                                              whiteSpace: "nowrap",
+                                            }}
+                                          >
+                                            {siniestro.id}
+                                          </td>
+
+                                          <td
+                                            style={{
+                                              padding: "9px 10px",
+                                              borderBottom: "1px solid #e6ebf2",
+                                              color: "#07195a",
+                                              fontSize: "12px",
+                                              fontWeight: 900,
+                                              whiteSpace: "nowrap",
+                                            }}
+                                          >
+                                            <strong
+                                              style={{
+                                                display: "block",
+                                                fontWeight: 950,
+                                              }}
+                                            >
+                                              {siniestro.seguro}
+                                            </strong>
+                                            <span
+                                              style={{
+                                                color: "#667085",
+                                                fontSize: "11px",
+                                                fontWeight: 850,
+                                              }}
+                                            >
+                                              {siniestro.poliza}
+                                            </span>
+                                          </td>
+
+                                          <td
+                                            style={{
+                                              padding: "9px 10px",
+                                              borderBottom: "1px solid #e6ebf2",
+                                              whiteSpace: "nowrap",
+                                            }}
+                                          >
+                                            <span
+                                              style={{
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                gap: "7px",
+                                                minWidth: "150px",
+                                                minHeight: "28px",
+                                                padding: "5px 12px",
+                                                borderRadius: "999px",
+                                                background: meta.background,
+                                                border: `1px solid ${meta.border}`,
+                                                color: meta.color,
+                                                fontSize: "11px",
+                                                fontWeight: 950,
+                                              }}
+                                            >
+                                              <img
+                                                src={meta.icono}
+                                                alt=""
+                                                style={{
+                                                  width: "13px",
+                                                  height: "13px",
+                                                  objectFit: "contain",
+                                                }}
+                                              />
+                                              {meta.texto}
+                                            </span>
+                                          </td>
+
+                                          <td
+                                            style={{
+                                              padding: "9px 10px",
+                                              borderBottom: "1px solid #e6ebf2",
+                                              color: "#07195a",
+                                              fontSize: "12px",
+                                              fontWeight: 950,
+                                              whiteSpace: "nowrap",
+                                            }}
+                                          >
+                                            {siniestro.ejecutivo}
+                                          </td>
+
+                                          <td
+                                            style={{
+                                              padding: "9px 10px",
+                                              borderBottom: "1px solid #e6ebf2",
+                                              color: "#07195a",
+                                              fontSize: "12px",
+                                              fontWeight: 950,
+                                              whiteSpace: "nowrap",
+                                            }}
+                                          >
+                                            {fechaFormateada(siniestro.fecha)}
+                                          </td>
+                                        </tr>
+                                      );
+                                    })
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+
+                            {siniestrosCliente.length > CASOS_POR_PAGINA && (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  gap: "10px",
+                                  marginTop: "9px",
+                                  flexWrap: "wrap",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    color: "#667085",
+                                    fontSize: "11px",
+                                    fontWeight: 850,
+                                  }}
+                                >
+                                  Mostrando {desdeSiniestro}-{hastaSiniestro} de{" "}
+                                  {totalSiniestros} casos
+                                </span>
+
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                  }}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setPaginaSiniestros((pagina) =>
+                                        Math.max(1, pagina - 1),
+                                      )
+                                    }
+                                    disabled={paginaActualSiniestros === 1}
+                                    style={{
+                                      border: "1px solid #d9e2ef",
+                                      background:
+                                        paginaActualSiniestros === 1
+                                          ? "#f5f7fb"
+                                          : "#ffffff",
+                                      color:
+                                        paginaActualSiniestros === 1
+                                          ? "#98a2b3"
+                                          : "#07195a",
+                                      borderRadius: "10px",
+                                      padding: "6px 9px",
+                                      fontWeight: 950,
+                                      cursor:
+                                        paginaActualSiniestros === 1
+                                          ? "not-allowed"
+                                          : "pointer",
+                                    }}
+                                  >
+                                    ‹
+                                  </button>
+
+                                  {Array.from(
+                                    { length: totalPaginasSiniestros },
+                                    (_, index) => index + 1,
+                                  ).map((pagina) => (
+                                    <button
+                                      key={pagina}
+                                      type="button"
+                                      onClick={() =>
+                                        setPaginaSiniestros(pagina)
+                                      }
+                                      style={{
+                                        border:
+                                          paginaActualSiniestros === pagina
+                                            ? "1px solid #07195a"
+                                            : "1px solid #d9e2ef",
+                                        background:
+                                          paginaActualSiniestros === pagina
+                                            ? "#07195a"
+                                            : "#ffffff",
+                                        color:
+                                          paginaActualSiniestros === pagina
+                                            ? "#ffffff"
+                                            : "#07195a",
+                                        borderRadius: "10px",
+                                        padding: "6px 10px",
+                                        fontWeight: 950,
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      {pagina}
+                                    </button>
+                                  ))}
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setPaginaSiniestros((pagina) =>
+                                        Math.min(
+                                          totalPaginasSiniestros,
+                                          pagina + 1,
+                                        ),
+                                      )
+                                    }
+                                    disabled={
+                                      paginaActualSiniestros ===
+                                      totalPaginasSiniestros
+                                    }
+                                    style={{
+                                      border: "1px solid #d9e2ef",
+                                      background:
+                                        paginaActualSiniestros ===
+                                        totalPaginasSiniestros
+                                          ? "#f5f7fb"
+                                          : "#ffffff",
+                                      color:
+                                        paginaActualSiniestros ===
+                                        totalPaginasSiniestros
+                                          ? "#98a2b3"
+                                          : "#07195a",
+                                      borderRadius: "10px",
+                                      padding: "6px 9px",
+                                      fontWeight: 950,
+                                      cursor:
+                                        paginaActualSiniestros ===
+                                        totalPaginasSiniestros
+                                          ? "not-allowed"
+                                          : "pointer",
+                                    }}
+                                  >
+                                    ›
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            <p
+                              style={{
+                                margin: "8px 0 0",
+                                color: "#98a2b3",
+                                textAlign: "center",
+                                fontSize: "11px",
+                                fontWeight: 850,
+                              }}
+                            >
+                              {siniestrosCliente.length > 0
+                                ? "Última actualización: hoy, 00:18"
+                                : "Sin casos registrados"}
+                            </p>
+                          </section>
+                        </div>
+
+                        <aside style={{ display: "grid", gap: "10px" }}>
+                          <section
+                            style={{
+                              border: "1px solid #e6ebf2",
+                              borderRadius: "18px",
+                              background: "#ffffff",
+                              padding: "13px 14px",
+                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.04)",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                margin: "0 0 8px",
+                                color: uploadRequerido ? "#c2410c" : "#07195a",
+                                fontSize: "16px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              {uploadRequerido
+                                ? "Adjuntar respaldo requerido"
+                                : "Adjuntar respaldo"}
+                            </h3>
+
+                            <div
+                              style={{
+                                border: uploadRequerido
+                                  ? "1px dashed rgba(244, 124, 32, 0.34)"
+                                  : "1px dashed rgba(7, 25, 90, 0.22)",
+                                borderRadius: "16px",
+                                background: uploadRequerido
+                                  ? "#fffaf5"
+                                  : "#f8fafc",
+                                padding: "18px 14px",
+                                textAlign: "center",
+                                minHeight: "142px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <div style={{ width: "100%" }}>
+                                <img
+                                  src={ICONOS.upload}
+                                  alt=""
+                                  style={{
+                                    width: "39px",
+                                    height: "39px",
+                                    objectFit: "contain",
+                                    display: "block",
+                                    margin: "0 auto 10px",
+                                  }}
+                                />
+
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    color: "#07195a",
+                                    fontSize: "14px",
+                                    fontWeight: 950,
+                                  }}
+                                >
+                                  Fotos y documentos
+                                </strong>
+
+                                <p
+                                  style={{
+                                    margin: "5px auto 10px",
+                                    color: "#667085",
+                                    fontSize: "12px",
+                                    lineHeight: 1.35,
+                                    maxWidth: "285px",
+                                  }}
+                                >
+                                  Aquí se podrá subir PDF, fotos, constancias,
+                                  presupuestos e informes.
+                                </p>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    alert(
+                                      "Carga simulada. Esta función se conectará al backend más adelante.",
+                                    )
+                                  }
+                                  style={{
+                                    minHeight: "32px",
+                                    borderRadius: "11px",
+                                    border: "1px solid #07195a",
+                                    background: "#ffffff",
+                                    color: "#07195a",
+                                    fontWeight: 950,
+                                    cursor: "pointer",
+                                    padding: "6px 14px",
+                                  }}
+                                >
+                                  Adjuntar archivo
+                                </button>
+                              </div>
+                            </div>
+                          </section>
+
+                          <section
+                            style={{
+                              border: "1px solid #e6ebf2",
+                              borderRadius: "18px",
+                              background: "#ffffff",
+                              padding: "13px 14px",
+                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.04)",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                margin: "0 0 5px",
+                                color: "#07195a",
+                                fontSize: "16px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              ¿Qué póliza deseas reportar?
+                            </h3>
+
+                            <p
+                              style={{
+                                margin: "0 0 8px",
+                                color: "#667085",
+                                fontSize: "12px",
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              Selecciona tu póliza vigente y luego presiona
+                              “Reportar siniestro”.
+                            </p>
+
+                            <select
+                              disabled={polizasReportables.length === 0}
+                              value={polizaSeleccionada?.id || ""}
+                              onChange={(event) =>
+                                seleccionarPoliza(event.target.value)
+                              }
+                              style={{
+                                width: "100%",
+                                minHeight: "36px",
+                                border: "1px solid #d9e2ef",
+                                borderRadius: "12px",
+                                background: "#f8fafc",
+                                color: "#07195a",
+                                fontWeight: 900,
+                                fontSize: "12px",
+                                padding: "0 11px",
+                                outline: "none",
+                                cursor: "pointer",
+                              }}
+                            >
+                              {polizasReportables.length === 0 ? (
+                                <option value="">
+                                  No tienes pólizas vigentes registradas
+                                </option>
+                              ) : (
+                                Object.entries(categoriasReportables).map(
+                                  ([categoria, items]) => (
+                                    <optgroup
+                                      key={categoria}
+                                      label={`${categoria} (${items.length})`}
+                                    >
+                                      {items.map((item) => (
+                                        <option key={item.id} value={item.id}>
+                                          {item.nombre} · {item.poliza}
+                                        </option>
+                                      ))}
+                                    </optgroup>
+                                  ),
+                                )
+                              )}
+                            </select>
+
+                            {polizaSeleccionada ? (
+                              <div
+                                style={{
+                                  marginTop: "10px",
+                                  border: "1px solid rgba(7, 25, 90, 0.08)",
+                                  borderRadius: "14px",
+                                  background: "#f5f7fb",
+                                  padding: "10px 11px",
+                                }}
+                              >
+                                <small
+                                  style={{
+                                    display: "block",
+                                    color: "#f47c20",
+                                    fontSize: "10px",
+                                    fontWeight: 950,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.04em",
+                                  }}
+                                >
+                                  Póliza seleccionada
+                                </small>
+
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    marginTop: "3px",
+                                    color: "#07195a",
+                                    fontSize: "13px",
+                                    fontWeight: 950,
+                                    lineHeight: 1.2,
+                                  }}
+                                >
+                                  {polizaSeleccionada.nombre}
+                                </strong>
+
+                                <span
+                                  style={{
+                                    display: "block",
+                                    marginTop: "2px",
+                                    color: "#667085",
+                                    fontSize: "11px",
+                                    fontWeight: 800,
+                                  }}
+                                >
+                                  {polizaSeleccionada.categoria} ·{" "}
+                                  {polizaSeleccionada.poliza}
+                                </span>
+
+                                <span
+                                  style={{
+                                    display: "block",
+                                    marginTop: "7px",
+                                    color: reporteSiniestroActivo
+                                      ? "#067647"
+                                      : "#475467",
+                                    fontSize: "11px",
+                                    fontWeight: 900,
+                                  }}
+                                >
+                                  {reporteSiniestroActivo
+                                    ? "Reporte preparado para la póliza seleccionada."
+                                    : siniestroPorPoliza
+                                      ? "Esta póliza ya tiene un caso asociado."
+                                      : "Lista para iniciar un nuevo reporte."}
+                                </span>
+                              </div>
+                            ) : (
+                              <div
+                                style={{
+                                  marginTop: "10px",
+                                  border: "1px dashed #d9e2ef",
+                                  borderRadius: "14px",
+                                  background: "#f8fafc",
+                                  padding: "12px",
+                                  color: "#667085",
+                                  fontSize: "12px",
+                                  fontWeight: 850,
+                                  lineHeight: 1.35,
+                                }}
+                              >
+                                Cuando el backend entregue tus pólizas vigentes,
+                                podrás seleccionar una aquí para iniciar el
+                                reporte.
+                              </div>
+                            )}
+                          </section>
+                        </aside>
+                      </div>
+
+                      <section
+                        style={{
+                          marginTop: "10px",
+                          borderRadius: "18px",
+                          background:
+                            "linear-gradient(135deg, #07195a 0%, #031344 100%)",
+                          color: "#ffffff",
+                          padding: "12px 18px",
+                          display: "grid",
+                          gridTemplateColumns: "1.35fr 0.8fr 0.95fr",
+                          gap: "18px",
+                          alignItems: "center",
+                          boxShadow: "0 18px 38px rgba(7, 25, 90, 0.22)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "48px 1fr",
+                            gap: "13px",
+                            alignItems: "center",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "48px",
+                              height: "48px",
+                              borderRadius: "999px",
+                              border: "2px solid rgba(255, 255, 255, 0.7)",
+                              display: "grid",
+                              placeItems: "center",
+                              background: "rgba(255, 255, 255, 0.08)",
+                              position: "relative",
+                            }}
+                          >
+                            <span style={{ fontSize: "24px", lineHeight: 1 }}>
+                              👤
+                            </span>
+                            <span
+                              style={{
+                                position: "absolute",
+                                right: "4px",
+                                bottom: "4px",
+                                width: "13px",
+                                height: "13px",
+                                borderRadius: "999px",
+                                background: "#22c55e",
+                                border: "2px solid #ffffff",
+                              }}
+                            />
+                          </div>
+
+                          <div>
+                            <small
+                              style={{
+                                display: "block",
+                                opacity: 0.85,
+                                fontSize: "11px",
+                                fontWeight: 850,
+                              }}
+                            >
+                              Ejecutivo asignado
+                            </small>
+
+                            <strong
+                              style={{
+                                display: "block",
+                                marginTop: "3px",
+                                fontSize: "15px",
+                                fontWeight: 950,
+                              }}
+                            >
+                              {siniestroSeleccionado?.ejecutivo ||
+                                "Pendiente asignación"}
+                            </strong>
+
+                            <p
+                              style={{
+                                margin: "3px 0 0",
+                                opacity: 0.9,
+                                fontSize: "11px",
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              Acompañamiento en denuncia, respaldo y seguimiento
+                              con la compañía.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            borderLeft: "1px solid rgba(255, 255, 255, 0.28)",
+                            paddingLeft: "18px",
+                          }}
+                        >
+                          <strong
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              fontSize: "14px",
+                              fontWeight: 950,
+                            }}
+                          >
+                            <span style={{ fontSize: "17px" }}>◷</span>
+                            Horario de atención
+                          </strong>
+
+                          <p
+                            style={{
+                              margin: "5px 0 0",
+                              opacity: 0.9,
+                              fontSize: "12px",
+                              lineHeight: 1.35,
+                            }}
+                          >
+                            Lunes a viernes
+                            <br />
+                            09:00 a 18:00 hrs.
+                          </p>
+                        </div>
+
+                        <div
+                          style={{
+                            borderLeft: "1px solid rgba(255, 255, 255, 0.28)",
+                            paddingLeft: "18px",
+                          }}
+                        >
+                          <strong
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              fontSize: "14px",
+                              fontWeight: 950,
+                            }}
+                          >
+                            <span style={{ fontSize: "17px" }}>📄</span>
+                            Estado actual
+                          </strong>
+
+                          <p
+                            style={{
+                              margin: "5px 0 0",
+                              opacity: 0.9,
+                              fontSize: "12px",
+                              lineHeight: 1.35,
+                            }}
+                          >
+                            {siniestroSeleccionado
+                              ? estadoActual.texto
+                              : "Sin caso seleccionado"}
+                            <br />
+                            {siniestroSeleccionado
+                              ? `Última actualización: ${siniestroSeleccionado.actualizado || "pendiente"}`
+                              : "Esperando conexión con backend"}
+                          </p>
+                        </div>
+                      </section>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+
+            {vista === "cuotas" && (
+              <div className="pc-panel pc-full-panel">
+                <h2>Pagos y cuotas</h2>
+
+                <p
+                  style={{
+                    color: "#56637a",
+                    fontSize: "14px",
+                    lineHeight: 1.6,
+                    marginTop: "-12px",
+                    marginBottom: "18px",
+                  }}
+                >
+                  Revisa tus cuotas pendientes, próximos vencimientos y
+                  comprobantes asociados a tus pólizas.
+                </p>
+
+                <div className="pc-stats" style={{ marginBottom: "14px" }}>
+                  <article>
+                    <strong>{formatearMoneda(montoPendiente)}</strong>
+                    <span>Monto pendiente</span>
+                  </article>
+
+                  <article>
+                    <strong>{pagosPendientes.length}</strong>
+                    <span>Cuotas próximas</span>
+                  </article>
+
+                  <article>
+                    <strong>
+                      {proximoPago
+                        ? formatearFecha(proximoPago.fecha_vencimiento)
+                        : "—"}
+                    </strong>
+                    <span>Próximo vencimiento</span>
+                  </article>
+
+                  <article>
+                    <strong>{pagosRealizados}</strong>
+                    <span>Pagos realizados</span>
+                  </article>
+                </div>
+
+                <div
+                  style={{
+                    border: "1px solid #e6ebf2",
+                    borderRadius: "18px",
+                    overflow: "hidden",
+                    background: "#ffffff",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "1.2fr 0.95fr 0.65fr 0.75fr 0.85fr 0.75fr 0.85fr",
+                      gap: "10px",
+                      padding: "12px 16px",
+                      background: "#f5f7fb",
+                      color: "#07195a",
+                      fontSize: "12px",
+                      fontWeight: 800,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    <span>Seguro</span>
+                    <span>Compañía</span>
+                    <span>Cuota</span>
+                    <span>Monto</span>
+                    <span>Vencimiento</span>
+                    <span>Estado</span>
+                    <span>Acción</span>
                   </div>
-                )}
+
+                  {pagosNormalizados.length === 0 ? (
+                    <>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "1.2fr 0.95fr 0.65fr 0.75fr 0.85fr 0.75fr 0.85fr",
+                          gap: "10px",
+                          alignItems: "center",
+                          padding: "15px 16px",
+                          borderTop: "1px solid #eef2f7",
+                          color: "#667085",
+                          fontSize: "13px",
+                          fontWeight: 800,
+                        }}
+                      >
+                        <span>No tienes pagos pendientes</span>
+                        <span>—</span>
+                        <span>—</span>
+                        <span>—</span>
+                        <span>—</span>
+                        <span>—</span>
+                        <span>—</span>
+                      </div>
+
+                      <div
+                        className="pc-empty"
+                        style={{ margin: "14px", padding: "24px" }}
+                      >
+                        <h3>No tienes pagos pendientes</h3>
+                        <p>
+                          Cuando una póliza tenga pagos, cuotas próximas o
+                          comprobantes, podrás gestionarlos aquí
+                          automáticamente.
+                        </p>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "10px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <button onClick={() => setVista("cotizaciones")}>
+                            Explorar seguros
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              abrirWhatsApp(
+                                "Hola, necesito orientación sobre pagos y cuotas de mis seguros.",
+                              )
+                            }
+                            style={{
+                              background: "#ffffff",
+                              color: "#07195a",
+                              border: "1px solid #dfe6f3",
+                            }}
+                          >
+                            Contactar ejecutivo
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    pagosNormalizados.map((pago) => (
+                      <div
+                        key={pago.id}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "1.2fr 0.95fr 0.65fr 0.75fr 0.85fr 0.75fr 0.85fr",
+                          gap: "10px",
+                          alignItems: "center",
+                          padding: "13px 16px",
+                          borderTop: "1px solid #eef2f7",
+                          fontSize: "13px",
+                        }}
+                      >
+                        <div>
+                          <strong
+                            style={{ color: "#07195a", display: "block" }}
+                          >
+                            {pago.seguro}
+                          </strong>
+                          <small style={{ color: "#667085", fontWeight: 800 }}>
+                            {pago.numero_poliza}
+                          </small>
+                        </div>
+
+                        <span style={{ color: "#475467" }}>
+                          {pago.compania}
+                        </span>
+                        <strong style={{ color: "#07195a" }}>
+                          {pago.cuota}
+                        </strong>
+                        <strong style={{ color: "#07195a" }}>
+                          {formatearMoneda(pago.monto, pago.moneda)}
+                        </strong>
+                        <span style={{ color: "#475467" }}>
+                          {formatearFecha(pago.fecha_vencimiento)}
+                        </span>
+                        <span className={`pc-status ${pago.estado}`}>
+                          {textoEstado(pago.estado)}
+                        </span>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {[
+                            "pendiente",
+                            "por-vencer",
+                            "vigente",
+                            "activa",
+                          ].includes(pago.estado) ? (
+                            <button
+                              type="button"
+                              onClick={() => iniciarPago(pago)}
+                              style={{
+                                border: "none",
+                                background: "#07195a",
+                                color: "#ffffff",
+                                borderRadius: "10px",
+                                padding: "9px 12px",
+                                fontSize: "11px",
+                                fontWeight: 900,
+                              }}
+                            >
+                              Pagar
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                pago.url_comprobante
+                                  ? window.open(
+                                      pago.url_comprobante,
+                                      "_blank",
+                                      "noopener,noreferrer",
+                                    )
+                                  : abrirWhatsApp(
+                                      `Hola, necesito el comprobante del pago asociado a ${pago.seguro}.`,
+                                    )
+                              }
+                              style={{
+                                border: "1px solid #f47c20",
+                                background: "#ffffff",
+                                color: "#f47c20",
+                                borderRadius: "10px",
+                                padding: "9px 12px",
+                                fontSize: "11px",
+                                fontWeight: 900,
+                              }}
+                            >
+                              Comprobante
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "14px",
+                    padding: "16px",
+                    borderRadius: "16px",
+                    background: "#f8faff",
+                    border: "1px solid #e6ebf2",
+                    color: "#56637a",
+                    fontSize: "13px",
+                    lineHeight: 1.55,
+                  }}
+                >
+                  <strong
+                    style={{
+                      color: "#07195a",
+                      display: "block",
+                      marginBottom: "5px",
+                    }}
+                  >
+                    Integración preparada
+                  </strong>
+                  El portal queda listo para consumir{" "}
+                  <strong>/portal/mis-pagos</strong>. Para pagos reales, el
+                  frontend debe solicitar al backend iniciar la transacción y el
+                  backend debe conectar con el proveedor de pago.
+                </div>
+              </div>
+            )}
+
+            {vista === "beneficios" && (
+              <div
+                className="pc-panel pc-full-panel"
+                style={{
+                  width: "min(100%, 1480px)",
+                  maxWidth: "1480px",
+                  margin: "0 auto 70px",
+                  padding: "18px",
+                  overflow: "visible",
+                }}
+              >
+                <section
+                  style={{
+                    borderRadius: "22px",
+                    padding: "30px 34px",
+                    marginBottom: "18px",
+                    border: "1px solid #e4e9f3",
+                    background:
+                      "linear-gradient(135deg, #ffffff 0%, #fff4ee 100%)",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      padding: "8px 14px",
+                      borderRadius: "999px",
+                      background: "rgba(244, 124, 32, 0.13)",
+                      color: "#f47c20",
+                      fontSize: "11px",
+                      fontWeight: 950,
+                      textTransform: "uppercase",
+                      marginBottom: "14px",
+                    }}
+                  >
+                    Club Prieto & Correa
+                  </span>
+
+                  <h2
+                    style={{
+                      margin: "0 0 10px",
+                      color: "#07195a",
+                      fontSize: "31px",
+                    }}
+                  >
+                    Descubre beneficios para clientes
+                  </h2>
+
+                  <p
+                    style={{
+                      margin: 0,
+                      maxWidth: "740px",
+                      color: "#56637a",
+                      lineHeight: 1.6,
+                      fontSize: "14px",
+                    }}
+                  >
+                    Accede a descuentos, convenios y promociones asociadas a tu
+                    portal de seguros. Esta sección queda preparada para
+                    conectarse al backend mediante{" "}
+                    <strong>/portal/mis-beneficios</strong>.
+                  </p>
+                </section>
+
+                <section
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "minmax(0, 1fr) 260px",
+                    gap: "16px",
+                    marginBottom: "18px",
+                    alignItems: "stretch",
+                  }}
+                >
+                  <article
+                    style={{
+                      minHeight: "280px",
+                      borderRadius: "22px",
+                      overflow: "hidden",
+                      position: "relative",
+                      display: "grid",
+                      gridTemplateColumns: "1fr 120px",
+                      alignItems: "center",
+                      padding: "34px",
+                      color: "#ffffff",
+                      backgroundImage: `linear-gradient(90deg, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.10)), url(${beneficioPrincipal?.imagen || "/restaurant.jpg"})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  >
+                    <div style={{ position: "relative", zIndex: 2 }}>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          padding: "8px 14px",
+                          borderRadius: "999px",
+                          background: "#f47c20",
+                          color: "#ffffff",
+                          fontSize: "11px",
+                          fontWeight: 950,
+                          textTransform: "uppercase",
+                          marginBottom: "18px",
+                        }}
+                      >
+                        Beneficio destacado
+                      </span>
+
+                      <h3
+                        style={{
+                          margin: "0 0 12px",
+                          fontSize: "33px",
+                          lineHeight: 1.08,
+                          maxWidth: "680px",
+                          color: "#ffffff",
+                          textShadow: "0 4px 22px rgba(0,0,0,0.55)",
+                        }}
+                      >
+                        {beneficioPrincipal?.titulo ||
+                          "Beneficios disponibles próximamente"}
+                      </h3>
+
+                      <p
+                        style={{
+                          margin: "0 0 16px",
+                          maxWidth: "560px",
+                          color: "rgba(255,255,255,0.9)",
+                          fontWeight: 800,
+                        }}
+                      >
+                        {beneficioPrincipal?.descripcion ||
+                          beneficioPrincipal?.bajada ||
+                          "Cuando existan beneficios activos aparecerán aquí."}
+                      </p>
+
+                      <small
+                        style={{
+                          display: "inline-flex",
+                          padding: "8px 13px",
+                          borderRadius: "999px",
+                          background: "rgba(255,255,255,0.14)",
+                          color: "#ffffff",
+                          fontWeight: 950,
+                        }}
+                      >
+                        Vigencia: {formatearFecha(beneficioPrincipal?.vigencia)}
+                      </small>
+
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "7px",
+                          marginTop: "18px",
+                        }}
+                      >
+                        {beneficiosDestacados.map((beneficio, index) => (
+                          <button
+                            key={
+                              beneficio.id_beneficio || beneficio.id || index
+                            }
+                            type="button"
+                            onClick={() => setBeneficioSlide(index)}
+                            aria-label={`Ver beneficio destacado ${index + 1}`}
+                            style={{
+                              width:
+                                beneficioSlide % beneficiosDestacados.length ===
+                                index
+                                  ? "28px"
+                                  : "9px",
+                              height: "9px",
+                              border: "none",
+                              borderRadius: "999px",
+                              background:
+                                beneficioSlide % beneficiosDestacados.length ===
+                                index
+                                  ? "#f47c20"
+                                  : "rgba(255,255,255,0.55)",
+                              transition: "0.25s ease",
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        width: "86px",
+                        height: "86px",
+                        borderRadius: "22px",
+                        background: "rgba(255,255,255,0.80)",
+                        backdropFilter: "blur(10px)",
+                        display: "grid",
+                        placeItems: "center",
+                        justifySelf: "end",
+                        boxShadow: "0 12px 26px rgba(0,0,0,0.12)",
+                      }}
+                    >
+                      <img
+                        src={beneficioPrincipal?.icono || "/descuento.png"}
+                        alt=""
+                        style={{
+                          width: "42px",
+                          height: "42px",
+                          objectFit: "contain",
+                        }}
+                      />
+                    </div>
+                  </article>
+
+                  <aside style={{ display: "grid", gap: "12px" }}>
+                    {[
+                      [beneficiosBase.length, "Beneficios cargados"],
+                      [beneficiosActivos, "Activos"],
+                      [categoriasBeneficios.length, "Categorías"],
+                    ].map(([valor, label]) => (
+                      <article
+                        key={label}
+                        style={{
+                          background: "#ffffff",
+                          border: "1px solid #e6ebf2",
+                          borderTop: "4px solid #07195a",
+                          borderRadius: "18px",
+                          padding: "20px",
+                          minHeight: "86px",
+                        }}
+                      >
+                        <strong
+                          style={{
+                            display: "block",
+                            color: "#07195a",
+                            fontSize: "30px",
+                            marginBottom: "6px",
+                          }}
+                        >
+                          {valor}
+                        </strong>
+                        <span
+                          style={{
+                            color: "#56637a",
+                            fontSize: "11px",
+                            fontWeight: 950,
+                          }}
+                        >
+                          {label}
+                        </span>
+                      </article>
+                    ))}
+                  </aside>
+                </section>
+
+                <section
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    border: "1px solid #e6ebf2",
+                    borderRadius: "18px",
+                    padding: "12px",
+                    marginBottom: "18px",
+                    background: "#ffffff",
+                    overflowX: "auto",
+                  }}
+                >
+                  <strong
+                    style={{
+                      color: "#07195a",
+                      fontSize: "12px",
+                      textTransform: "uppercase",
+                      marginRight: "8px",
+                    }}
+                  >
+                    Categorías
+                  </strong>
+
+                  {categoriasBeneficios.map((categoria) => (
+                    <button
+                      key={categoria.id}
+                      type="button"
+                      onClick={() => setCategoriaBeneficioActiva(categoria.id)}
+                      style={{
+                        minWidth: "104px",
+                        height: "66px",
+                        border: "1px solid #dfe6f3",
+                        borderRadius: "14px",
+                        background:
+                          categoriaBeneficioActiva === categoria.id
+                            ? "#07195a"
+                            : "#ffffff",
+                        color:
+                          categoriaBeneficioActiva === categoria.id
+                            ? "#ffffff"
+                            : "#07195a",
+                        display: "grid",
+                        placeItems: "center",
+                        gap: "5px",
+                        fontSize: "11px",
+                        fontWeight: 950,
+                      }}
+                    >
+                      <img
+                        src={categoria.icono}
+                        alt=""
+                        style={{
+                          width: "24px",
+                          height: "24px",
+                          objectFit: "contain",
+                          filter:
+                            categoriaBeneficioActiva === categoria.id
+                              ? "brightness(0) invert(1)"
+                              : "none",
+                        }}
+                      />
+                      {categoria.nombre}
+                    </button>
+                  ))}
+                </section>
+
+                <section
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                    gap: "16px",
+                    paddingBottom: "80px",
+                  }}
+                >
+                  {beneficiosFiltrados.length === 0 ? (
+                    <div className="pc-empty" style={{ gridColumn: "1 / -1" }}>
+                      <h3>No hay beneficios en esta categoría</h3>
+                      <p>
+                        Prueba seleccionando otra categoría o revisa nuevamente
+                        cuando el backend esté conectado.
+                      </p>
+                    </div>
+                  ) : (
+                    beneficiosFiltrados.map((beneficio) => (
+                      <article
+                        key={beneficio.id_beneficio || beneficio.id}
+                        style={{
+                          minHeight: "260px",
+                          border: "1px solid #e6ebf2",
+                          borderRadius: "20px",
+                          padding: "18px",
+                          background: "#ffffff",
+                          display: "grid",
+                          gap: "12px",
+                          boxShadow: "0 10px 28px rgba(7,25,90,0.05)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "54px",
+                            height: "54px",
+                            borderRadius: "14px",
+                            background: "#f3f6fb",
+                            display: "grid",
+                            placeItems: "center",
+                          }}
+                        >
+                          <img
+                            src={
+                              beneficio.icono ||
+                              beneficio.imagen ||
+                              "/descuento.png"
+                            }
+                            alt=""
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              objectFit: "contain",
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              padding: "5px 10px",
+                              borderRadius: "999px",
+                              background:
+                                beneficio.estado === "proximamente"
+                                  ? "#fff0e6"
+                                  : "#ecfdf3",
+                              color:
+                                beneficio.estado === "proximamente"
+                                  ? "#f47c20"
+                                  : "#067647",
+                              fontSize: "11px",
+                              fontWeight: 950,
+                              marginBottom: "10px",
+                            }}
+                          >
+                            {beneficio.estado === "proximamente"
+                              ? "Próximamente"
+                              : "Activo"}
+                          </span>
+                          <h3
+                            style={{
+                              margin: "0 0 8px",
+                              color: "#07195a",
+                              fontSize: "18px",
+                            }}
+                          >
+                            {beneficio.titulo}
+                          </h3>
+                          <p
+                            style={{
+                              margin: "0 0 8px",
+                              color: "#667085",
+                              fontSize: "13px",
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            {beneficio.descripcion ||
+                              beneficio.bajada ||
+                              "Beneficio disponible para clientes."}
+                          </p>
+                          <small style={{ color: "#56637a", fontWeight: 900 }}>
+                            Vigencia: {formatearFecha(beneficio.vigencia)}
+                          </small>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            abrirWhatsApp(
+                              `Hola, quiero más información sobre el beneficio: ${beneficio.titulo}`,
+                            )
+                          }
+                          style={{
+                            alignSelf: "end",
+                            minHeight: "40px",
+                            border: "none",
+                            borderRadius: "12px",
+                            background: "#07195a",
+                            color: "#ffffff",
+                            fontWeight: 950,
+                          }}
+                        >
+                          Solicitar información
+                        </button>
+                      </article>
+                    ))
+                  )}
+                </section>
               </div>
             )}
           </>

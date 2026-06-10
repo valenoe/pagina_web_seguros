@@ -2,23 +2,20 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { login } from "../services/api";
+import { login, getMiCuenta } from "../services/api";
 import "../App.css";
 
-function esRutValido(rut) {
-  const limpio = rut.replace(/\./g, "").replace(/-/g, "").trim().toUpperCase();
-  if (!/^\d{7,8}[0-9K]$/.test(limpio)) return false;
+function formatearRut(valor) {
+  const limpio = valor.replace(/[^0-9kK]/g, "").toUpperCase();
+  if (limpio.length <= 1) return limpio;
   const cuerpo = limpio.slice(0, -1);
   const dv = limpio.slice(-1);
-  let suma = 0;
-  let mult = 2;
-  for (let i = cuerpo.length - 1; i >= 0; i--) {
-    suma += Number(cuerpo[i]) * mult;
-    mult = mult === 7 ? 2 : mult + 1;
+  let formateado = "";
+  for (let i = cuerpo.length - 1, count = 0; i >= 0; i--, count++) {
+    if (count > 0 && count % 3 === 0) formateado = "." + formateado;
+    formateado = cuerpo[i] + formateado;
   }
-  const resto = suma % 11;
-  const dvEsperado = resto === 1 ? "K" : String(resto === 0 ? 0 : 11 - resto);
-  return dv === dvEsperado;
+  return `${formateado}-${dv}`;
 }
 
 function LoginClientes() {
@@ -55,9 +52,10 @@ function LoginClientes() {
   }, []);
 
   function cambiarDato(e) {
+    const { name, value } = e.target;
     setFormulario({
       ...formulario,
-      [e.target.name]: e.target.value,
+      [name]: name === "rut" ? formatearRut(value) : value,
     });
   }
 
@@ -76,12 +74,6 @@ function LoginClientes() {
     e.preventDefault();
 
     setError("");
-
-    if (!esRutValido(formulario.rut)) {
-      setError("El RUT ingresado no es válido. Ej: 12.345.678-9");
-      return;
-    }
-
     setCargando(true);
 
     try {
@@ -93,17 +85,30 @@ function LoginClientes() {
         throw new Error("No se recibió token desde el backend");
       }
 
+      [
+        "nombre_cliente",
+        "rut_cliente",
+        "correo_cliente",
+        "telefono_cliente",
+        "direccion_cliente",
+        "tipo_cliente",
+        "avatar_cliente",
+      ].forEach((k) => localStorage.removeItem(k));
+
       localStorage.setItem("token", token);
 
-      const nombreCliente =
-        data?.nombre_o_razon_social ||
-        data?.nombre ||
-        data?.cliente?.nombre_o_razon_social ||
-        data?.cliente?.nombre ||
-        formulario.rut ||
-        "Cliente";
-
-      localStorage.setItem("nombre_cliente", nombreCliente);
+      try {
+        const perfil = await getMiCuenta(token);
+        localStorage.setItem(
+          "nombre_cliente",
+          perfil.nombre_o_razon_social || formulario.rut,
+        );
+        localStorage.setItem("rut_cliente", perfil.rut || formulario.rut);
+        localStorage.setItem("correo_cliente", perfil.email || "");
+        localStorage.setItem("telefono_cliente", perfil.telefono || "");
+      } catch {
+        localStorage.setItem("nombre_cliente", formulario.rut);
+      }
 
       if (recordarCuenta) {
         localStorage.setItem(
@@ -111,7 +116,7 @@ function LoginClientes() {
           JSON.stringify({
             rut: formulario.rut,
             tipo_cliente: formulario.tipo_cliente,
-          })
+          }),
         );
       } else {
         localStorage.removeItem("cuenta_recordada");
@@ -122,7 +127,9 @@ function LoginClientes() {
       console.error("ERROR LOGIN:", error);
       localStorage.removeItem("token");
       localStorage.removeItem("nombre_cliente");
-      setError("RUT o contraseña incorrectos.");
+      setError(
+        "RUT o contraseña incorrectos. Verifica que estés en la pestaña correcta (Persona / Empresa).",
+      );
     } finally {
       setCargando(false);
     }
@@ -150,7 +157,7 @@ function LoginClientes() {
 
         <div className="login-clientes-card">
           <img
-            src="/Logo Prieto.png"
+            src="/LOGO_TRANSPARENTE.svg"
             alt="Prieto & Correa"
             className="login-logo"
           />
@@ -163,7 +170,9 @@ function LoginClientes() {
             <div className="tipo-cliente-tabs">
               <button
                 type="button"
-                className={formulario.tipo_cliente === "persona" ? "active" : ""}
+                className={
+                  formulario.tipo_cliente === "persona" ? "active" : ""
+                }
                 onClick={() => cambiarTipoCliente("persona")}
               >
                 Persona
@@ -171,7 +180,9 @@ function LoginClientes() {
 
               <button
                 type="button"
-                className={formulario.tipo_cliente === "empresa" ? "active" : ""}
+                className={
+                  formulario.tipo_cliente === "empresa" ? "active" : ""
+                }
                 onClick={() => cambiarTipoCliente("empresa")}
               >
                 Empresa

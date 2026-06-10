@@ -24,7 +24,10 @@ _CREDENCIALES_INVALIDAS = HTTPException(status_code=401, detail="Credenciales in
 
 @router.post("/registro", status_code=201)
 def registro(datos: RegistroIn, db: Session = Depends(get_db)):
-    cliente_existente = db.query(Cliente).filter(Cliente.rut == datos.rut).first()
+    cliente_existente = db.query(Cliente).filter(
+        Cliente.rut == datos.rut,
+        Cliente.tipo_cliente == datos.tipo_cliente,
+    ).first()
 
     if cliente_existente and cliente_existente.cliente_activo:
         raise HTTPException(status_code=409, detail="El RUT ya está registrado")
@@ -36,8 +39,6 @@ def registro(datos: RegistroIn, db: Session = Depends(get_db)):
         cliente = cliente_existente
         cliente.nombre_o_razon_social = datos.nombre
         cliente.tipo_cliente = datos.tipo_cliente
-        cliente.email = datos.email
-        cliente.telefono = datos.telefono
         cliente.cliente_activo = True
         db.flush()
         acceso = db.query(PortalAcceso).filter(PortalAcceso.cliente_id == cliente.id_cliente).first()
@@ -52,8 +53,6 @@ def registro(datos: RegistroIn, db: Session = Depends(get_db)):
             rut=datos.rut,
             tipo_cliente=datos.tipo_cliente,
             nombre_o_razon_social=datos.nombre,
-            email=datos.email,
-            telefono=datos.telefono,
         )
         db.add(cliente)
         db.flush()
@@ -71,6 +70,16 @@ def registro(datos: RegistroIn, db: Session = Depends(get_db)):
 
     db.commit()
     return {"mensaje": "Cuenta creada exitosamente"}
+
+
+@router.get("/verificar-rut")
+def verificar_rut(rut: str, tipo_cliente: str, db: Session = Depends(get_db)):
+    existe = db.query(Cliente).filter(
+        Cliente.rut == rut,
+        Cliente.tipo_cliente == tipo_cliente,
+        Cliente.cliente_activo == True,
+    ).first()
+    return {"disponible": existe is None}
 
 
 @router.post("/login", response_model=TokenOut)

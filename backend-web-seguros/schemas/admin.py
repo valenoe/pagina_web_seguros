@@ -2,7 +2,7 @@ import re
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal, Optional
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
 
 class SeguroIn(BaseModel):
@@ -57,11 +57,29 @@ class ClienteAdminOut(BaseModel):
     rut: str
     tipo_cliente: str
     nombre_o_razon_social: str
-    email: Optional[str]
-    telefono: Optional[str]
+    email: Optional[str] = None
+    telefono: Optional[str] = None
     cliente_activo: bool
     fecha_registro: datetime
     model_config = {"from_attributes": True}
+
+    @model_validator(mode="before")
+    @classmethod
+    def extraer_contacto(cls, v):
+        if isinstance(v, dict):
+            return v
+        emails = list(v.emails) if hasattr(v, "emails") else []
+        telefonos = list(v.telefonos) if hasattr(v, "telefonos") else []
+        return {
+            "id_cliente": v.id_cliente,
+            "rut": v.rut,
+            "tipo_cliente": v.tipo_cliente,
+            "nombre_o_razon_social": v.nombre_o_razon_social,
+            "email": emails[0].email if emails else None,
+            "telefono": next((t.telefono for t in telefonos if t.tipo == "telefono"), None),
+            "cliente_activo": v.cliente_activo,
+            "fecha_registro": v.fecha_registro,
+        }
 
 
 class PolizaIn(BaseModel):

@@ -1,10 +1,7 @@
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { useNavigate } from "react-router-dom";
 
 function Nosotros() {
-  const navigate = useNavigate();
-
   return (
     <>
       <Header />
@@ -15,7 +12,9 @@ function Nosotros() {
 
         <section className="nosotros-hero">
 
-          <span>Prieto & Correa</span>
+          <span>
+            Prieto & Correa
+          </span>
 
           <h1>
             Más de 30 años entregando tranquilidad y protección
@@ -43,30 +42,30 @@ function Nosotros() {
             </h2>
 
             <p>
-              Prieto & Correa Seguros nace en Talca en 1993, con el propósito de entregar una
-              asesoría cercana y acompañamiento permanente, entendiendo que
-              cada cliente necesita protección adaptada a su realidad.
+              Prieto & Correa Seguros nace en Talca en 1993, con el propósito de
+              entregar una asesoría cercana y acompañamiento permanente,
+              entendiendo que cada cliente necesita protección adaptada a su
+              realidad.
             </p>
 
             <p>
               Desde nuestros inicios, hemos trabajado construyendo relaciones de
               confianza basadas en el compromiso, la transparencia y una atención
               verdaderamente personalizada.
-              
             </p>
 
             <p>
-              A lo largo de más de 30 años de trayectoria en la Región del Maule, 
-              hemos acompañado a nuestros clientes en distintas etapas de sus vidas, entregando orientación para que puedan tomar decisiones 
-              informadas y acceder a soluciones de protección acordes a sus necesidades.
-
-        
+              A lo largo de más de 30 años de trayectoria en la Región del
+              Maule, hemos acompañado a nuestros clientes en distintas etapas de
+              sus vidas, entregando orientación para que puedan tomar decisiones
+              informadas y acceder a soluciones de protección acordes a sus
+              necesidades.
             </p>
 
             <p>
-              Hoy continuamos evolucionando y fortaleciendo nuestros canales de atención, 
-              manteniendo intacta nuestra esencia: estar presentes cuando más nos necesitan.
-              
+              Hoy continuamos evolucionando y fortaleciendo nuestros canales de
+              atención, manteniendo intacta nuestra esencia: estar presentes
+              cuando más nos necesitan.
             </p>
 
           </div>
@@ -89,7 +88,6 @@ function Nosotros() {
 
         </section>
 
-
         {/* MISION */}
 
         <section className="corporativo-section">
@@ -106,9 +104,9 @@ function Nosotros() {
 
             <p>
               Acompañar y asesorar a nuestros clientes con cercanía,
-              transparencia y compromiso, construyendo relaciones de
-              confianza duraderas y entregando soluciones adaptadas a
-              las necesidades de cada persona y empresa.
+              transparencia y compromiso, construyendo relaciones de confianza
+              duraderas y entregando soluciones adaptadas a las necesidades de
+              cada persona y empresa.
             </p>
 
           </div>
@@ -125,7 +123,6 @@ function Nosotros() {
 
         </section>
 
-
         {/* CULTURA */}
 
         <section className="corporativo-section reverse">
@@ -141,9 +138,8 @@ function Nosotros() {
             </h2>
 
             <p>
-              Nuestra cultura se basa en pilares que representan
-              nuestro compromiso y la forma en que nos relacionamos
-              con cada cliente.
+              Nuestra cultura se basa en pilares que representan nuestro
+              compromiso y la forma en que nos relacionamos con cada cliente.
             </p>
 
           </div>
@@ -160,7 +156,6 @@ function Nosotros() {
 
         </section>
 
-
         {/* VALORES */}
 
         <section className="valores-corporativos">
@@ -172,8 +167,8 @@ function Nosotros() {
             </h2>
 
             <p>
-              Más que palabras, representan la forma en que acompañamos
-              y protegemos a nuestros clientes.
+              Más que palabras, representan la forma en que acompañamos y
+              protegemos a nuestros clientes.
             </p>
 
           </div>
@@ -196,7 +191,6 @@ function Nosotros() {
 
             </article>
 
-
             <article className="valor-corporativo-card">
 
               <div className="valor-icono">
@@ -213,7 +207,6 @@ function Nosotros() {
 
             </article>
 
-
             <article className="valor-corporativo-card">
 
               <div className="valor-icono">
@@ -229,7 +222,6 @@ function Nosotros() {
               </p>
 
             </article>
-
 
             <article className="valor-corporativo-card">
 
@@ -248,25 +240,6 @@ function Nosotros() {
             </article>
 
           </div>
-
-        </section>
-
-
-        {/* CTA */}
-
-        <section className="cta-nosotros">
-
-          <h2>
-
-            ¿Buscas una propuesta personalizada?
-
-          </h2>
-
-          <button
-            onClick={() => navigate("/cotizador")}
-          >
-            Solicitar cotización
-          </button>
 
         </section>
 

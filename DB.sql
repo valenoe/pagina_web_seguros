@@ -40,8 +40,7 @@ CREATE TABLE `web_clientes` (
   `rut` varchar(20) NOT NULL,
   `tipo_cliente` varchar(10) NOT NULL,
   `nombre_o_razon_social` varchar(200) NOT NULL,
-  `email` varchar(100),
-  `telefono` varchar(20),
+  `foto_perfil` varchar(500) DEFAULT NULL,
   `cliente_activo` boolean DEFAULT true,
   `fecha_registro` timestamp DEFAULT (now()),
   `updated_at` timestamp
@@ -150,6 +149,44 @@ CREATE TABLE `web_cliente_emails` (
   `cliente_id` integer NOT NULL,
   `email` varchar(100) NOT NULL,
   FOREIGN KEY (`cliente_id`) REFERENCES `web_clientes` (`id_cliente`) ON DELETE CASCADE
+);
+
+CREATE TABLE `web_siniestros` (
+  `id_siniestro` integer PRIMARY KEY AUTO_INCREMENT,
+  `cliente_id` integer NOT NULL,
+  `poliza_id` integer NOT NULL,
+  `tipo` varchar(100) NOT NULL,
+  `descripcion` text,
+  `fecha_ocurrencia` date,
+  `etapa` integer NOT NULL DEFAULT 1,
+  `estado` varchar(20) NOT NULL DEFAULT 'reportado',
+  `fecha_registro` timestamp DEFAULT (now()),
+  FOREIGN KEY (`cliente_id`) REFERENCES `web_clientes` (`id_cliente`),
+  FOREIGN KEY (`poliza_id`) REFERENCES `web_polizas` (`id_poliza`)
+);
+
+CREATE TABLE `web_documentos_cliente` (
+  `id_documento` integer PRIMARY KEY AUTO_INCREMENT,
+  `cliente_id` integer NOT NULL,
+  `poliza_id` integer,
+  `nombre` varchar(200) NOT NULL,
+  `tipo` varchar(50) NOT NULL DEFAULT 'Documento',
+  `estado` varchar(20) NOT NULL DEFAULT 'Disponible',
+  `url` varchar(500),
+  `fecha_emision` timestamp DEFAULT (now()),
+  FOREIGN KEY (`cliente_id`) REFERENCES `web_clientes` (`id_cliente`),
+  FOREIGN KEY (`poliza_id`) REFERENCES `web_polizas` (`id_poliza`)
+);
+
+CREATE TABLE `web_metodos_pago` (
+  `id_metodo` integer PRIMARY KEY AUTO_INCREMENT,
+  `cliente_id` integer NOT NULL,
+  `tipo` varchar(50) NOT NULL,
+  `descripcion` varchar(200),
+  `ultimo4` varchar(4),
+  `activo` boolean DEFAULT true,
+  `fecha_registro` timestamp DEFAULT (now()),
+  FOREIGN KEY (`cliente_id`) REFERENCES `web_clientes` (`id_cliente`)
 );
 
 INSERT INTO `web_seguros_catalogo` (`nombre`, `categoria`, `descripcion`, `permite_digital`, `permite_tradicional`, `url_externa`, `seguro_activo`, `orden_display`) VALUES
