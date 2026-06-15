@@ -1,96 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap");
-
-/* ==================================================
-PRIETO & CORREA SEGUROS — APP.CSS LIMPIO
-Frontend React + Vite
-================================================== */
-
-:root {
-  --pc-blue: #07195a;
-  --pc-blue-dark: #031344;
-  --pc-orange: #f47c20;
-  --pc-bg: #f3f6fb;
-  --pc-bg-soft: #f5f7fb;
-  --pc-white: #ffffff;
-  --pc-text: #0b1640;
-  --pc-muted: #56637a;
-  --pc-border: #e6eaf4;
-  --pc-shadow: 0 12px 35px rgba(7, 25, 90, 0.06);
-  --pc-radius: 22px;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  background: #f7f7f7;
-  color: var(--pc-text);
-  font-family: "Montserrat", sans-serif;
-  overflow-x: clip;
-}
-
-/* Bloquea el scroll cuando el menú hamburguesa está abierto */
-body.menu-abierto {
-  overflow: hidden;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-button,
-input,
-textarea,
-select {
-  font-family: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-img {
-  max-width: 100%;
-  display: block;
-}
-
-.cargando {
-  padding: 70px;
-  text-align: center;
-  color: var(--pc-blue);
-  font-weight: 900;
-}
-
-.form-error,
-.form-success {
-  margin: 18px 0 26px;
-  padding: 14px 18px;
-  border-radius: 14px;
-  font-size: 14px;
-  font-weight: 800;
-  text-align: center;
-}
-
-.form-error {
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.18);
-  color: #dc2626;
-}
-
-.form-success {
-  background: rgba(22, 163, 74, 0.08);
-  border: 1px solid rgba(22, 163, 74, 0.18);
-  color: #16a34a;
-}
-
 /* ==================================================
 HEADER
 ================================================== */
@@ -426,11 +333,11 @@ HOME
 
 .hero {
   min-height: calc(100vh - 110px);
-  padding: 65px 8%;
+  padding: clamp(45px, 33.7px + 1.63vw, 65px) 8%;
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
   align-items: center;
-  gap: 80px;
+  gap: clamp(32px, 4.3vw, 80px);
   background: linear-gradient(135deg, #ffffff, #f7f7f7);
 }
 
@@ -458,14 +365,14 @@ HOME
 .hero h1 {
   margin-bottom: 28px;
   color: var(--pc-text);
-  font-size: 72px;
+  font-size: clamp(42px, 9.4px + 3.26vw, 72px);
   line-height: 1;
 }
 
 .hero p {
   max-width: 700px;
   color: #555;
-  font-size: 24px;
+  font-size: clamp(18px, 14.6px + 0.49vw, 24px);
   line-height: 1.6;
 }
 
@@ -502,7 +409,7 @@ HOME
 }
 
 .hero-card {
-  padding: 70px;
+  padding: clamp(30px, 7px + 3.28vw, 70px);
   background: var(--pc-blue);
   color: white;
   border-radius: 40px;
@@ -511,21 +418,21 @@ HOME
 }
 
 .hero-card h2 {
-  font-size: 120px;
+  font-size: clamp(60px, 25px + 5vw, 120px);
   line-height: 1;
 }
 
 .hero-card span {
   display: block;
   margin-top: 20px;
-  font-size: 24px;
+  font-size: clamp(16px, 11px + 0.66vw, 24px);
   font-weight: 800;
 }
 
 .promo-banner-slider {
   position: relative;
   width: 100%;
-  height: 520px;
+  height: clamp(320px, 205px + 16.4vw, 520px);
   overflow: hidden;
   background: white;
 }
@@ -645,7 +552,7 @@ HOME
 .partners-header h2 {
   margin-top: 20px;
   color: var(--pc-blue);
-  font-size: 62px;
+  font-size: clamp(42px, 20.3px + 2.17vw, 62px);
   line-height: 1.05;
 }
 
@@ -3706,10 +3613,10 @@ RESPONSIVE
     padding: 50px;
   }
 
-  .hero h1,
-  .purpose-new-header h2,
-  .why-header h2,
-  .partners-header h2,
+  /* .hero h1,              — redundante: clamp da 42px exactos en 1000px */
+  /* .purpose-new-header h2, — redundante: clamp da 42px exactos en 1000px */
+  /* .why-header h2,         — redundante: clamp da 42px exactos en 1000px */
+  /* .partners-header h2,    — redundante: clamp da 42px exactos en 1000px */
   .contacto-box h1,
   .cotizador-header h1,
   .seguros-hero h1,
@@ -3877,9 +3784,7 @@ RESPONSIVE
     font-size: 44px;
   }
 
-  .hero p {
-    font-size: 18px;
-  }
+  /* .hero p { font-size: 18px; } — redundante: clamp(18px,...) ya tiene 18px como mínimo */
 
   .hero-buttons,
   .cotizacion-buttons,
@@ -3899,9 +3804,7 @@ RESPONSIVE
     width: 100%;
   }
 
-  .promo-banner-slider {
-    height: 320px;
-  }
+  /* .promo-banner-slider { height: 320px; } — redundante: clamp(320px,...) ya tiene 320px como mínimo */
 
   .promo-arrow-left {
     left: 16px;
@@ -5508,414 +5411,4 @@ BENEFICIOS / CLUB PRIETO & CORREA — PORTAL CLIENTE
 .pc-beneficio-card {
   min-height: 260px;
   padding-bottom: 28px !important;
-}
-/* ==========================
-   POLÍTICA PRIVACIDAD
-========================== */
-
-.legal-premium-page {
-  background: #f3f6fb;
-
-  padding: 150px 30px 100px;
-}
-
-.legal-hero {
-  max-width: 1300px;
-
-  margin: auto;
-
-  margin-bottom: 30px;
-
-  padding: 60px;
-
-  border-radius: 34px;
-
-  background:
-    linear-gradient(135deg, rgba(7, 25, 90, 0.96), rgba(3, 19, 68, 0.88)),
-    url("/Fondo-login.png");
-
-  background-size: cover;
-
-  background-position: center;
-
-  color: white;
-
-  box-shadow: 0 30px 80px rgba(7, 25, 90, 0.18);
-}
-
-.legal-hero span {
-  display: inline-flex;
-
-  padding: 10px 18px;
-
-  background: #f47c20;
-
-  border-radius: 999px;
-
-  font-size: 13px;
-
-  font-weight: 800;
-
-  margin-bottom: 22px;
-}
-
-.legal-hero h1 {
-  font-size: 64px;
-
-  line-height: 1;
-
-  margin-bottom: 20px;
-
-  color: white;
-}
-
-.legal-hero p {
-  max-width: 850px;
-
-  font-size: 18px;
-
-  line-height: 1.8;
-
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.legal-hero small {
-  display: block;
-
-  margin-top: 20px;
-
-  font-weight: 700;
-
-  opacity: 0.8;
-}
-
-.legal-layout {
-  max-width: 1300px;
-
-  margin: auto;
-
-  display: grid;
-
-  grid-template-columns:
-    290px
-    1fr;
-
-  gap: 28px;
-
-  align-items: start;
-}
-
-.legal-index {
-  position: sticky;
-
-  top: 120px;
-
-  background: white;
-
-  padding: 28px;
-
-  border-radius: 30px;
-
-  box-shadow: 0 18px 50px rgba(7, 25, 90, 0.08);
-}
-
-.legal-index h3 {
-  color: #07195a;
-
-  margin-bottom: 18px;
-}
-
-.legal-index a {
-  display: block;
-
-  padding: 14px;
-
-  border-radius: 14px;
-
-  text-decoration: none;
-
-  font-weight: 700;
-
-  color: #526072;
-}
-
-.legal-index a:hover {
-  background: #f3f6fb;
-
-  color: #07195a;
-}
-
-.legal-document {
-  background: white;
-
-  padding: 60px;
-
-  border-radius: 34px;
-
-  box-shadow: 0 22px 70px rgba(7, 25, 90, 0.08);
-}
-
-.legal-document section {
-  padding-bottom: 42px;
-
-  margin-bottom: 42px;
-
-  border-bottom: 1px solid #edf1f7;
-}
-
-.legal-document section:last-child {
-  margin-bottom: 0;
-
-  border: none;
-}
-
-.legal-document h2 {
-  font-size: 34px;
-
-  color: #07195a;
-
-  margin-bottom: 20px;
-}
-
-.legal-document p {
-  line-height: 2;
-
-  color: #526072;
-
-  font-size: 17px;
-}
-
-.legal-document ul {
-  margin-top: 18px;
-
-  padding-left: 25px;
-}
-
-.legal-document li {
-  margin-bottom: 12px;
-
-  line-height: 1.9;
-
-  color: #526072;
-}
-
-.legal-contact-box {
-  background: linear-gradient(135deg, #07195a, #031344);
-
-  padding: 40px !important;
-
-  border-radius: 24px;
-}
-
-.legal-contact-box h2,
-.legal-contact-box p,
-.legal-contact-box strong,
-.legal-contact-box span {
-  color: white;
-}
-
-.legal-contact-box strong,
-.legal-contact-box span {
-  display: block;
-
-  margin-top: 10px;
-}
-
-@media (max-width: 980px) {
-  .legal-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .legal-index {
-    position: relative;
-
-    top: auto;
-  }
-
-  .legal-document {
-    padding: 34px;
-  }
-
-  .legal-hero h1 {
-    font-size: 42px;
-  }
-}
-/* ==========================
-   POLÍTICA PRIVACIDAD
-========================== */
-
-.legal-premium-page {
-  background: #f3f6fb;
-  padding: 150px 30px 100px;
-}
-
-.legal-hero {
-  max-width: 1300px;
-  margin: auto;
-  margin-bottom: 30px;
-  padding: 60px;
-  border-radius: 34px;
-  background:
-    linear-gradient(135deg, rgba(7, 25, 90, 0.96), rgba(3, 19, 68, 0.88)),
-    url("/Fondo-login.png");
-  background-size: cover;
-  background-position: center;
-  color: white;
-  box-shadow: 0 30px 80px rgba(7, 25, 90, 0.18);
-}
-
-.legal-hero span {
-  display: inline-flex;
-  padding: 10px 18px;
-  background: #f47c20;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 800;
-  margin-bottom: 22px;
-  text-transform: uppercase;
-}
-
-.legal-hero h1 {
-  font-size: 64px;
-  line-height: 1;
-  margin-bottom: 20px;
-  color: white;
-}
-
-.legal-hero p {
-  max-width: 850px;
-  font-size: 18px;
-  line-height: 1.8;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.legal-hero small {
-  display: block;
-  margin-top: 20px;
-  font-weight: 700;
-  opacity: 0.8;
-}
-
-.legal-layout {
-  max-width: 1300px;
-  margin: auto;
-  display: grid;
-  grid-template-columns: 290px 1fr;
-  gap: 28px;
-  align-items: start;
-}
-
-.legal-index {
-  position: sticky;
-  top: 120px;
-  background: white;
-  padding: 28px;
-  border-radius: 30px;
-  box-shadow: 0 18px 50px rgba(7, 25, 90, 0.08);
-}
-
-.legal-index h3 {
-  color: #07195a;
-  margin-bottom: 18px;
-}
-
-.legal-index a {
-  display: block;
-  padding: 14px;
-  border-radius: 14px;
-  text-decoration: none;
-  font-weight: 700;
-  color: #526072;
-}
-
-.legal-index a:hover {
-  background: #f3f6fb;
-  color: #07195a;
-}
-
-.legal-document {
-  background: white;
-  padding: 60px;
-  border-radius: 34px;
-  box-shadow: 0 22px 70px rgba(7, 25, 90, 0.08);
-}
-
-.legal-document section {
-  padding-bottom: 42px;
-  margin-bottom: 42px;
-  border-bottom: 1px solid #edf1f7;
-}
-
-.legal-document section:last-child {
-  margin-bottom: 0;
-  border: none;
-}
-
-.legal-document h2 {
-  font-size: 34px;
-  color: #07195a;
-  margin-bottom: 20px;
-}
-
-.legal-document p {
-  line-height: 2;
-  color: #526072;
-  font-size: 17px;
-}
-
-.legal-document ul {
-  margin-top: 18px;
-  padding-left: 25px;
-}
-
-.legal-document li {
-  margin-bottom: 12px;
-  line-height: 1.9;
-  color: #526072;
-}
-
-.legal-document strong {
-  color: #07195a;
-}
-
-.legal-contact-box {
-  background: linear-gradient(135deg, #07195a, #031344);
-  padding: 40px !important;
-  border-radius: 24px;
-}
-
-.legal-contact-box h2,
-.legal-contact-box p,
-.legal-contact-box strong,
-.legal-contact-box span {
-  color: white;
-}
-
-.legal-contact-box strong,
-.legal-contact-box span {
-  display: block;
-  margin-top: 10px;
-}
-
-@media (max-width: 980px) {
-  .legal-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .legal-index {
-    position: relative;
-    top: auto;
-  }
-
-  .legal-document {
-    padding: 34px;
-  }
-
-  .legal-hero h1 {
-    font-size: 42px;
-  }
-}
-html {
-  background: #f7f7f7; /* mismo color que tu body */
-  overscroll-behavior: auto;
 }
