@@ -4824,16 +4824,37 @@ BENEFICIOS / CLUB PRIETO & CORREA — PORTAL CLIENTE
   min-height: 280px;
   padding: 34px;
   border-radius: 26px;
+
   display: grid;
-  grid-template-columns: 1fr 210px;
+  grid-template-columns: 1fr;
+
   gap: 30px;
   align-items: center;
-  background: linear-gradient(120deg, rgba(7, 25, 90, 0.96), rgba(7, 25, 90, 0.72)), url("/Fondo-login.png");
-  background-size: cover;
-  background-position: center;
+
+  background:
+  linear-gradient(
+  90deg,
+  rgba(3,19,68,.92) 0%,
+  rgba(3,19,68,.80) 42%,
+  rgba(7,25,90,.18) 100%
+  ),
+  url("/kineintegral.png");
+
+  background-size: 115%;
+
+  background-position: 78% center;
+
   color: white;
+
   overflow: hidden;
-  box-shadow: 0 18px 45px rgba(7, 25, 90, 0.14);
+
+  box-shadow: 0 18px 45px rgba(7,25,90,.14);
+}
+
+.pc-beneficio-destacado h3,
+.pc-beneficio-destacado p,
+.pc-beneficio-destacado small{
+text-shadow:0 4px 18px rgba(0,0,0,.70);
 }
 
 .pc-beneficio-badge {
@@ -4875,14 +4896,7 @@ BENEFICIOS / CLUB PRIETO & CORREA — PORTAL CLIENTE
 }
 
 .pc-beneficio-destacado > img {
-  width: 160px;
-  height: 160px;
-  padding: 34px;
-  border-radius: 34px;
-  background: rgba(255, 255, 255, 0.94);
-  object-fit: contain;
-  justify-self: center;
-  filter: none;
+display: none;
 }
 
 .pc-beneficios-resumen {
@@ -4996,7 +5010,7 @@ BENEFICIOS / CLUB PRIETO & CORREA — PORTAL CLIENTE
 }
 
 .pc-beneficio-icon {
-  width: px;
+  width: 58px;
   height: 58px;
   border-radius: 18px;
   background: #f3f6fb;
@@ -6003,5 +6017,202 @@ Frontend Core V1
 
   .corredin-message {
     max-width: 94%;
+  }
+}
+
+/* ==================================================
+MODAL CÓDIGO BENEFICIO — CLUB PRIETO & CORREA
+================================================== */
+
+.pc-beneficio-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+}
+
+.pc-beneficio-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(3, 19, 68, 0.68);
+  backdrop-filter: blur(7px);
+}
+
+.pc-beneficio-modal-card {
+  position: relative;
+  z-index: 2;
+  width: min(560px, 100%);
+  padding: 34px;
+  border-radius: 30px;
+  background: #ffffff;
+  box-shadow: 0 35px 90px rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.pc-beneficio-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 999px;
+  background: #f3f6fb;
+  color: var(--pc-blue);
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.pc-beneficio-modal-success {
+  width: 58px;
+  height: 58px;
+  margin-bottom: 18px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+  font-size: 32px;
+  font-weight: 900;
+}
+
+.pc-beneficio-modal-kicker {
+  display: inline-flex;
+  width: fit-content;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border-radius: 999px;
+  background: rgba(244, 124, 32, 0.12);
+  color: var(--pc-orange);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.pc-beneficio-modal-card h2 {
+  margin: 0 0 10px;
+  color: var(--pc-blue);
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.pc-beneficio-modal-intro,
+.pc-beneficio-modal-note {
+  color: #56637a;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.pc-beneficio-comprobante {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pc-beneficio-comprobante div {
+  padding: 14px;
+  border-radius: 16px;
+  background: #f7f9ff;
+  border: 1px solid #e5ebf5;
+}
+
+.pc-beneficio-comprobante small,
+.pc-beneficio-codigo-box small {
+  display: block;
+  margin-bottom: 6px;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.pc-beneficio-comprobante strong {
+  color: var(--pc-blue);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.pc-beneficio-codigo-box {
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--pc-blue), var(--pc-blue-dark));
+  color: #ffffff;
+}
+
+.pc-beneficio-codigo-box small {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.pc-beneficio-codigo-box strong {
+  display: block;
+  color: #ffffff;
+  font-size: 24px;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.pc-beneficio-modal-note {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #fff7f0;
+  border: 1px solid #f3e6db;
+  color: #7a4a21;
+  font-weight: 800;
+}
+
+.pc-beneficio-modal-actions {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pc-beneficio-modal-actions button {
+  min-height: 46px;
+  border: none;
+  border-radius: 13px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.pc-beneficio-modal-actions button:first-child {
+  background: #eef3ff;
+  color: var(--pc-blue);
+}
+
+.pc-beneficio-modal-actions button:last-child {
+  background: var(--pc-blue);
+  color: #ffffff;
+}
+
+.pc-beneficio-modal-actions button:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 700px) {
+  .pc-beneficio-modal {
+    padding: 14px;
+  }
+
+  .pc-beneficio-modal-card {
+    padding: 26px;
+    border-radius: 24px;
+  }
+
+  .pc-beneficio-comprobante,
+  .pc-beneficio-modal-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .pc-beneficio-codigo-box strong {
+    font-size: 19px;
+    word-break: break-word;
   }
 }

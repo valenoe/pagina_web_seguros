@@ -53,7 +53,6 @@ function Dashboard() {
   const [beneficios, setBeneficios] = useState([]);
   const [categoriaBeneficioActiva, setCategoriaBeneficioActiva] = useState("todos");
   const [beneficioSlide, setBeneficioSlide] = useState(0);
-  const [beneficioSolicitado, setBeneficioSolicitado] = useState(null);
   const [documentos, setDocumentos] = useState([]);
   const [pagos, setPagos] = useState([]);
   const [alertas, setAlertas] = useState([]);
@@ -1088,53 +1087,6 @@ Estado: ${documento.estado}`);
     ? beneficiosDestacados[beneficioSlide % beneficiosDestacados.length]
     : beneficiosBase[0];
   const beneficiosActivos = beneficiosBase.filter((beneficio) => beneficio.estado !== "proximamente").length;
-
-  function obtenerSiglaBeneficio(beneficio) {
-    const texto = `${beneficio?.empresa || ""} ${beneficio?.titulo || ""}`.toLowerCase();
-
-    if (texto.includes("kimagen")) return "KIM";
-    if (texto.includes("kineintegral")) return "ABK";
-
-    return String(beneficio?.empresa || beneficio?.titulo || "BEN")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-zA-Z0-9]/g, "")
-      .slice(0, 3)
-      .toUpperCase() || "BEN";
-  }
-
-  function generarCodigoBeneficio(beneficio) {
-    const sigla = obtenerSiglaBeneficio(beneficio);
-    const anio = beneficio?.vigencia ? new Date(beneficio.vigencia).getFullYear() : new Date().getFullYear();
-    const indice = Math.max(
-      1,
-      beneficiosBase.findIndex((item) => (item.id_beneficio || item.id) === (beneficio.id_beneficio || beneficio.id)) + 1
-    );
-
-    return `CLUB-PC-${sigla}-${anio}-${String(indice).padStart(4, "0")}`;
-  }
-
-  function solicitarBeneficio(beneficio) {
-    if (!beneficio || beneficio.estado === "proximamente") return;
-
-    setBeneficioSolicitado({
-      ...beneficio,
-      codigoBeneficio: generarCodigoBeneficio(beneficio),
-      cliente: nombreVisible || "Cliente",
-      rut: datosPerfil.rut || "12.345.678-9",
-      fechaSolicitud: new Date().toISOString(),
-    });
-  }
-
-  function cerrarModalBeneficio() {
-    setBeneficioSolicitado(null);
-  }
-
-  function copiarCodigoBeneficio() {
-    if (!beneficioSolicitado?.codigoBeneficio) return;
-
-    navigator.clipboard?.writeText(beneficioSolicitado.codigoBeneficio);
-  }
 
   function abrirMisSeguros(tab = "coberturas") {
     setTabMisSeguros(tab);
@@ -7505,20 +7457,18 @@ Estado: ${documento.estado}`);
 
                         <button
                           type="button"
-                          onClick={() => solicitarBeneficio(beneficio)}
+                          onClick={() => abrirWhatsApp(`Hola, quiero más información sobre el beneficio ${beneficio.descuento ? beneficio.descuento + " " : ""}de ${beneficio.titulo}`)}
                           style={{
                             alignSelf: "end",
                             minHeight: "40px",
                             border: "none",
                             borderRadius: "12px",
-                            background: beneficio.estado === "proximamente" ? "#cbd5e1" : "#07195a",
+                            background: "#07195a",
                             color: "#ffffff",
                             fontWeight: 950,
-                            cursor: beneficio.estado === "proximamente" ? "not-allowed" : "pointer",
                           }}
-                          disabled={beneficio.estado === "proximamente"}
                         >
-                          Solicitar beneficio
+                          Solicitar información
                         </button>
                       </article>
                     ))
@@ -7529,84 +7479,6 @@ Estado: ${documento.estado}`);
           </>
         )}
       </main>
-
-      {beneficioSolicitado && (
-        <div className="pc-beneficio-modal" role="dialog" aria-modal="true">
-          <button
-            type="button"
-            className="pc-beneficio-modal-backdrop"
-            aria-label="Cerrar beneficio solicitado"
-            onClick={cerrarModalBeneficio}
-          />
-
-          <article className="pc-beneficio-modal-card">
-            <button
-              type="button"
-              className="pc-beneficio-modal-close"
-              onClick={cerrarModalBeneficio}
-              aria-label="Cerrar"
-            >
-              ×
-            </button>
-
-            <div className="pc-beneficio-modal-success">✓</div>
-
-            <span className="pc-beneficio-modal-kicker">Club Prieto & Correa</span>
-
-            <h2>Beneficio solicitado correctamente</h2>
-
-            <p className="pc-beneficio-modal-intro">
-              Presenta este comprobante junto a tu cédula de identidad para acceder al descuento.
-            </p>
-
-            <div className="pc-beneficio-comprobante">
-              <div>
-                <small>Cliente</small>
-                <strong>{beneficioSolicitado.cliente}</strong>
-              </div>
-
-              <div>
-                <small>RUT</small>
-                <strong>{beneficioSolicitado.rut}</strong>
-              </div>
-
-              <div>
-                <small>Empresa</small>
-                <strong>{beneficioSolicitado.empresa || beneficioSolicitado.titulo}</strong>
-              </div>
-
-              <div>
-                <small>Descuento</small>
-                <strong>{beneficioSolicitado.descuento || "Beneficio activo"}</strong>
-              </div>
-
-              <div>
-                <small>Válido hasta</small>
-                <strong>{formatearFecha(beneficioSolicitado.vigencia)}</strong>
-              </div>
-            </div>
-
-            <div className="pc-beneficio-codigo-box">
-              <small>Código de beneficio</small>
-              <strong>{beneficioSolicitado.codigoBeneficio}</strong>
-            </div>
-
-            <p className="pc-beneficio-modal-note">
-              Presente este código junto a su cédula de identidad. Beneficio sujeto a validación del prestador y condiciones del convenio.
-            </p>
-
-            <div className="pc-beneficio-modal-actions">
-              <button type="button" onClick={copiarCodigoBeneficio}>
-                Copiar código
-              </button>
-
-              <button type="button" onClick={cerrarModalBeneficio}>
-                Entendido
-              </button>
-            </div>
-          </article>
-        </div>
-      )}
     </section>
   );
 }
