@@ -85,9 +85,9 @@ function Dashboard() {
   const [reporteSiniestroActivo, setReporteSiniestroActivo] = useState(false);
   const [paginaSiniestros, setPaginaSiniestros] = useState(1);
   const [formularioSiniestroAbierto, setFormularioSiniestroAbierto] = useState(false);
-  const [modoFormularioSiniestro, setModoFormularioSiniestro] = useState("opciones");
+  const [modoFormularioSiniestro, setModoFormularioSiniestro] = useState("digital");
   const [mensajeFormularioSiniestro, setMensajeFormularioSiniestro] = useState("");
-  const [archivoRespaldoSiniestro, setArchivoRespaldoSiniestro] = useState(null);
+  const [archivoRespaldoSiniestro, setArchivoRespaldoSiniestro] = useState([]);
   const [formularioSiniestro, setFormularioSiniestro] = useState({
     numeroSiniestro: "",
     liquidador: "",
@@ -128,8 +128,6 @@ function Dashboard() {
     tipoDano: "",
     partesAfectadas: "",
     magnitudDanos: "",
-    estimacion: "",
-
     existeTercero: "",
     terceroReclama: "",
     terceroSeguro: "",
@@ -142,7 +140,6 @@ function Dashboard() {
     terceroDireccion: "",
     terceroCiudad: "",
     terceroTelefono: "",
-    terceroFax: "",
     terceroEmail: "",
     terceroVehiculo: "",
     terceroModelo: "",
@@ -4185,7 +4182,7 @@ Estado: ${documento.estado}`);
                     direccion: datosPerfil.direccion || localStorage.getItem("direccion_cliente") || "",
                   };
 
-                  const abrirFormularioSiniestro = (modo = "opciones") => {
+                  const abrirFormularioSiniestro = (modo = "digital") => {
                     setModoFormularioSiniestro(modo);
                     setMensajeFormularioSiniestro("");
                     setFormularioSiniestroAbierto(true);
@@ -4193,7 +4190,7 @@ Estado: ${documento.estado}`);
 
                   const cerrarFormularioSiniestro = () => {
                     setFormularioSiniestroAbierto(false);
-                    setModoFormularioSiniestro("opciones");
+                    setModoFormularioSiniestro("digital");
                     setMensajeFormularioSiniestro("");
                   };
 
@@ -4212,11 +4209,20 @@ Estado: ${documento.estado}`);
                       .replaceAll('"', "&quot;")
                       .replaceAll("'", "&#039;");
 
-                  const generarHtmlFormularioSiniestro = () => {
+                  const generarHtmlFormularioSiniestro = (opciones = {}) => {
+                    const formularioPDF = opciones.enBlanco ? {} : formularioSiniestro;
+                    const datosClientePDF = opciones.enBlanco ? {} : datosClienteFormulario;
+                    const anexosPDF = opciones.enBlanco
+                      ? []
+                      : Array.isArray(archivoRespaldoSiniestro)
+                        ? archivoRespaldoSiniestro
+                        : archivoRespaldoSiniestro
+                          ? [archivoRespaldoSiniestro]
+                          : [];
                     const v = (valor) => escapeHtmlSiniestro(valor || "");
-                    const polizaActual = polizaSeleccionada?.poliza || "";
-                    const seguroActual = polizaSeleccionada?.nombre || "";
-                    const companiaActual = polizaSeleccionada?.compania || "";
+                    const polizaActual = opciones.enBlanco ? "" : (polizaSeleccionada?.poliza || "");
+                    const seguroActual = opciones.enBlanco ? "" : (polizaSeleccionada?.nombre || "");
+                    const companiaActual = opciones.enBlanco ? "" : (polizaSeleccionada?.compania || "");
                     const fechaEmision = new Date().toLocaleDateString("es-CL");
                     const horaEmision = new Date().toLocaleTimeString("es-CL", {
                       hour: "2-digit",
@@ -4566,26 +4572,19 @@ Estado: ${documento.estado}`);
                               </div>
 
                               <div class="case-box">
-                                <div><span>N° Siniestro</span><strong>${v(formularioSiniestro.numeroSiniestro)}</strong></div>
-                                <div><span>Liquidador</span><strong>${v(formularioSiniestro.liquidador)}</strong></div>
+                                <div><span>N° Siniestro</span><strong>${v(formularioPDF.numeroSiniestro)}</strong></div>
+                                <div><span>Liquidador</span><strong>${v(formularioPDF.liquidador)}</strong></div>
                               </div>
                             </header>
 
                             <section class="content">
-                              <div class="summary-grid">
-                                ${campo("Cliente", datosClienteFormulario.nombre)}
-                                ${campo("RUT", datosClienteFormulario.rut)}
-                                ${campo("Teléfono", datosClienteFormulario.telefono)}
-                                ${campo("Correo", datosClienteFormulario.correo)}
-                              </div>
-
                               <section class="section">
                                 <div class="section-title"><h2>Datos generales</h2><span>Emisión ${v(fechaEmision)} · ${v(horaEmision)}</span></div>
                                 <div class="section-body grid-4">
                                   ${campo("Póliza", polizaActual)}
                                   ${campo("Seguro", seguroActual)}
                                   ${campo("Compañía", companiaActual)}
-                                  ${campo("Siniestro día", formularioSiniestro.siniestroDia || fechaFormateada(formularioSiniestro.fechaSiniestro))}
+                                  ${campo("Siniestro día", formularioPDF.siniestroDia || fechaFormateada(formularioPDF.fechaSiniestro))}
                                 </div>
                               </section>
 
@@ -4593,18 +4592,18 @@ Estado: ${documento.estado}`);
                                 <div class="section-title"><h2>Antecedentes del asegurado</h2><span>Datos precargados del portal</span></div>
                                 <div class="section-body">
                                   <div class="grid-2">
-                                    ${campo("Nombre", datosClienteFormulario.nombre)}
-                                    ${campo("R.U.T", datosClienteFormulario.rut)}
+                                    ${campo("Nombre", datosClientePDF.nombre)}
+                                    ${campo("R.U.T", datosClientePDF.rut)}
                                   </div>
                                   <div class="grid-3">
-                                    ${campo("Dirección", formularioSiniestro.aseguradoDireccion || datosClienteFormulario.direccion)}
-                                    ${campo("Ciudad", formularioSiniestro.aseguradoCiudad || formularioSiniestro.ciudadOcurrencia)}
-                                    ${campo("Denunciante", formularioSiniestro.denunciante || datosClienteFormulario.nombre)}
+                                    ${campo("Dirección", formularioPDF.aseguradoDireccion || datosClientePDF.direccion)}
+                                    ${campo("Ciudad", formularioPDF.aseguradoCiudad || formularioPDF.ciudadOcurrencia)}
+                                    ${campo("Denunciante", formularioPDF.denunciante || datosClientePDF.nombre)}
                                   </div>
                                   <div class="grid-3">
-                                    ${campo("R.U.T denunciante", formularioSiniestro.denuncianteRut || datosClienteFormulario.rut)}
-                                    ${campo("Teléfono", datosClienteFormulario.telefono)}
-                                    ${campo("E-mail", datosClienteFormulario.correo)}
+                                    ${campo("R.U.T denunciante", formularioPDF.denuncianteRut || datosClientePDF.rut)}
+                                    ${campo("Teléfono", datosClientePDF.telefono)}
+                                    ${campo("E-mail", datosClientePDF.correo)}
                                   </div>
                                 </div>
                               </section>
@@ -4613,20 +4612,20 @@ Estado: ${documento.estado}`);
                                 <div class="section-title"><h2>Antecedentes del conductor</h2><span>Información declarada</span></div>
                                 <div class="section-body">
                                   <div class="grid-3">
-                                    ${campo("Nombre", formularioSiniestro.conductorNombre)}
-                                    ${campo("R.U.T", formularioSiniestro.conductorRut)}
-                                    ${campo("Teléfono", formularioSiniestro.conductorTelefono)}
+                                    ${campo("Nombre", formularioPDF.conductorNombre)}
+                                    ${campo("R.U.T", formularioPDF.conductorRut)}
+                                    ${campo("Teléfono", formularioPDF.conductorTelefono)}
                                   </div>
                                   <div class="grid-3">
-                                    ${campo("Dirección", formularioSiniestro.conductorDireccion)}
-                                    ${campo("Ciudad", formularioSiniestro.conductorCiudad)}
-                                    ${campo("Región", formularioSiniestro.conductorRegion)}
+                                    ${campo("Dirección", formularioPDF.conductorDireccion)}
+                                    ${campo("Ciudad", formularioPDF.conductorCiudad)}
+                                    ${campo("Región", formularioPDF.conductorRegion)}
                                   </div>
                                   <div class="grid-4">
-                                    ${campo("Comuna", formularioSiniestro.conductorComuna)}
-                                    ${campo("N° licencia", formularioSiniestro.licenciaNumero)}
-                                    ${campo("Vigencia licencia", formularioSiniestro.licenciaVigencia)}
-                                    ${campo("Clase / Edad", `${formularioSiniestro.licenciaClase || ""} ${formularioSiniestro.conductorEdad ? "/ " + formularioSiniestro.conductorEdad : ""}`)}
+                                    ${campo("Comuna", formularioPDF.conductorComuna)}
+                                    ${campo("N° licencia", formularioPDF.licenciaNumero)}
+                                    ${campo("Vigencia licencia", formularioPDF.licenciaVigencia)}
+                                    ${campo("Clase / Edad", `${formularioPDF.licenciaClase || ""} ${formularioPDF.conductorEdad ? "/ " + formularioPDF.conductorEdad : ""}`)}
                                   </div>
                                 </div>
                               </section>
@@ -4634,11 +4633,11 @@ Estado: ${documento.estado}`);
                               <section class="section">
                                 <div class="section-title"><h2>Antecedentes del vehículo</h2><span>Vehículo asociado al siniestro</span></div>
                                 <div class="section-body grid-4">
-                                  ${campo("Marca", formularioSiniestro.vehiculoMarca)}
-                                  ${campo("Modelo", formularioSiniestro.vehiculoModelo)}
-                                  ${campo("Año", formularioSiniestro.vehiculoAnio)}
-                                  ${campo("Patente", formularioSiniestro.vehiculoPatente)}
-                                  ${campo("N° de motor", formularioSiniestro.vehiculoMotor)}
+                                  ${campo("Marca", formularioPDF.vehiculoMarca)}
+                                  ${campo("Modelo", formularioPDF.vehiculoModelo)}
+                                  ${campo("Año", formularioPDF.vehiculoAnio)}
+                                  ${campo("Patente", formularioPDF.vehiculoPatente)}
+                                  ${campo("N° de motor", formularioPDF.vehiculoMotor)}
                                 </div>
                               </section>
 
@@ -4646,16 +4645,16 @@ Estado: ${documento.estado}`);
                                 <div class="section-title"><h2>Antecedentes del siniestro</h2><span>Ocurrencia y relato</span></div>
                                 <div class="section-body">
                                   <div class="grid-4">
-                                    ${campo("Dirección de ocurrencia", formularioSiniestro.direccionOcurrencia)}
-                                    ${campo("Ciudad", formularioSiniestro.ciudadOcurrencia)}
-                                    ${campo("Región", formularioSiniestro.regionOcurrencia)}
-                                    ${campo("Hora ocurrencia", formularioSiniestro.horaSiniestro)}
+                                    ${campo("Dirección de ocurrencia", formularioPDF.direccionOcurrencia)}
+                                    ${campo("Ciudad", formularioPDF.ciudadOcurrencia)}
+                                    ${campo("Región", formularioPDF.regionOcurrencia)}
+                                    ${campo("Hora ocurrencia", formularioPDF.horaSiniestro)}
                                   </div>
                                   <div>
                                     <div class="mini-field"><span>Relato de los hechos</span></div>
-                                    <div class="relato-box">${v(formularioSiniestro.relatoHechos) || "—"}</div>
+                                    <div class="relato-box">${v(formularioPDF.relatoHechos) || "—"}</div>
                                   </div>
-                                  ${fila("Lugar de inspección: dónde se encuentra el vehículo", formularioSiniestro.lugarInspeccion)}
+                                  ${fila("Lugar de inspección: dónde se encuentra el vehículo", formularioPDF.lugarInspeccion)}
                                 </div>
                               </section>
 
@@ -4663,15 +4662,14 @@ Estado: ${documento.estado}`);
                                 <div class="section-title"><h2>Daños al vehículo</h2><span>Selección declarada por el asegurado</span></div>
                                 <div class="section-body">
                                   <div class="option-grid">
-                                    <div class="option ${formularioSiniestro.tipoDano === "Daños materiales" ? "active" : ""}">1. Daños materiales</div>
-                                    <div class="option ${formularioSiniestro.tipoDano === "Robo del vehículo" ? "active" : ""}">2. Robo del vehículo</div>
-                                    <div class="option ${formularioSiniestro.tipoDano === "Robo de accesorios" ? "active" : ""}">3. Robo de accesorios</div>
-                                    <div class="option ${formularioSiniestro.tipoDano === "Robo de partes o piezas" ? "active" : ""}">4. Robo de partes o piezas</div>
+                                    <div class="option ${formularioPDF.tipoDano === "Daños materiales" ? "active" : ""}">1. Daños materiales</div>
+                                    <div class="option ${formularioPDF.tipoDano === "Robo del vehículo" ? "active" : ""}">2. Robo del vehículo</div>
+                                    <div class="option ${formularioPDF.tipoDano === "Robo de accesorios" ? "active" : ""}">3. Robo de accesorios</div>
+                                    <div class="option ${formularioPDF.tipoDano === "Robo de partes o piezas" ? "active" : ""}">4. Robo de partes o piezas</div>
                                   </div>
                                   <div class="grid-3">
-                                    ${campo("Partes afectadas", formularioSiniestro.partesAfectadas)}
-                                    ${campo("Magnitud de daños", formularioSiniestro.magnitudDanos)}
-                                    ${campo("Estimación $", formularioSiniestro.estimacion)}
+                                    ${campo("Partes afectadas", formularioPDF.partesAfectadas)}
+                                    ${campo("Magnitud de daños", formularioPDF.magnitudDanos)}
                                   </div>
                                 </div>
                               </section>
@@ -4680,30 +4678,29 @@ Estado: ${documento.estado}`);
                                 <div class="section-title"><h2>Antecedentes del tercero</h2><span>En caso de existir</span></div>
                                 <div class="section-body">
                                   <div class="grid-4">
-                                    ${campo("Existe tercero", formularioSiniestro.existeTercero)}
-                                    ${campo("Reclama", formularioSiniestro.terceroReclama)}
-                                    ${campo("Con seguro de daños", formularioSiniestro.terceroSeguro)}
-                                    ${campo("Compañía", formularioSiniestro.terceroCompania)}
+                                    ${campo("Existe tercero", formularioPDF.existeTercero)}
+                                    ${campo("Reclama", formularioPDF.terceroReclama)}
+                                    ${campo("Con seguro de daños", formularioPDF.terceroSeguro)}
+                                    ${campo("Compañía", formularioPDF.terceroCompania)}
                                   </div>
                                   <div class="grid-3">
-                                    ${campo("3° culpable", formularioSiniestro.terceroCulpable)}
-                                    ${campo("Daño del 3°", formularioSiniestro.terceroDano)}
-                                    ${campo("Nombre tercero", formularioSiniestro.terceroNombre)}
+                                    ${campo("3° culpable", formularioPDF.terceroCulpable)}
+                                    ${campo("Daño del 3°", formularioPDF.terceroDano)}
+                                    ${campo("Nombre tercero", formularioPDF.terceroNombre)}
                                   </div>
                                   <div class="grid-3">
-                                    ${campo("R.U.T tercero", formularioSiniestro.terceroRut)}
-                                    ${campo("Dirección", formularioSiniestro.terceroDireccion)}
-                                    ${campo("Ciudad", formularioSiniestro.terceroCiudad)}
+                                    ${campo("R.U.T tercero", formularioPDF.terceroRut)}
+                                    ${campo("Dirección", formularioPDF.terceroDireccion)}
+                                    ${campo("Ciudad", formularioPDF.terceroCiudad)}
                                   </div>
                                   <div class="grid-4">
-                                    ${campo("Teléfono", formularioSiniestro.terceroTelefono)}
-                                    ${campo("Fax", formularioSiniestro.terceroFax)}
-                                    ${campo("E-mail", formularioSiniestro.terceroEmail)}
-                                    ${campo("Patente", formularioSiniestro.terceroPatente)}
+                                    ${campo("Teléfono", formularioPDF.terceroTelefono)}
+                                    ${campo("E-mail", formularioPDF.terceroEmail)}
+                                    ${campo("Patente", formularioPDF.terceroPatente)}
                                   </div>
                                   <div class="grid-2">
-                                    ${campo("Marca vehículo tercero", formularioSiniestro.terceroVehiculo)}
-                                    ${campo("Modelo", formularioSiniestro.terceroModelo)}
+                                    ${campo("Marca vehículo tercero", formularioPDF.terceroVehiculo)}
+                                    ${campo("Modelo", formularioPDF.terceroModelo)}
                                   </div>
                                 </div>
                               </section>
@@ -4711,12 +4708,23 @@ Estado: ${documento.estado}`);
                               <section class="section">
                                 <div class="section-title"><h2>Antecedentes legales</h2><span>Constancia o denuncia policial obligatoria</span></div>
                                 <div class="section-body grid-3">
-                                  ${campo("Comisaría", formularioSiniestro.comisaria)}
-                                  ${campo("Folio / Párrafo", formularioSiniestro.folio)}
-                                  ${campo("Fecha", formularioSiniestro.fechaDenuncia)}
-                                  ${campo("Juzgado", formularioSiniestro.juzgado)}
-                                  ${campo("Citación", formularioSiniestro.citacion)}
-                                  ${campo("Alcoholemia", formularioSiniestro.alcoholemia)}
+                                  ${campo("Comisaría", formularioPDF.comisaria)}
+                                  ${campo("N° Parte Policial", formularioPDF.folio)}
+                                  ${campo("Fecha", formularioPDF.fechaDenuncia)}
+                                  ${campo("Juzgado", formularioPDF.juzgado)}
+                                  ${campo("Citación", formularioPDF.citacion)}
+                                  ${campo("Alcoholemia", formularioPDF.alcoholemia)}
+                                </div>
+                              </section>
+
+                              <section class="section">
+                                <div class="section-title"><h2>Anexos</h2><span>Respaldos adjuntados por el cliente</span></div>
+                                <div class="section-body">
+                                  ${
+                                    anexosPDF.length
+                                      ? `<div class="grid-2">${anexosPDF.map((archivo, index) => campo(`Anexo ${index + 1}`, archivo.name || "Archivo adjunto")).join("")}</div>`
+                                      : fila("Archivos adjuntos", "Sin anexos adjuntos")
+                                  }
                                 </div>
                               </section>
 
@@ -4742,41 +4750,680 @@ Estado: ${documento.estado}`);
                     `;
                   };
 
-                  const descargarFormularioCompletado = () => {
-                    const ventana = window.open("", "_blank");
-                    if (!ventana) {
-                      setMensajeFormularioSiniestro("El navegador bloqueó la ventana. Permite ventanas emergentes para descargar el formulario.");
-                      return;
+                  const cargarHtml2PdfSiniestro = () =>
+                    new Promise((resolve, reject) => {
+                      if (window.html2pdf) {
+                        resolve(window.html2pdf);
+                        return;
+                      }
+
+                      const scriptExistente = document.querySelector('script[data-pc-html2pdf="true"]');
+
+                      if (scriptExistente) {
+                        scriptExistente.addEventListener("load", () => resolve(window.html2pdf));
+                        scriptExistente.addEventListener("error", reject);
+                        return;
+                      }
+
+                      const script = document.createElement("script");
+                      script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+                      script.async = true;
+                      script.dataset.pcHtml2pdf = "true";
+                      script.onload = () => resolve(window.html2pdf);
+                      script.onerror = () => reject(new Error("No se pudo cargar el generador PDF visual."));
+                      document.body.appendChild(script);
+                    });
+
+                  const crearPdfVisualFormularioSiniestro = async (opciones = {}) => {
+                    const html2pdf = await cargarHtml2PdfSiniestro();
+                    const iframe = document.createElement("iframe");
+
+                    iframe.style.position = "fixed";
+                    iframe.style.left = "-99999px";
+                    iframe.style.top = "0";
+                    iframe.style.width = "794px";
+                    iframe.style.height = "1123px";
+                    iframe.style.border = "0";
+                    iframe.setAttribute("aria-hidden", "true");
+                    document.body.appendChild(iframe);
+
+                    const html = generarHtmlFormularioSiniestro(opciones);
+                    const documento = iframe.contentDocument || iframe.contentWindow.document;
+                    documento.open();
+                    documento.write(html);
+                    documento.close();
+
+                    await new Promise((resolve) => {
+                      setTimeout(resolve, 450);
+                    });
+
+                    const hoja = documento.querySelector(".sheet") || documento.body;
+                    const opcionesPdf = {
+                      margin: [0, 0, 0, 0],
+                      filename: opciones.nombreArchivo || "Formulario_Siniestro_Prieto_Correa.pdf",
+                      image: { type: "jpeg", quality: 0.98 },
+                      html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: "#ffffff",
+                        scrollX: 0,
+                        scrollY: 0,
+                        windowWidth: 794,
+                      },
+                      jsPDF: {
+                        unit: "mm",
+                        format: "a4",
+                        orientation: "portrait",
+                      },
+                      pagebreak: {
+                        mode: ["css", "legacy"],
+                        avoid: [".section", ".field", ".signature-card"],
+                      },
+                    };
+
+                    try {
+                      return await html2pdf().set(opcionesPdf).from(hoja).outputPdf("blob");
+                    } finally {
+                      iframe.remove();
                     }
-
-                    ventana.document.open();
-                    ventana.document.write(generarHtmlFormularioSiniestro());
-                    ventana.document.close();
-
-                    setTimeout(() => {
-                      ventana.focus();
-                      ventana.print();
-                    }, 350);
-
-                    setMensajeFormularioSiniestro("Formulario generado. Elige “Guardar como PDF” para dejarlo en tu teléfono o computador.");
                   };
 
-                  const enviarFormularioAEjecutivo = () => {
+                  const limpiarTextoPdfSiniestro = (valor) =>
+                    String(valor || "")
+                      .normalize("NFD")
+                      .replace(/[\u0300-\u036f]/g, "")
+                      .replace(/[^\x20-\x7E]/g, "")
+                      .replace(/\s+/g, " ")
+                      .trim();
+
+                  const escaparPdfSiniestro = (texto) =>
+                    limpiarTextoPdfSiniestro(texto)
+                      .replace(/\\/g, "\\\\")
+                      .replace(/\(/g, "\\(")
+                      .replace(/\)/g, "\\)");
+
+                  const dividirLineaPdfSiniestro = (texto, maximo = 42) => {
+                    const palabras = limpiarTextoPdfSiniestro(texto).split(" ").filter(Boolean);
+                    const lineas = [];
+                    let linea = "";
+
+                    palabras.forEach((palabra) => {
+                      const candidata = linea ? `${linea} ${palabra}` : palabra;
+                      if (candidata.length > maximo) {
+                        if (linea) lineas.push(linea);
+                        linea = palabra;
+                      } else {
+                        linea = candidata;
+                      }
+                    });
+
+                    if (linea) lineas.push(linea);
+                    return lineas.length ? lineas : [""];
+                  };
+                  const cargarLogoPdfSiniestro = (url = "/Logo Prieto.png") =>
+                    new Promise((resolve) => {
+                      const imagen = new Image();
+                      imagen.crossOrigin = "anonymous";
+
+                      imagen.onload = () => {
+                        try {
+                          const origen = document.createElement("canvas");
+                          origen.width = imagen.naturalWidth;
+                          origen.height = imagen.naturalHeight;
+
+                          const ctxOrigen = origen.getContext("2d", { willReadFrequently: true });
+                          ctxOrigen.fillStyle = "#ffffff";
+                          ctxOrigen.fillRect(0, 0, origen.width, origen.height);
+                          ctxOrigen.drawImage(imagen, 0, 0);
+
+                          const pixels = ctxOrigen.getImageData(0, 0, origen.width, origen.height).data;
+                          let minX = origen.width;
+                          let minY = origen.height;
+                          let maxX = 0;
+                          let maxY = 0;
+
+                          for (let yPix = 0; yPix < origen.height; yPix += 1) {
+                            for (let xPix = 0; xPix < origen.width; xPix += 1) {
+                              const i = (yPix * origen.width + xPix) * 4;
+                              const r = pixels[i];
+                              const g = pixels[i + 1];
+                              const b = pixels[i + 2];
+                              const a = pixels[i + 3];
+
+                              const esBlanco = r > 245 && g > 245 && b > 245;
+                              const esTransparente = a < 20;
+
+                              if (!esBlanco && !esTransparente) {
+                                minX = Math.min(minX, xPix);
+                                minY = Math.min(minY, yPix);
+                                maxX = Math.max(maxX, xPix);
+                                maxY = Math.max(maxY, yPix);
+                              }
+                            }
+                          }
+
+                          if (minX > maxX || minY > maxY) {
+                            resolve(null);
+                            return;
+                          }
+
+                          const padding = 8;
+                          minX = Math.max(0, minX - padding);
+                          minY = Math.max(0, minY - padding);
+                          maxX = Math.min(origen.width - 1, maxX + padding);
+                          maxY = Math.min(origen.height - 1, maxY + padding);
+
+                          const cropW = maxX - minX + 1;
+                          const cropH = maxY - minY + 1;
+                          const maxAncho = 86;
+                          const maxAlto = 38;
+                          const proporcion = Math.min(maxAncho / cropW, maxAlto / cropH);
+                          const ancho = Math.max(1, Math.round(cropW * proporcion));
+                          const alto = Math.max(1, Math.round(cropH * proporcion));
+
+                          const canvas = document.createElement("canvas");
+                          canvas.width = ancho * 3;
+                          canvas.height = alto * 3;
+
+                          const ctx = canvas.getContext("2d");
+                          ctx.fillStyle = "#ffffff";
+                          ctx.fillRect(0, 0, canvas.width, canvas.height);
+                          ctx.drawImage(origen, minX, minY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+
+                          const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+                          const base64 = dataUrl.split(",")[1];
+                          resolve({
+                            ancho,
+                            alto,
+                            canvasAncho: canvas.width,
+                            canvasAlto: canvas.height,
+                            binario: atob(base64),
+                          });
+                        } catch {
+                          resolve(null);
+                        }
+                      };
+
+                      imagen.onerror = () => resolve(null);
+                      imagen.src = url;
+                    });
+
+                  const crearPdfSiniestro = async (opciones = {}) => {
+                    const formularioPDF = opciones.enBlanco ? {} : formularioSiniestro;
+                    const datosClientePDF = opciones.enBlanco ? {} : datosClienteFormulario;
+                    const anexosPDF = opciones.enBlanco
+                      ? []
+                      : Array.isArray(archivoRespaldoSiniestro)
+                        ? archivoRespaldoSiniestro
+                        : archivoRespaldoSiniestro
+                          ? [archivoRespaldoSiniestro]
+                          : [];
+
+                    const polizaActual = opciones.enBlanco ? "" : (polizaSeleccionada?.poliza || "");
+                    const seguroActual = opciones.enBlanco ? "" : (polizaSeleccionada?.nombre || "");
+                    const companiaActual = opciones.enBlanco ? "" : (polizaSeleccionada?.compania || "");
+                    const fechaEmision = new Date().toLocaleDateString("es-CL");
+                    const horaEmision = new Date().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+                    const valor = (dato) => limpiarTextoPdfSiniestro(dato || "Pendiente");
+                    const logoPdf = await cargarLogoPdfSiniestro("/Logo Prieto.png");
+
+                    const anchoPagina = 595;
+                    const altoPagina = 842;
+                    const margen = 34;
+                    const anchoContenido = anchoPagina - margen * 2;
+                    const margenInferior = 44;
+                    const azul = [7, 25, 90];
+                    const azulOscuro = [3, 19, 68];
+                    const naranjo = [244, 124, 32];
+                    const grisFondo = [248, 250, 255];
+                    const grisBorde = [218, 226, 241];
+                    const textoGris = [88, 101, 127];
+
+                    let paginas = [];
+                    let comandos = [];
+                    let y = 0;
+
+                    const color = (rgb) => rgb.map((n) => (n / 255).toFixed(3)).join(" ");
+
+                    const rect = (x, yBottom, w, h, fill, stroke = null) => {
+                      if (fill) comandos.push(`${color(fill)} rg ${x} ${yBottom} ${w} ${h} re f`);
+                      if (stroke) comandos.push(`${color(stroke)} RG 0.8 w ${x} ${yBottom} ${w} ${h} re S`);
+                    };
+
+                    const rectRedondeado = (x, yBottom, w, h, r, fill, stroke = null) => {
+                      const c = 0.5522847498;
+                      const k = r * c;
+                      const x2 = x + w;
+                      const y2 = yBottom + h;
+                      const path = [
+                        `${x + r} ${yBottom} m`,
+                        `${x2 - r} ${yBottom} l`,
+                        `${x2 - r + k} ${yBottom} ${x2} ${yBottom + r - k} ${x2} ${yBottom + r} c`,
+                        `${x2} ${y2 - r} l`,
+                        `${x2} ${y2 - r + k} ${x2 - r + k} ${y2} ${x2 - r} ${y2} c`,
+                        `${x + r} ${y2} l`,
+                        `${x + r - k} ${y2} ${x} ${y2 - r + k} ${x} ${y2 - r} c`,
+                        `${x} ${yBottom + r} l`,
+                        `${x} ${yBottom + r - k} ${x + r - k} ${yBottom} ${x + r} ${yBottom} c`,
+                        "h",
+                      ].join(" ");
+
+                      if (fill && stroke) {
+                        comandos.push(`${color(fill)} rg ${color(stroke)} RG 0.8 w ${path} B`);
+                      } else if (fill) {
+                        comandos.push(`${color(fill)} rg ${path} f`);
+                      } else if (stroke) {
+                        comandos.push(`${color(stroke)} RG 0.8 w ${path} S`);
+                      }
+                    };
+
+                    const imagenPdf = (nombre, x, yBottom, w, h) => {
+                      comandos.push(`q ${w} 0 0 ${h} ${x} ${yBottom} cm /${nombre} Do Q`);
+                    };
+
+                    const texto = (x, yText, contenido, opcionesTexto = {}) => {
+                      const tamano = opcionesTexto.tamano || 9;
+                      const fuente = opcionesTexto.negrita ? "/F2" : "/F1";
+                      const rgb = opcionesTexto.color || azul;
+                      comandos.push(`${color(rgb)} rg BT ${fuente} ${tamano} Tf ${x} ${yText} Td (${escaparPdfSiniestro(contenido)}) Tj ET`);
+                    };
+
+                    const cerrarPagina = () => {
+                      if (comandos.length) paginas.push(comandos.join("\n"));
+                    };
+                    const iniciarPagina = () => {
+                      comandos = [];
+
+                      rect(0, 0, anchoPagina, altoPagina, [255, 255, 255]);
+
+                      // Encabezado corporativo para PDF carta.
+                      // Mantiene el diseño limpio y evita que el título choque con los campos derechos.
+                      rect(margen, altoPagina - 96, anchoContenido, 70, azul);
+
+                      const logoY = altoPagina - 79;
+                      if (logoPdf) {
+                        const logoMaxW = 96;
+                        const logoMaxH = 42;
+                        const escalaLogo = Math.min(logoMaxW / logoPdf.ancho, logoMaxH / logoPdf.alto, 1);
+                        const logoW = logoPdf.ancho * escalaLogo;
+                        const logoH = logoPdf.alto * escalaLogo;
+                        imagenPdf("ImLogo", margen + 16, logoY + (42 - logoH) / 2 - 3, logoW, logoH);
+                      } else {
+                        texto(margen + 18, altoPagina - 56, "PRIETO & CORREA", { tamano: 10, negrita: true, color: [255, 255, 255] });
+                      }
+
+                      const tituloX = margen + 140;
+                      const inputX = margen + anchoContenido - 110;
+                      const camposX = inputX - 60;
+                      const inputW = 92;
+                      const inputH = 16;
+
+                      texto(tituloX, altoPagina - 52, "FORMULARIO DENUNCIO DE SINIESTRO", {
+                        tamano: 10.2,
+                        negrita: true,
+                        color: [255, 255, 255],
+                      });
+
+                      texto(tituloX, altoPagina - 68, "Portal Clientes Prieto & Correa Seguros", {
+                        tamano: 7.2,
+                        color: [255, 255, 255],
+                      });
+
+                      texto(tituloX, altoPagina - 84, `Fecha de emision: ${fechaEmision} ${horaEmision}`, {
+                        tamano: 6.7,
+                        color: [218, 226, 245],
+                      });
+
+                      // Campos manuales para completar después de emitir o imprimir.
+                      texto(camposX, altoPagina - 54, "N° de Siniestro:", {
+                        tamano: 6.7,
+                        negrita: true,
+                        color: [255, 255, 255],
+                      });
+
+                      rect(inputX, altoPagina - 62, inputW, inputH, [255, 255, 255], [220, 226, 238]);
+
+                      texto(camposX, altoPagina - 78, "Estado:", {
+                        tamano: 6.7,
+                        negrita: true,
+                        color: [255, 255, 255],
+                      });
+
+                      rect(inputX, altoPagina - 86, inputW, inputH, [255, 255, 255], [220, 226, 238]);
+
+                      y = altoPagina - 116;
+                    };
+
+                    const nuevaPagina = () => {
+                      cerrarPagina();
+                      iniciarPagina();
+                    };
+
+                    const asegurarEspacio = (altoNecesario) => {
+                      if (y - altoNecesario < margenInferior) nuevaPagina();
+                    };
+
+                    iniciarPagina();
+
+                    const seccion = (titulo) => {
+                      asegurarEspacio(48);
+                      rectRedondeado(margen, y - 26, anchoContenido, 26, 10, [255, 230, 210], null);
+                      texto(margen + 12, y - 17, titulo, { tamano: 10, negrita: true, color: azul });
+                      y -= 38;
+                    };
+
+                    const campoPdf = (x, yTop, w, h, label, value, altoLinea = 10) => {
+                      rectRedondeado(x, yTop - h, w, h, 10, grisFondo, grisBorde);
+                      texto(x + 9, yTop - 13, label, { tamano: 6.5, negrita: true, color: textoGris });
+                      const maximo = Math.max(18, Math.floor(w / 5.2));
+                      const lineas = dividirLineaPdfSiniestro(valor(value), maximo).slice(0, Math.max(1, Math.floor((h - 21) / altoLinea)));
+                      lineas.forEach((linea, index) => {
+                        texto(x + 9, yTop - 28 - (index * altoLinea), linea, { tamano: 8.5, negrita: true, color: azul });
+                      });
+                    };
+
+                    const filaCampos = (campos, columnas = 3, alto = 48) => {
+                      asegurarEspacio(alto + 10);
+                      const gap = 10;
+                      const w = (anchoContenido - gap * (columnas - 1)) / columnas;
+                      campos.forEach((item, index) => {
+                        const x = margen + (w + gap) * index;
+                        campoPdf(x, y, w, alto, item[0], item[1], item[2] || 10);
+                      });
+                      y -= alto + 10;
+                    };
+
+                    const cuadroTexto = (label, value, alto = 76) => {
+                      asegurarEspacio(alto + 10);
+                      campoPdf(margen, y, anchoContenido, alto, label, value, 10);
+                      y -= alto + 10;
+                    };
+
+                    seccion("DATOS GENERALES");
+                    filaCampos([
+                      ["N Siniestro", formularioPDF.numeroSiniestro],
+                      ["Liquidador", formularioPDF.liquidador],
+                      ["Poliza asociada", polizaActual],
+                    ]);
+                    filaCampos([
+                      ["Seguro", seguroActual],
+                      ["Compania", companiaActual],
+                      ["Item", formularioPDF.polizaItem],
+                    ]);
+                    filaCampos([
+                      ["Fecha del siniestro", formularioPDF.fechaSiniestro],
+                      ["Hora ocurrencia", formularioPDF.horaSiniestro],
+                      ["Fecha emision", `${fechaEmision} ${horaEmision}`],
+                    ]);
+
+                    seccion("ANTECEDENTES DEL ASEGURADO");
+                    filaCampos([
+                      ["Nombre", datosClientePDF.nombre],
+                      ["R.U.T", datosClientePDF.rut],
+                      ["Telefono", datosClientePDF.telefono],
+                    ]);
+                    filaCampos([
+                      ["E-mail", datosClientePDF.correo],
+                      ["Direccion", formularioPDF.aseguradoDireccion || datosClientePDF.direccion],
+                      ["Ciudad", formularioPDF.aseguradoCiudad || formularioPDF.ciudadOcurrencia],
+                    ]);
+                    filaCampos([
+                      ["Denunciante", formularioPDF.denunciante || datosClientePDF.nombre],
+                      ["R.U.T denunciante", formularioPDF.denuncianteRut || datosClientePDF.rut],
+                      ["Telefono contacto", datosClientePDF.telefono],
+                    ]);
+
+                    seccion("ANTECEDENTES DEL CONDUCTOR");
+                    filaCampos([
+                      ["Nombre", formularioPDF.conductorNombre],
+                      ["R.U.T", formularioPDF.conductorRut],
+                      ["Telefono", formularioPDF.conductorTelefono],
+                    ]);
+                    filaCampos([
+                      ["Direccion", formularioPDF.conductorDireccion],
+                      ["Ciudad", formularioPDF.conductorCiudad],
+                      ["Region", formularioPDF.conductorRegion],
+                    ]);
+                    filaCampos([
+                      ["Comuna", formularioPDF.conductorComuna],
+                      ["N licencia", formularioPDF.licenciaNumero],
+                      ["Vigencia licencia", formularioPDF.licenciaVigencia],
+                    ]);
+                    filaCampos([
+                      ["Clase licencia", formularioPDF.licenciaClase],
+                      ["Edad", formularioPDF.conductorEdad],
+                      ["Relacion con asegurado", formularioPDF.relacionConductor],
+                    ]);
+
+                    seccion("ANTECEDENTES DEL VEHICULO");
+                    filaCampos([
+                      ["Marca", formularioPDF.vehiculoMarca],
+                      ["Modelo", formularioPDF.vehiculoModelo],
+                      ["Ano", formularioPDF.vehiculoAnio],
+                    ]);
+                    filaCampos([
+                      ["Patente", formularioPDF.vehiculoPatente],
+                      ["N motor", formularioPDF.vehiculoMotor],
+                      ["Color", formularioPDF.vehiculoColor],
+                    ]);
+
+                    seccion("ANTECEDENTES DEL SINIESTRO");
+                    filaCampos([
+                      ["Direccion ocurrencia", formularioPDF.direccionOcurrencia],
+                      ["Ciudad", formularioPDF.ciudadOcurrencia],
+                      ["Region", formularioPDF.regionOcurrencia],
+                    ]);
+                    filaCampos([
+                      ["Hora ocurrencia", formularioPDF.horaSiniestro],
+                      ["Lugar inspeccion", formularioPDF.lugarInspeccion],
+                      ["Siniestro dia", formularioPDF.siniestroDia || fechaFormateada(formularioPDF.fechaSiniestro)],
+                    ]);
+                    cuadroTexto("Relato de los hechos", formularioPDF.relatoHechos, 86);
+
+                    seccion("DANOS AL VEHICULO");
+                    filaCampos([
+                      ["Tipo de danos", formularioPDF.tipoDano],
+                      ["Partes afectadas", formularioPDF.partesAfectadas],
+                      ["Magnitud de danos", formularioPDF.magnitudDanos],
+                    ]);
+
+                    seccion("IDENTIFICACION DEL TERCERO");
+                    filaCampos([
+                      ["Existe tercero", formularioPDF.existeTercero],
+                      ["Reclama", formularioPDF.terceroReclama],
+                      ["Con seguro de danos", formularioPDF.terceroSeguro],
+                    ]);
+                    filaCampos([
+                      ["Nombre", formularioPDF.terceroNombre],
+                      ["R.U.T", formularioPDF.terceroRut],
+                      ["Telefono", formularioPDF.terceroTelefono],
+                    ]);
+                    filaCampos([
+                      ["E-mail", formularioPDF.terceroEmail],
+                      ["Direccion", formularioPDF.terceroDireccion],
+                      ["Ciudad", formularioPDF.terceroCiudad],
+                    ]);
+                    filaCampos([
+                      ["Marca vehiculo", formularioPDF.terceroVehiculo],
+                      ["Modelo", formularioPDF.terceroModelo],
+                      ["Patente", formularioPDF.terceroPatente],
+                    ]);
+
+                    seccion("ANTECEDENTES LEGALES");
+                    filaCampos([
+                      ["Comisaria", formularioPDF.comisaria],
+                      ["N Parte Policial", formularioPDF.folio],
+                      ["Fecha", formularioPDF.fechaDenuncia],
+                    ]);
+                    filaCampos([
+                      ["Juzgado", formularioPDF.juzgado],
+                      ["Citacion", formularioPDF.citacion],
+                      ["Alcoholemia", formularioPDF.alcoholemia],
+                    ]);
+                    cuadroTexto("Observaciones", formularioPDF.observaciones, 64);
+
+                    seccion("ANEXOS");
+                    if (anexosPDF.length) {
+                      anexosPDF.forEach((archivo, index) => {
+                        filaCampos([[`Anexo ${index + 1}`, archivo.name || "Archivo adjunto"]], 1, 42);
+                      });
+                    } else {
+                      filaCampos([["Archivos adjuntos", "Sin anexos adjuntos"]], 1, 42);
+                    }
+
+                    asegurarEspacio(82);
+                    y -= 8;
+                    const firmaW = (anchoContenido - 22) / 2;
+                    rectRedondeado(margen, y - 54, firmaW, 54, 12, [255, 255, 255], grisBorde);
+                    rectRedondeado(margen + firmaW + 22, y - 54, firmaW, 54, 12, [255, 255, 255], grisBorde);
+                    texto(margen + 20, y - 26, "Firma asegurado", { tamano: 9, negrita: true, color: azul });
+                    texto(margen + firmaW + 42, y - 26, "Recepcion ejecutivo comercial", { tamano: 9, negrita: true, color: azul });
+                    y -= 70;
+
+                    asegurarEspacio(52);
+                    rectRedondeado(margen, y - 42, anchoContenido, 42, 12, [248, 250, 255], grisBorde);
+                    texto(margen + 12, y - 17, "Documento generado digitalmente desde el Portal Clientes de Prieto & Correa Seguros.", { tamano: 8, color: textoGris });
+                    texto(margen + 12, y - 31, "La informacion declarada debe ser respaldada con fotografias, constancias, presupuestos o informes.", { tamano: 8, color: textoGris });
+
+                    cerrarPagina();
+
+                    let objetos = [];
+                    const agregarObjeto = (contenido) => {
+                      objetos.push(contenido);
+                      return objetos.length;
+                    };
+
+                    const catalogoId = agregarObjeto("<< /Type /Catalog /Pages 2 0 R >>");
+                    const pagesPlaceholderId = agregarObjeto("PAGES_PLACEHOLDER");
+                    const fontRegularId = agregarObjeto("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+                    const fontBoldId = agregarObjeto("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
+                    const logoObjetoId = logoPdf
+                      ? agregarObjeto(`<< /Type /XObject /Subtype /Image /Width ${logoPdf.canvasAncho} /Height ${logoPdf.canvasAlto} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${logoPdf.binario.length} >>\nstream\n${logoPdf.binario}\nendstream`)
+                      : null;
+
+                    const pageIds = [];
+                    paginas.forEach((stream) => {
+                      const contenidoId = agregarObjeto(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+                      const recursosImagen = logoObjetoId ? `/XObject << /ImLogo ${logoObjetoId} 0 R >>` : "";
+                      const paginaId = agregarObjeto(`<< /Type /Page /Parent ${pagesPlaceholderId} 0 R /MediaBox [0 0 ${anchoPagina} ${altoPagina}] /Resources << /Font << /F1 ${fontRegularId} 0 R /F2 ${fontBoldId} 0 R >> ${recursosImagen} >> /Contents ${contenidoId} 0 R >>`);
+                      pageIds.push(paginaId);
+                    });
+
+                    objetos[pagesPlaceholderId - 1] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageIds.length} >>`;
+
+                    let pdf = "%PDF-1.4\n";
+                    const offsets = [0];
+                    objetos.forEach((objeto, index) => {
+                      offsets.push(pdf.length);
+                      pdf += `${index + 1} 0 obj\n${objeto}\nendobj\n`;
+                    });
+
+                    const inicioXref = pdf.length;
+                    pdf += `xref\n0 ${objetos.length + 1}\n0000000000 65535 f \n`;
+                    offsets.slice(1).forEach((offset) => {
+                      pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+                    });
+                    pdf += `trailer\n<< /Size ${objetos.length + 1} /Root ${catalogoId} 0 R >>\nstartxref\n${inicioXref}\n%%EOF`;
+
+                    const bytes = new Uint8Array(pdf.length);
+                    for (let i = 0; i < pdf.length; i += 1) {
+                      bytes[i] = pdf.charCodeAt(i) & 0xff;
+                    }
+
+                    return new Blob([bytes], { type: "application/pdf" });
+                  };
+
+                  const construirLineasFormularioSiniestro = (opciones = {}) => opciones;
+
+                  const descargarBlobFormularioSiniestro = (blob, nombreArchivo) => {
+                    const url = URL.createObjectURL(blob);
+                    const enlace = document.createElement("a");
+
+                    enlace.href = url;
+                    enlace.download = nombreArchivo;
+                    document.body.appendChild(enlace);
+                    enlace.click();
+                    enlace.remove();
+
+                    setTimeout(() => URL.revokeObjectURL(url), 1200);
+                  };
+
+                  const descargarPdfFormulario = async (nombreArchivo, opciones = {}) => {
+                    const blobPdf = await crearPdfSiniestro(construirLineasFormularioSiniestro(opciones));
+                    descargarBlobFormularioSiniestro(blobPdf, nombreArchivo);
+                    return blobPdf;
+                  };
+
+                  const descargarFormularioEnBlanco = async () => {
+                    await descargarPdfFormulario(
+                      "Formulario_Siniestro_Blanco_Prieto_Correa.pdf",
+                      { enBlanco: true }
+                    );
+
+                    setMensajeFormularioSiniestro("PDF en blanco descargado correctamente.");
+                  };
+
+                  const descargarFormularioCompletado = async () => {
+                    await descargarPdfFormulario(
+                      "Formulario_Siniestro_Completado_Prieto_Correa.pdf"
+                    );
+
+                    setMensajeFormularioSiniestro("PDF descargado correctamente. El archivo queda listo para enviar o guardar.");
+                  };
+
+                  const enviarFormularioAEjecutivo = async () => {
+                    const pdfBlob = await descargarPdfFormulario(
+                      "Formulario_Siniestro_Completado_Prieto_Correa.pdf"
+                    );
+                    const archivoFormulario = new File(
+                      [pdfBlob],
+                      "Formulario_Siniestro_Completado_Prieto_Correa.pdf",
+                      { type: "application/pdf" }
+                    );
+
+                    const anexos = Array.isArray(archivoRespaldoSiniestro)
+                      ? archivoRespaldoSiniestro
+                      : archivoRespaldoSiniestro
+                        ? [archivoRespaldoSiniestro]
+                        : [];
+
                     const resumen = [
-                      "Hola, necesito enviar un formulario de siniestro.",
-                      `Cliente: ${datosClienteFormulario.nombre}`,
-                      `RUT: ${datosClienteFormulario.rut}`,
-                      `Póliza: ${polizaSeleccionada?.poliza || "Sin póliza seleccionada"}`,
+                      "Hola, envio formulario de denuncio de siniestro.",
+                      `Cliente: ${datosClienteFormulario.nombre || "Pendiente"}`,
+                      `RUT: ${datosClienteFormulario.rut || "Pendiente"}`,
+                      `Poliza: ${polizaSeleccionada?.poliza || "Sin poliza seleccionada"}`,
                       `Seguro: ${polizaSeleccionada?.nombre || "Seguro"}`,
-                      `Compañía: ${polizaSeleccionada?.compania || "Pendiente"}`,
+                      `Compania: ${polizaSeleccionada?.compania || "Pendiente"}`,
                       `Fecha siniestro: ${formularioSiniestro.fechaSiniestro || "Pendiente"}`,
                       `Ciudad: ${formularioSiniestro.ciudadOcurrencia || "Pendiente"}`,
                       `Relato: ${formularioSiniestro.relatoHechos || "Pendiente"}`,
-                      archivoRespaldoSiniestro ? `Archivo seleccionado: ${archivoRespaldoSiniestro.name}` : "Archivo seleccionado: pendiente",
-                    ].join("\\n");
+                      anexos.length
+                        ? `Anexos: ${anexos.map((archivo) => archivo.name).join(", ")}`
+                        : "Anexos: sin archivos adjuntos",
+                    ].join("\n");
 
-                    setMensajeFormularioSiniestro("Se abrirá WhatsApp para enviar el formulario o coordinar el envío con tu ejecutivo.");
-                    abrirWhatsApp(resumen);
+                    try {
+                      if (
+                        navigator.canShare &&
+                        navigator.canShare({ files: [archivoFormulario] }) &&
+                        navigator.share
+                      ) {
+                        await navigator.share({
+                          title: "Formulario de siniestro Prieto & Correa",
+                          text: resumen,
+                          files: [archivoFormulario],
+                        });
+
+                        setMensajeFormularioSiniestro("Formulario PDF compartido con el ejecutivo correctamente.");
+                        return;
+                      }
+                    } catch {
+                      setMensajeFormularioSiniestro("No se pudo compartir directamente. Se descargara el PDF para que lo adjuntes.");
+                    }
+
+                    setMensajeFormularioSiniestro("PDF descargado. Se abrira WhatsApp con el mensaje listo; adjunta el PDF descargado y los respaldos antes de enviarlo.");
+                    abrirWhatsApp(`${resumen}\n\nAdjunto el PDF descargado del formulario y sus respaldos.`);
                   };
 
                   const casosActivos = siniestrosCliente.filter((item) => item.tipoEstado !== "cerrado").length;
@@ -4996,8 +5643,8 @@ Estado: ${documento.estado}`);
                         >
                           <button
                             type="button"
-                            onClick={() => abrirFormularioSiniestro("opciones")}
-                            title="Completar o descargar el formulario de siniestro"
+                            onClick={() => abrirFormularioSiniestro("digital")}
+                            title="Reporta tu siniestro completando el formulario en línea"
                             style={{
                               border: "1px solid #d9e2ef",
                               borderRadius: "15px",
@@ -5015,33 +5662,9 @@ Estado: ${documento.estado}`);
                             }}
                           >
                             <span style={{ fontSize: "17px", lineHeight: 1 }}>▣</span>
-                            <span>Formulario siniestro</span>
+                            <span>Reporta tu siniestro</span>
                           </button>
 
-                          <button
-                            type="button"
-                            onClick={reportarSiniestro}
-                            disabled={!polizaSeleccionada}
-                            title={!polizaSeleccionada ? "Selecciona una póliza para reportar" : "Iniciar reporte para la póliza seleccionada"}
-                            style={{
-                              border: "none",
-                              borderRadius: "15px",
-                              background: polizaSeleccionada ? "#f47c20" : "#cbd5e1",
-                              color: "#ffffff",
-                              padding: "11px 18px",
-                              fontWeight: 950,
-                              cursor: polizaSeleccionada ? "pointer" : "not-allowed",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: "9px",
-                              boxShadow: polizaSeleccionada ? "0 12px 30px rgba(244, 124, 32, 0.25)" : "none",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            <span style={{ fontSize: "17px", lineHeight: 1 }}>+</span>
-                            <span>Reportar siniestro</span>
-                          </button>
                         </div>
                       </div>
 
@@ -5357,7 +5980,7 @@ Estado: ${documento.estado}`);
                                         >
                                           No tienes siniestros registrados.
                                         </strong>
-                                        Selecciona una póliza vigente y presiona “Reportar siniestro” para iniciar un caso.
+                                        Selecciona una póliza vigente y presiona “Reporta tu siniestro” para iniciar un caso.
                                       </td>
                                     </tr>
                                   ) : (
@@ -5603,95 +6226,6 @@ Estado: ${documento.estado}`);
                           >
                             <h3
                               style={{
-                                margin: "0 0 8px",
-                                color: uploadRequerido ? "#c2410c" : "#07195a",
-                                fontSize: "16px",
-                                fontWeight: 950,
-                              }}
-                            >
-                              {uploadRequerido ? "Adjuntar respaldo requerido" : "Adjuntar respaldo"}
-                            </h3>
-
-                            <div
-                              style={{
-                                border: uploadRequerido ? "1px dashed rgba(244, 124, 32, 0.34)" : "1px dashed rgba(7, 25, 90, 0.22)",
-                                borderRadius: "16px",
-                                background: uploadRequerido ? "#fffaf5" : "#f8fafc",
-                                padding: "18px 14px",
-                                textAlign: "center",
-                                minHeight: "142px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                            >
-                              <div style={{ width: "100%" }}>
-                                <img
-                                  src={ICONOS.upload}
-                                  alt=""
-                                  style={{
-                                    width: "39px",
-                                    height: "39px",
-                                    objectFit: "contain",
-                                    display: "block",
-                                    margin: "0 auto 10px",
-                                  }}
-                                />
-
-                                <strong
-                                  style={{
-                                    display: "block",
-                                    color: "#07195a",
-                                    fontSize: "14px",
-                                    fontWeight: 950,
-                                  }}
-                                >
-                                  Fotos y documentos
-                                </strong>
-
-                                <p
-                                  style={{
-                                    margin: "5px auto 10px",
-                                    color: "#667085",
-                                    fontSize: "12px",
-                                    lineHeight: 1.35,
-                                    maxWidth: "285px",
-                                  }}
-                                >
-                                  Aquí se podrá subir PDF, fotos, constancias, presupuestos e informes.
-                                </p>
-
-                                <button
-                                  type="button"
-                                  onClick={() => alert("Carga simulada. Esta función se conectará al backend más adelante.")}
-                                  style={{
-                                    minHeight: "32px",
-                                    borderRadius: "11px",
-                                    border: "1px solid #07195a",
-                                    background: "#ffffff",
-                                    color: "#07195a",
-                                    fontWeight: 950,
-                                    cursor: "pointer",
-                                    padding: "6px 14px",
-                                  }}
-                                >
-                                  Adjuntar archivo
-                                </button>
-                              </div>
-                            </div>
-                          </section>
-
-                          <section
-                            style={{
-                              border: "1px solid #e6ebf2",
-                              borderRadius: "18px",
-                              background: "#ffffff",
-                              padding: "13px 14px",
-                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.04)",
-                            }}
-                          >
-                            <h3
-                              style={{
                                 margin: "0 0 5px",
                                 color: "#07195a",
                                 fontSize: "16px",
@@ -5709,7 +6243,7 @@ Estado: ${documento.estado}`);
                                 lineHeight: 1.35,
                               }}
                             >
-                              Selecciona tu póliza vigente y luego presiona “Reportar siniestro”.
+                              Selecciona tu póliza vigente y luego presiona “Reporta tu siniestro”.
                             </p>
 
                             <select
@@ -6083,7 +6617,7 @@ Estado: ${documento.estado}`);
                             </div>
 
                             <div style={{ padding: "26px 28px 30px" }}>
-                              {modoFormularioSiniestro === "opciones" ? (
+                              {false ? (
                                 <>
                                   <div
                                     style={{
@@ -6244,57 +6778,6 @@ Estado: ${documento.estado}`);
                                 </>
                               ) : (
                                 <>
-                                  <div
-                                    style={{
-                                      display: "grid",
-                                      gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                                      gap: "12px",
-                                      marginBottom: "18px",
-                                    }}
-                                  >
-                                    {[
-                                      ["Cliente", datosClienteFormulario.nombre],
-                                      ["RUT", datosClienteFormulario.rut],
-                                      ["Teléfono", datosClienteFormulario.telefono || "Pendiente"],
-                                      ["Correo", datosClienteFormulario.correo || "Pendiente"],
-                                    ].map(([titulo, valor]) => (
-                                      <article
-                                        key={titulo}
-                                        style={{
-                                          padding: "14px",
-                                          border: "1px solid #e6ebf2",
-                                          borderRadius: "16px",
-                                          background: "#f8faff",
-                                        }}
-                                      >
-                                        <small
-                                          style={{
-                                            display: "block",
-                                            color: "#667085",
-                                            fontSize: "10px",
-                                            fontWeight: 950,
-                                            textTransform: "uppercase",
-                                            marginBottom: "6px",
-                                          }}
-                                        >
-                                          {titulo}
-                                        </small>
-
-                                        <strong
-                                          style={{
-                                            display: "block",
-                                            color: "#07195a",
-                                            fontSize: "13px",
-                                            fontWeight: 950,
-                                            lineHeight: 1.35,
-                                          }}
-                                        >
-                                          {valor}
-                                        </strong>
-                                      </article>
-                                    ))}
-                                  </div>
-
                                   <form
                                     onSubmit={(event) => {
                                       event.preventDefault();
@@ -6391,7 +6874,6 @@ Estado: ${documento.estado}`);
                                         {campoSiniestro("tipoDano", "Tipo de daños", { tipo: "select", items: ["Seleccionar", "Daños materiales", "Robo del vehículo", "Robo de accesorios", "Robo de partes o piezas", "Otro"] })}
                                         {campoSiniestro("partesAfectadas", "Partes afectadas", { tipo: "select", items: ["Seleccionar", "Delantera", "Trasera", "Costado izquierdo", "Costado derecho", "Más de una parte"] })}
                                         {campoSiniestro("magnitudDanos", "Magnitud de daños", { tipo: "select", items: ["Seleccionar", "Leves", "Medianos", "Graves"] })}
-                                        {campoSiniestro("estimacion", "Estimación $")}
                                       </div>
                                     </section>
 
@@ -6413,7 +6895,6 @@ Estado: ${documento.estado}`);
                                         {campoSiniestro("terceroNombre", "Nombre")}
                                         {campoSiniestro("terceroRut", "R.U.T")}
                                         {campoSiniestro("terceroTelefono", "Teléfono")}
-                                        {campoSiniestro("terceroFax", "Fax")}
                                         {campoSiniestro("terceroEmail", "E-mail")}
                                         {campoSiniestro("terceroDireccion", "Dirección")}
                                         {campoSiniestro("terceroCiudad", "Ciudad")}
@@ -6427,26 +6908,13 @@ Estado: ${documento.estado}`);
                                       <div style={estiloTituloSeccionFormulario}>Antecedentes legales</div>
                                       <div style={estiloGridFormulario}>
                                         {campoSiniestro("comisaria", "Comisaría")}
-                                        {campoSiniestro("folio", "Folio / párrafo")}
+                                        {campoSiniestro("folio", "N° Parte Policial")}
                                         {campoSiniestro("fechaDenuncia", "Fecha", { tipo: "date" })}
                                         {campoSiniestro("juzgado", "Juzgado")}
                                         {campoSiniestro("citacion", "Citación")}
                                         {campoSiniestro("alcoholemia", "Alcoholemia", { tipo: "select", items: ["Seleccionar", "Sí", "No", "No aplica", "Pendiente"] })}
                                       </div>
                                     </section>
-
-                                    <label style={{ display: "grid", gap: "7px", color: "#07195a", fontSize: "12px", fontWeight: 950 }}>
-                                      Adjuntar respaldo
-                                      <input
-                                        type="file"
-                                        accept=".pdf,.jpg,.jpeg,.png,.heic"
-                                        onChange={(event) => setArchivoRespaldoSiniestro(event.target.files?.[0] || null)}
-                                        style={{ minHeight: "46px", border: "1px dashed #cbd5e1", borderRadius: "13px", padding: "12px", color: "#07195a", fontWeight: 850, background: "#f8faff" }}
-                                      />
-                                      <small style={{ color: "#667085", fontWeight: 800 }}>
-                                        {archivoRespaldoSiniestro ? `Archivo seleccionado: ${archivoRespaldoSiniestro.name}` : "Puedes adjuntar fotos, constancias, presupuestos o informes."}
-                                      </small>
-                                    </label>
 
                                     {mensajeFormularioSiniestro && (
                                       <div style={{ padding: "13px 15px", borderRadius: "14px", background: "#f8faff", border: "1px solid #d9e2ef", color: "#07195a", fontSize: "12px", fontWeight: 850, lineHeight: 1.55 }}>
@@ -6455,17 +6923,17 @@ Estado: ${documento.estado}`);
                                     )}
 
                                     <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-                                      <button type="button" onClick={() => setModoFormularioSiniestro("opciones")} style={{ minHeight: "46px", border: "1px solid #d9e2ef", borderRadius: "14px", background: "#ffffff", color: "#07195a", padding: "0 18px", fontWeight: 950, cursor: "pointer" }}>
-                                        Volver
+                                      <button type="button" onClick={cerrarFormularioSiniestro} style={{ minHeight: "46px", border: "1px solid #d9e2ef", borderRadius: "14px", background: "#ffffff", color: "#07195a", padding: "0 18px", fontWeight: 950, cursor: "pointer" }}>
+                                        Cerrar
                                       </button>
 
                                       <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                                        <a href="/formulario-siniestro.pdf" download="formulario-siniestro-prieto-correa.pdf" style={{ minHeight: "46px", borderRadius: "14px", background: "#eef4ff", color: "#07195a", padding: "0 18px", fontWeight: 950, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                                        <button type="button" onClick={descargarFormularioEnBlanco} style={{ minHeight: "46px", border: "none", borderRadius: "14px", background: "#eef4ff", color: "#07195a", padding: "0 18px", fontWeight: 950, cursor: "pointer" }}>
                                           Descargar PDF en blanco
-                                        </a>
+                                        </button>
 
                                         <button type="submit" style={{ minHeight: "46px", border: "none", borderRadius: "14px", background: "#f47c20", color: "#ffffff", padding: "0 18px", fontWeight: 950, cursor: "pointer" }}>
-                                          Descargar completado
+                                          Descargar archivo
                                         </button>
 
                                         <button type="button" onClick={enviarFormularioAEjecutivo} style={{ minHeight: "46px", border: "none", borderRadius: "14px", background: "#07195a", color: "#ffffff", padding: "0 18px", fontWeight: 950, cursor: "pointer" }}>
