@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header";
+import "../styles/pages/Cotizador.css";
 import Footer from "../components/Footer";
 import useFetch from "../hooks/useFetch";
 import { obtenerSeguros, enviarCotizacion } from "../services/api";

@@ -1,0 +1,87 @@
+.contacto {
+  min-height: calc(100vh - 150px);
+  padding: 70px 8%;
+  background: #f6f7fb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.contacto-box {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 30px;
+  padding: 48px;
+  box-shadow: 0 18px 55px rgba(7, 25, 90, 0.08);
+}
+
+.contacto-box h1 {
+  color: var(--pc-blue);
+  font-size: 44px;
+  margin-bottom: 10px;
+}
+
+.contacto-box > p {
+  color: #667085;
+  margin-bottom: 32px;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.contacto-box form {
+  display: grid;
+  gap: 18px;
+}
+
+.contacto-box label {
+  color: var(--pc-blue);
+  font-weight: 900;
+  display: grid;
+  gap: 8px;
+}
+
+.contacto-box input,
+.contacto-box textarea {
+  width: 100%;
+  border: 1px solid #dfe4ef;
+  border-radius: 14px;
+  padding: 16px 18px;
+  font-size: 15px;
+  outline: none;
+}
+
+.contacto-box textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+.contacto-box button {
+  height: 56px;
+  border: none;
+  border-radius: 999px;
+  background: var(--pc-blue);
+  color: white;
+  font-weight: 900;
+}
+
+.contacto-box button:hover {
+  background: var(--pc-orange);
+}
+
+@media (max-width: 1000px) {
+  .contacto-box h1 {
+    font-size: 42px;
+  }
+}
+
+@media (max-width: 800px) {
+  .contacto {
+    padding: 40px 20px;
+  }
+
+  .contacto-box {
+    padding: 30px;
+  }
+}

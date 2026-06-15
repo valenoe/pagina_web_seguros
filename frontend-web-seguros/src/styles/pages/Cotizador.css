@@ -1,0 +1,272 @@
+.cotizador {
+  min-height: calc(100vh - 150px);
+  padding: 70px 8%;
+  background: #f6f7fb;
+}
+
+.cotizador-box,
+.cotizador-info {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 30px;
+  padding: 48px;
+  box-shadow: 0 18px 55px rgba(7, 25, 90, 0.08);
+}
+
+.cotizador-header h1 {
+  color: var(--pc-blue);
+  font-size: 44px;
+  margin-bottom: 10px;
+}
+
+.cotizador-header p,
+.cotizador-info p {
+  color: #667085;
+  margin-bottom: 32px;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.cotizador-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+/* El .search-field del header (App.css) estilab un input; aquí es un wrapper */
+.cotizador-form .search-field {
+  height: auto;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  position: relative;
+}
+
+.cotizador-form .suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: white;
+  border: 1px solid #dfe4ef;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(7, 25, 90, 0.1);
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+}
+
+.cotizador-form .suggestions button {
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--pc-blue);
+  text-align: left;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.cotizador-form .suggestions button:hover {
+  background: #f5f6fa;
+}
+
+.cotizador-form label {
+  color: var(--pc-blue);
+  font-weight: 900;
+  display: grid;
+  gap: 8px;
+}
+
+.cotizador-form input,
+.cotizador-form select,
+.cotizador-form textarea {
+  width: 100%;
+  border: 1px solid #dfe4ef;
+  border-radius: 14px;
+  padding: 16px 18px;
+  font-size: 15px;
+  outline: none;
+}
+
+.cotizador-form input,
+.cotizador-form select {
+  height: 52px;
+  padding: 0 16px;
+}
+
+.cotizador-form textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+.cotizador-full {
+  grid-column: 1 / -1;
+}
+
+.cotizador-form button {
+  height: 56px;
+  border: none;
+  border-radius: 999px;
+  background: var(--pc-blue);
+  color: white;
+  font-weight: 900;
+  grid-column: 1 / -1;
+}
+
+.cotizador-form button:hover {
+  background: var(--pc-orange);
+}
+
+.cotizador-header span {
+  color: var(--pc-orange);
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.cotizador-info {
+  margin-top: 28px;
+  border-radius: 24px;
+  padding: 32px;
+}
+
+.cotizador-info h2 {
+  color: var(--pc-blue);
+  margin-bottom: 16px;
+}
+
+.cotizacion-exitosa {
+  height: calc(100vh - 95px);
+  padding: 20px 7%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, var(--pc-blue), var(--pc-text));
+  overflow: hidden;
+}
+
+.cotizacion-card {
+  width: 100%;
+  max-width: 980px;
+  padding: 8px 70px 42px;
+  background: white;
+  border-radius: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
+}
+
+.cotizacion-logo {
+  width: 170px;
+  margin-bottom: 6px;
+}
+
+.success-icon {
+  width: 62px;
+  height: 62px;
+  background: var(--pc-orange);
+  color: white;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.cotizacion-card > span {
+  background: rgba(244, 124, 32, 0.12);
+  color: var(--pc-orange);
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.cotizacion-card h1 {
+  max-width: 760px;
+  color: var(--pc-blue);
+  font-size: 50px;
+  line-height: 1.08;
+  margin-bottom: 26px;
+}
+
+.cotizacion-card p {
+  max-width: 620px;
+  color: #555;
+  font-size: 20px;
+  line-height: 1.65;
+  margin-bottom: 40px;
+}
+
+.cotizacion-buttons {
+  display: flex;
+  gap: 18px;
+}
+
+.cotizacion-buttons a {
+  padding: 18px 34px;
+  border-radius: 999px;
+  color: white;
+  font-size: 17px;
+  font-weight: 900;
+  transition: 0.2s;
+}
+
+.cotizacion-buttons a:first-child {
+  background: var(--pc-blue);
+}
+.cotizacion-buttons a:last-child {
+  background: var(--pc-orange);
+}
+
+@media (max-width: 1000px) {
+  .cotizador-header h1 {
+    font-size: 42px;
+  }
+
+  .cotizador-form {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .cotizador {
+    padding: 40px 20px;
+  }
+
+  .cotizador-box {
+    padding: 30px;
+  }
+}
+
+@media (max-width: 700px) {
+  .cotizador-form {
+    grid-template-columns: 1fr;
+  }
+
+  .cotizacion-buttons {
+    flex-direction: column;
+  }
+
+  .cotizacion-card {
+    padding: 30px;
+  }
+
+  .cotizacion-card h1 {
+    font-size: 34px;
+  }
+}

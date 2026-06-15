@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import "../styles/pages/Contacto.css";
 import Footer from "../components/Footer";
 import { enviarContacto } from "../services/api";
 
