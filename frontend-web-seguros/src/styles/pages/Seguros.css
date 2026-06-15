@@ -1,0 +1,381 @@
+.seguros-page {
+  background: white;
+}
+
+.seguros-hero {
+  height: 420px;
+  padding: 0 130px 0 95px;
+  display: flex;
+  align-items: center;
+  background-image:
+    linear-gradient(90deg, rgba(7, 25, 90, 0.82), rgba(7, 25, 90, 0.52)),
+    url("/banner-seguros.png");
+  background-size: cover;
+  background-position: 60% center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+.seguros-hero-overlay {
+  max-width: 760px;
+}
+
+.seguros-badge {
+  display: inline-flex;
+  padding: 12px 24px;
+  margin-bottom: 18px;
+  background: var(--pc-orange);
+  color: white;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.seguros-hero h1 {
+  max-width: 620px;
+  margin-bottom: 24px;
+  color: white;
+  font-size: 50px;
+  font-weight: 900;
+  line-height: 1.08;
+}
+
+.seguros-hero p {
+  max-width: 760px;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.seguros-categorias {
+  padding: 34px 0 26px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.seguros-categorias button {
+  height: 42px;
+  padding: 0 22px;
+  border: 1px solid #dfe4ef;
+  border-radius: 999px;
+  background: white;
+  color: var(--pc-blue);
+  font-size: 13px;
+  font-weight: 900;
+  transition: 0.25s;
+}
+
+.seguros-categorias button:hover,
+.seguros-categorias button.activo {
+  background: var(--pc-blue);
+  color: white;
+}
+
+.seguros-bloques {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 12px 22px 80px;
+  display: grid;
+  gap: 20px;
+}
+
+.seguro-bloque {
+  min-height: 360px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  background: white;
+  border: 1px solid #e8ebf5;
+  border-radius: 24px;
+  box-shadow: 0 10px 32px rgba(7, 25, 90, 0.045);
+}
+
+.seguro-bloque.reverse {
+  grid-template-columns: 54% 46%;
+}
+
+.seguro-bloque.reverse .seguro-bloque-imagen {
+  order: 2;
+}
+.seguro-bloque.reverse .seguro-bloque-info {
+  order: 1;
+}
+
+.seguro-bloque-imagen {
+  min-height: 360px;
+  overflow: hidden;
+}
+
+.seguro-bloque-imagen > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.84);
+}
+
+.seguro-bloque-info {
+  min-height: 360px;
+  padding: 30px 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.seguro-bloque-info > span {
+  width: fit-content;
+  padding: 6px 12px;
+  margin-bottom: 12px;
+  background: rgba(244, 124, 32, 0.12);
+  color: var(--pc-orange);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.seguro-bloque-info h2 {
+  margin-bottom: 10px;
+  color: var(--pc-blue);
+  font-size: 22px;
+}
+
+.seguro-bloque-info > p {
+  margin-bottom: 14px;
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.seguro-precios {
+  margin-bottom: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.seguro-precios div {
+  flex: 1;
+  padding: 10px;
+  background: #f8f9fc;
+  border-radius: 12px;
+}
+
+.seguro-precios small {
+  display: block;
+  margin-bottom: 4px;
+  color: #98a2b3;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.seguro-precios strong {
+  color: var(--pc-blue);
+  font-size: 13px;
+}
+
+.seguro-mini-coberturas {
+  margin-bottom: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.seguro-mini-coberturas span {
+  padding: 5px 10px;
+  border: 1px solid #e5e7ef;
+  border-radius: 999px;
+  color: var(--pc-blue);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.seguro-bloque-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.seguro-bloque-actions button,
+.seguro-online-link {
+  height: 38px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.seguro-bloque-actions button:first-child {
+  background: var(--pc-blue);
+  color: white;
+}
+
+.seguro-online-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pc-orange);
+  color: white;
+}
+
+.seguro-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  padding: 30px;
+  display: grid;
+  place-items: center;
+}
+
+.seguro-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 12, 35, 0.62);
+  backdrop-filter: blur(5px);
+}
+
+.seguro-modal-card {
+  position: relative;
+  z-index: 2;
+  width: min(900px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 38px;
+  background: white;
+  border-radius: 30px;
+  box-shadow: 0 35px 90px rgba(0, 0, 0, 0.28);
+}
+
+.seguro-modal-close {
+  position: absolute;
+  top: 20px;
+  right: 22px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 999px;
+  background: #f5f7fb;
+  color: var(--pc-blue);
+  font-size: 28px;
+}
+
+.seguro-modal-head {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding-right: 45px;
+}
+
+.seguro-modal-head img {
+  width: 74px;
+  height: 74px;
+  object-fit: contain;
+  background: rgba(244, 124, 32, 0.12);
+  padding: 14px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.seguro-modal-head span,
+.seguro-modal-grid h3 {
+  color: var(--pc-orange);
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.seguro-modal-head h2 {
+  color: var(--pc-blue);
+  font-size: 36px;
+  margin: 8px 0 12px;
+}
+
+.seguro-modal-head p,
+.seguro-modal-grid p {
+  color: var(--pc-muted);
+  line-height: 1.7;
+}
+
+.seguro-modal-price,
+.seguro-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 26px 0;
+}
+
+.seguro-modal-price div,
+.seguro-modal-grid div {
+  background: #f6f7fb;
+  padding: 18px;
+  border-radius: 18px;
+}
+
+.seguro-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.seguro-modal-actions button {
+  flex: 1;
+  height: 54px;
+  border: none;
+  border-radius: 999px;
+  color: white;
+  font-weight: 900;
+}
+
+.seguro-modal-actions button:first-child {
+  background: var(--pc-blue);
+}
+.seguro-modal-actions button:last-child {
+  background: var(--pc-orange);
+}
+
+@media (max-width: 700px) {
+  .seguro-bloque-actions,
+  .seguro-modal-actions {
+    flex-direction: column;
+  }
+
+  .seguro-bloque-actions button,
+  .seguro-online-link {
+    width: 100%;
+  }
+}
+
+@media (max-width: 1000px) {
+  .seguros-hero h1 {
+    font-size: 42px;
+  }
+
+  .seguros-hero {
+    padding: 60px 30px;
+  }
+
+  .seguro-bloque,
+  .seguro-bloque.reverse {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: auto;
+  }
+
+  .seguro-bloque.reverse .seguro-bloque-imagen,
+  .seguro-bloque.reverse .seguro-bloque-info {
+    order: unset;
+  }
+
+  .seguro-bloque-imagen {
+    height: 240px;
+  }
+
+  .seguro-bloque-info {
+    height: auto;
+  }
+
+  .seguro-modal-price,
+  .seguro-modal-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,4 +1,5 @@
 import Header from "../components/Header";
+import "../styles/pages/Home.css";
 import PromoCarrusel from "../components/PromoCarrusel";
 import Purpose from "../components/Purpose";
 import WhyChooseUs from "../components/WhyChooseUs";

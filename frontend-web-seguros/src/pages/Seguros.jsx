@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import "../styles/pages/Seguros.css";
 import Footer from "../components/Footer";
 import useFetch from "../hooks/useFetch";
 import { obtenerSeguros } from "../services/api";
