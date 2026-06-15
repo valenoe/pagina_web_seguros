@@ -1,5 +1,6 @@
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import "../styles/pages/Nosotros.css";
 
 function Nosotros() {
   return (
