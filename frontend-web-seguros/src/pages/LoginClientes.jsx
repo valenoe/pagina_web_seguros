@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { login, getMiCuenta } from "../services/api";
-import "../App.css";
+import "../styles/pages/LoginClientes.css";
 
 function formatearRut(valor) {
   const limpio = valor.replace(/[^0-9kK]/g, "").toUpperCase();

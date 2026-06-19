@@ -4,7 +4,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import PhoneInput from "../components/PhoneInput";
 import { registroCliente, verificarRutDisponible } from "../services/api";
-import "../App.css";
+import "../styles/pages/RegistroOnboarding.css";
 
 function validarRut(rut) {
   const limpio = rut.replace(/[^0-9kK]/g, "").toUpperCase();

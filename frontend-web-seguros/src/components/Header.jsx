@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import "../styles/components/Header.css";
 
 import useFetch from "../hooks/useFetch";
 import { obtenerSeguros } from "../services/api";

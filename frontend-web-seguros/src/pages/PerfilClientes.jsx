@@ -1,3 +1,5 @@
+import "../styles/pages/PerfilCliente.css";
+
 function PerfilCliente() {
   const nombreCliente = localStorage.getItem("nombre_cliente") || "Cliente";
 

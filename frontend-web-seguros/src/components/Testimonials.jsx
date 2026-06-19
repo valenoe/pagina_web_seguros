@@ -11,7 +11,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-import "./Testimonials.css";
+import "../styles/components/Testimonials.css";
 
 const testimonios = [
   {

@@ -1,0 +1,482 @@
+/* Spacer invisible que reserva el espacio del header fijo en el flujo del documento */
+.header-spacer {
+  height: 95px;
+  flex-shrink: 0;
+}
+
+/* Altura del header — cámbiala aquí (y en .header-spacer también) */
+.header {
+  width: 100%;
+  height: 95px;
+  padding: 0 7%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  background: var(--pc-white);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.05);
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999;
+}
+
+.header-logo {
+  width: 220px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.header-logo img {
+  width: 150px;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Gap entre links del nav — cámbialo aquí */
+
+.header-nav {
+  display: flex;
+  align-items: flex-end;
+  gap: 52px;
+  margin-left: auto;
+  margin-right: 80px;
+  padding-top: 20px;
+}
+
+.header-nav a {
+  position: relative;
+  padding-bottom: 7px;
+  color: var(--pc-blue);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  transition: 0.25s ease;
+}
+
+.header-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: var(--pc-orange);
+  transition: 0.25s ease;
+}
+
+.header-nav a:hover {
+  color: var(--pc-orange);
+}
+
+.header-nav a:hover::after {
+  width: 100%;
+}
+
+.header-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-top: 0;
+}
+
+.search-button {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  transition: 0.2s ease;
+}
+
+.search-button:hover {
+  background: rgba(7, 25, 90, 0.06);
+}
+
+.search-icon {
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--pc-blue);
+  border-radius: 50%;
+  position: relative;
+  display: block;
+}
+
+.search-icon::after {
+  content: "";
+  width: 10px;
+  height: 3px;
+  background: var(--pc-blue);
+  position: absolute;
+  right: -8px;
+  bottom: -6px;
+  transform: rotate(45deg);
+  border-radius: 10px;
+}
+
+.search-box {
+  position: absolute;
+  top: 60px;
+  right: -80px;
+  width: 320px;
+  padding: 16px;
+  background: var(--pc-white);
+  border-radius: 22px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.12);
+  z-index: 9999;
+}
+
+.search-box input,
+.search-field {
+  width: 100%;
+  height: 52px;
+  border: none;
+  outline: none;
+  border-radius: 14px;
+  background: #f3f4f6;
+  padding: 0 18px;
+  color: var(--pc-blue);
+  font-size: 15px;
+}
+
+.search-results,
+.suggestions {
+  margin-top: 14px;
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.search-results button,
+.suggestions button {
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--pc-blue);
+  text-align: left;
+  font-weight: 800;
+}
+
+.search-results button:hover,
+.suggestions button:hover {
+  background: #f5f6fa;
+}
+
+.header-login {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-top: 0;
+}
+
+.header-button {
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-user {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: -2px;
+  margin-right: 8px;
+}
+
+.header-user-image {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+.header-user span {
+  margin-top: -2px;
+  color: var(--pc-blue);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.header-login-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 290px;
+  margin-top: 8px;
+  padding: 18px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--pc-white);
+  border-radius: 24px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+  z-index: 99999;
+}
+
+@media (hover: hover) {
+  .header-login:hover .header-login-menu {
+    display: flex;
+  }
+}
+
+.header-login-menu.is-open {
+  display: flex;
+}
+
+.header-login::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 18px;
+}
+
+.login-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  color: var(--pc-blue);
+  font-weight: 800;
+  transition: 0.25s ease;
+}
+
+.login-item:hover {
+  background: #f7f8fc;
+  transform: translateX(4px);
+}
+
+.login-icon {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* Hamburger — oculto en desktop */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  padding: 8px;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.hamburger:hover {
+  background: rgba(7, 25, 90, 0.06);
+}
+
+.hamburger span {
+  display: block;
+  width: 24px;
+  height: 2.5px;
+  background: var(--pc-blue);
+  border-radius: 4px;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+  transform-origin: center;
+}
+
+.hamburger.abierto span:nth-child(1) {
+  transform: translateY(7.5px) rotate(45deg);
+}
+
+.hamburger.abierto span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.hamburger.abierto span:nth-child(3) {
+  transform: translateY(-7.5px) rotate(-45deg);
+}
+
+/* Overlay oscuro detrás del menú móvil */
+.mobile-overlay {
+  display: none;
+}
+
+/* Sección "Mi Sucursal" dentro del menú móvil — oculta en desktop */
+.mobile-nav-login {
+  display: none;
+}
+
+.header-login-menu .login-icon {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+@media (max-width: 1300px) {
+  .header-nav {
+    gap: 34px;
+    margin-right: 55px;
+  }
+}
+
+@media (max-width: 1100px) {
+  /* Comprimir nav en pantallas medianas sin pasar a hamburguesa */
+  .header-nav {
+    gap: 20px;
+    margin-right: 32px;
+  }
+}
+
+@media (max-width: 1000px) {
+  /* ---- Header: compacto horizontal (logo + hamburger) ---- */
+  .header-spacer {
+    height: 70px;
+  }
+
+  .header {
+    height: 70px;
+    padding: 0 20px;
+    flex-direction: row;
+    gap: 0;
+  }
+
+  .header-logo {
+    width: auto;
+    margin-right: auto;
+  }
+
+  .header-logo img {
+    width: 120px;
+  }
+
+  /* Mostrar el botón hamburguesa */
+  .hamburger {
+    display: flex;
+  }
+
+  /* Ocultar "Mi Sucursal" de escritorio (sus links van dentro del nav móvil) */
+  .header-login {
+    display: none;
+  }
+
+  /* ---- Nav móvil: panel desplegable fijo bajo el header ---- */
+  .header-nav {
+    display: none;
+    position: fixed;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    background: white;
+    /* Sombra solo hacia abajo, sin separarse del header */
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.09);
+    z-index: 998;
+  }
+
+  /* Clase que React agrega al abrir el menú */
+  .header-nav.mobile-abierto {
+    display: flex;
+  }
+
+  /* Links del nav en móvil — padding reducido para que no ocupe tanto */
+  .header-nav > a {
+    padding: 12px 22px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #eef1f8;
+  }
+
+  .header-nav > a::after {
+    display: none;
+  }
+
+  .header-nav > a:hover {
+    background: #f7f9ff;
+    color: var(--pc-blue);
+  }
+
+  /* Buscador dentro del nav móvil */
+  .header-search {
+    padding: 10px 22px;
+    border-bottom: 1px solid #eef1f8;
+    align-items: center;
+  }
+
+  /* Search box: posición estática en móvil (no flota) */
+  .search-box {
+    position: static;
+    width: 100%;
+    margin-top: 10px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+  }
+
+  /* Overlay oscuro que cierra el menú al tocar fuera */
+  .mobile-overlay {
+    display: block;
+    position: fixed;
+    top: 70px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 997;
+  }
+
+  /* ---- Sección "Mi Sucursal" al fondo del menú móvil ---- */
+  .mobile-nav-login {
+    display: flex;
+    flex-direction: column;
+    padding: 14px 22px;
+    gap: 0;
+    background: #f7f9ff;
+  }
+
+  .mobile-nav-login-titulo {
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--pc-orange);
+    margin-bottom: 6px;
+  }
+
+  .mobile-nav-login-item {
+    padding: 10px 0;
+    color: var(--pc-blue);
+    font-size: 14px;
+    font-weight: 800;
+    border-bottom: 1px solid #eef1f8;
+    display: block;
+  }
+
+  .mobile-nav-login-item:last-child {
+    border-bottom: none;
+  }
+
+  .mobile-nav-login-item:hover {
+    color: var(--pc-orange);
+  }
+}

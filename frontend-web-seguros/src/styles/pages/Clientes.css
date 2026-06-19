@@ -1,0 +1,101 @@
+.clientes-panel {
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(4, 18, 68, 0.65), rgba(4, 18, 68, 0.78)),
+    url("/Fondo-login.png");
+  background-size: cover;
+  background-position: center;
+}
+
+.clientes-panel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 20px;
+}
+
+.clientes-content {
+  width: 100%;
+  max-width: 1200px;
+  text-align: center;
+}
+
+.clientes-logo {
+  width: 150px;
+  margin: 0 auto 25px;
+}
+
+.clientes-content h1 {
+  color: white;
+  font-size: 64px;
+  margin-bottom: 10px;
+}
+
+.clientes-subtitle {
+  color: var(--pc-orange);
+  font-size: 22px;
+  margin-bottom: 70px;
+}
+
+.clientes-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+.cliente-card {
+  padding: 40px;
+  background: white;
+  border-radius: 22px;
+  display: flex;
+  gap: 25px;
+  text-align: left;
+  transition: 0.25s;
+}
+
+.cliente-card:hover {
+  transform: translateY(-10px);
+}
+
+.cliente-icon {
+  width: 90px;
+  height: 90px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.cliente-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.cliente-card h2 {
+  color: var(--pc-blue);
+  font-size: 34px;
+  margin-bottom: 8px;
+}
+
+.cliente-card span {
+  display: block;
+  color: #6b7280;
+  margin-bottom: 18px;
+}
+
+.cliente-card p {
+  color: #4b5563;
+  line-height: 1.7;
+}
+
+@media (max-width: 700px) {
+  .clientes-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .clientes-content h1 {
+    font-size: 42px;
+  }
+}
