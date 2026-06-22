@@ -1,308 +1,177 @@
-.testimonios{
+/* ============================================================
+   Testimonials — única fuente de estilos del componente.
+   Se renderiza solo dentro de Home.jsx. El fade-in (.visible)
+   lo activa el IntersectionObserver del JSX.
+   ============================================================ */
 
-padding:90px 7%;
-
-background:#f7f8fb;
-
-overflow:hidden;
-
+.testimonios {
+  padding: clamp(60px, 8vw, 90px) clamp(20px, 7vw, 7%);
+  background: #f7f8fb;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(80px);
+  transition:
+    opacity 0.9s ease,
+    transform 0.9s ease;
 }
 
-
+.testimonios.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
 
 /* TITULO */
-
-.testimonios h2{
-
-text-align:center;
-
-font-size:42px;
-
-font-weight:700;
-
-color:#07195a;
-
-margin-bottom:16px;
-
-letter-spacing:-1px;
-
+.testimonios h2 {
+  text-align: center;
+  font-size: clamp(32px, 5vw, 42px);
+  font-weight: 800;
+  color: var(--pc-blue);
+  margin-bottom: 16px;
 }
-
-
 
 /* SUBTITULO */
-
-.testimonios-subtitulo{
-
-text-align:center;
-
-font-size:18px;
-
-color:#61708f;
-
-max-width:760px;
-
-margin:
-0 auto 60px;
-
-line-height:1.8;
-
+.testimonios-subtitulo {
+  text-align: center;
+  font-size: clamp(16px, 2vw, 18px);
+  color: #61708f;
+  max-width: 760px;
+  margin: 0 auto 60px;
+  line-height: 1.8;
 }
-
-
 
 /* TARJETA */
-
-.testimonial-card{
-
-background:white;
-
-height:620px;
-
-display:flex;
-
-flex-direction:column;
-
-overflow:hidden;
-
-border-radius:22px;
-
-box-shadow:
-
-0 12px 35px rgba(7,25,90,.05);
-
-transition:.25s;
-
+.testimonial-card {
+  background: white;
+  height: 620px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 22px;
+  box-shadow: 0 12px 35px rgba(7, 25, 90, 0.05);
+  transition: 0.25s ease;
 }
 
-.testimonial-card:hover{
-
-transform:
-
-translateY(-4px);
-
-box-shadow:
-
-0 18px 45px rgba(7,25,90,.08);
-
+.testimonial-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 45px rgba(7, 25, 90, 0.08);
 }
-
-
 
 /* IMAGEN */
-
-.testimonial-card img{
-
-width:100%;
-
-height:230px;
-
-object-fit:cover;
-
-display:block;
-
+.testimonial-card img {
+  width: 100%;
+  height: 230px;
+  object-fit: cover;
 }
-
-
 
 /* COMILLAS */
-
-.quote{
-
-font-size:62px;
-
-color:#07195a;
-
-padding:
-24px
-35px
-8px;
-
-line-height:1;
-
-font-weight:700;
-
+.quote {
+  font-size: 62px;
+  color: var(--pc-blue);
+  padding: 24px 35px 8px;
+  line-height: 1;
+  font-weight: 800;
 }
-
-
 
 /* TEXTO */
-
-.testimonial-card p{
-
-padding:
-0
-35px;
-
-font-size:17px;
-
-line-height:1.9;
-
-color:#31426c;
-
-text-align:justify;
-
-min-height:180px;
-
+.testimonial-card p {
+  padding: 0 35px;
+  font-size: 17px;
+  line-height: 1.9;
+  color: #31426c;
+  text-align: justify;
+  min-height: 180px;
 }
-
-
 
 /* CLIENTE */
-
-.cliente{
-
-margin-top:auto;
-
-padding:30px;
-
-text-align:center;
-
-border-top:
-
-1px solid #eceff7;
-
+.cliente {
+  margin-top: auto;
+  padding: 30px;
+  text-align: center;
+  border-top: 1px solid #eceff7;
 }
 
-.cliente h4{
-
-font-size:20px;
-
-font-weight:700;
-
-color:#07195a;
-
-margin-bottom:8px;
-
+.cliente h4 {
+  font-size: 20px;
+  color: var(--pc-blue);
+  margin-bottom: 8px;
 }
 
-.cliente span{
-
-font-size:16px;
-
-color:#677590;
-
+.cliente span {
+  font-size: 16px;
+  color: #677590;
 }
 
-
-
-/* FLECHAS PEQUEÑAS */
-
-.swiper-button-prev{
-
-left:20px;
-
+/* FLECHAS (scopeadas a .testimonios para no filtrar a otros Swiper) */
+.testimonios .swiper-button-prev {
+  left: 20px;
+}
+.testimonios .swiper-button-next {
+  right: 20px;
+}
+.testimonios .swiper-button-prev,
+.testimonios .swiper-button-next {
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  box-shadow: none;
 }
 
-.swiper-button-next{
-
-right:20px;
-
+.testimonios .swiper-button-prev::after,
+.testimonios .swiper-button-next::after {
+  color: var(--pc-blue);
+  font-size: 16px;
+  font-weight: 900;
 }
 
-.swiper-button-prev,
-.swiper-button-next{
-
-width:24px;
-
-height:24px;
-
-background:none;
-
-border:none;
-
-box-shadow:none;
-
+.testimonios .swiper-button-prev:hover::after,
+.testimonios .swiper-button-next:hover::after {
+  color: var(--pc-orange);
 }
-
-.swiper-button-prev::after,
-.swiper-button-next::after{
-
-font-size:16px;
-
-font-weight:800;
-
-color:#07195a;
-
-transition:.2s;
-
-}
-
-.swiper-button-prev:hover::after,
-.swiper-button-next:hover::after{
-
-color:#f47c20;
-
-}
-
-
 
 /* PAGINACION */
-
-.swiper-pagination{
-
-position:relative;
-
-margin-top:40px;
-
+.testimonios .swiper-pagination {
+  position: relative;
+  margin-top: 40px;
 }
 
-.swiper-pagination-bullet{
-
-width:28px;
-
-height:6px;
-
-border-radius:20px;
-
-background:#d6dce8;
-
-opacity:1;
-
+.testimonios .swiper-pagination-bullet {
+  width: 28px;
+  height: 6px;
+  border-radius: 20px;
+  background: #d6dce8;
+  opacity: 1;
 }
 
-.swiper-pagination-bullet-active{
-
-background:#07195a;
-
-width:38px;
-
+.testimonios .swiper-pagination-bullet-active {
+  width: 38px;
+  background: var(--pc-blue);
 }
 
+/* RESPONSIVE
+   ≤900px: el Swiper baja a 2 tarjetas → dejar que crezcan en alto.
+   ≤700px: móvil, una sola tarjeta → ajustes finos de margen y comillas. */
+@media (max-width: 900px) {
+  .testimonial-card {
+    height: auto;
+  }
 
-
-/* RESPONSIVE */
-
-@media (max-width:900px){
-
-.testimonios{
-
-padding:70px 20px;
-
+  .testimonial-card p {
+    min-height: auto;
+  }
 }
 
-.testimonios h2{
+@media (max-width: 700px) {
+  .testimonios-subtitulo {
+    margin-bottom: 40px;
+  }
 
-font-size:32px;
+  .quote {
+    font-size: 52px;
+    padding: 20px 28px 6px;
+  }
 
-}
-
-.testimonios-subtitulo{
-
-font-size:16px;
-
-}
-
-.testimonial-card{
-
-height:auto;
-
-}
-
-.testimonial-card p{
-
-min-height:auto;
-
-}
-
+  .testimonial-card p {
+    padding: 0 28px;
+  }
 }

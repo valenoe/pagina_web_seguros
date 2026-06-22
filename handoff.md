@@ -182,7 +182,7 @@ Aunque el nombre confunde, `.contacto-corredor` y `.contacto-corredor img` está
 
 Con la migración CSS completa, se realizó una auditoría de responsividad sobre todos los archivos separados. El objetivo es identificar qué tiene breakpoints, qué les falta, y qué está roto en móvil/tablet.
 
-**Progreso actual (sin commitear):** ya están corregidos `Nosotros.css`, `DetalleSeguro.css`, `PerfilCliente.css` y `RegistroOnboarding.css`. Los breakpoints de `DetalleSeguro` y `PerfilCliente` ya se movieron desde `PortalDashboard.css` (ya no quedan ahí). **Próximo a editar: `LoginClientes.css`.**
+**Progreso actual:** ya están corregidos y **commiteados** `Nosotros.css`, `DetalleSeguro.css`, `PerfilCliente.css`, `RegistroOnboarding.css` y `LoginClientes.css` (commits `c36d97d` y `71d1ac8`). Los breakpoints de `DetalleSeguro` y `PerfilCliente` ya se movieron desde `PortalDashboard.css` (ya no quedan ahí). **`Testimonials.css` también está hecho (sin commitear todavía). Próximo a editar: `Legal.css`.**
 
 ### Criterios de corrección
 
@@ -194,14 +194,14 @@ Con la migración CSS completa, se realizó una auditoría de responsividad sobr
 
 | Prioridad | Archivo                  | Problema principal                                                                                                          |
 | --------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| 🔴 Alta   | `Nosotros.css`           | `.historia-card` con `width/height: 420px` fijos; grid de valores con `repeat(4, 420px)` sin colapso; sin breakpoint ≤700px |
-| 🔴 Alta   | `DetalleSeguro.css`      | Sin media queries propias; breakpoints viven en `PortalDashboard.css`                                                       |
-| 🔴 Alta   | `PerfilCliente.css`      | Sin media queries propias; breakpoints viven en `PortalDashboard.css`                                                       |
-| 🟡 Media  | `LoginClientes.css`      | Sin breakpoint ≤700px; card apretada en 375px; `h1` nunca se reduce bajo 1000px                                             |
-| 🟡 Media  | `RegistroOnboarding.css` | Padding y `h1` sin ajuste en ≤700px; `min-height: 650px` fija                                                               |
-| 🟡 Media  | `Testimonials.css`       | Selectores Swiper globales sin scope; duplicación con `Home.css`; sin ≤700px propio                                         |
-| 🟡 Media  | `Legal.css`              | Sin breakpoint ≤700px                                                                                                       |
-| 🟡 Media  | `Clientes.css`           | Sin breakpoint ≤1000px intermedio para el grid                                                                              |
+| ✅ Hecho  | `Nosotros.css`           | ~~`.historia-card` 420px fijos; grid sin colapso; sin ≤700px~~ → resuelto con `clamp()`, `aspect-ratio` y breakpoint ≤700px |
+| ✅ Hecho  | `DetalleSeguro.css`      | ~~Sin media queries propias~~ → breakpoints 1000px + 700px añadidos (movidos desde `PortalDashboard.css`)                   |
+| ✅ Hecho  | `PerfilCliente.css`      | ~~Sin media queries propias~~ → breakpoints 1000px + 700px añadidos (movidos desde `PortalDashboard.css`)                   |
+| ✅ Hecho  | `LoginClientes.css`      | ~~Sin ≤700px; card apretada; `h1` fijo~~ → `clamp()` en tipografía/padding, breakpoint ≤700px (padding página) y ≤450px (apila los checkboxes de `login-options`) |
+| ✅ Hecho  | `RegistroOnboarding.css` | ~~Padding y `h1` sin ajuste en ≤700px~~ → breakpoints 1000px + 700px añadidos                                               |
+| ✅ Hecho  | `Testimonials.css`       | ~~Swiper global sin scope; duplicación con `Home.css`; sin ≤700px~~ → reescrito como única fuente (con `var()`, swiper scopeado, fade-in `.visible`), `clamp()` en tipografía/padding, breakpoints 900px + 700px. Bloque duplicado eliminado de `Home.css`. |
+| ✅ Hecho  | `Legal.css`              | ~~Sin breakpoint ≤700px~~ → `clamp()` en padding página/hero/documento y en `h1`/`h2`; breakpoint ≤700px (radios + caja de contacto). El 980px quedó solo con el colapso de grid e índice. |
+| 🟡 Media  | `Clientes.css`           | **← PRÓXIMO.** Sin breakpoint ≤1000px intermedio para el grid                                                               |
 | 🟢 Baja   | `Seguros.css`            | Hero con `height: 420px` fija sin ajuste                                                                                    |
 | 🟢 Baja   | `Cotizador.css`          | `height: calc(100vh - 95px)` en pantalla de éxito se corta con teclado virtual                                              |
 | ✅ OK     | `Header.css`             | Breakpoints 1300px, 1100px, 1000px — bien cubierto                                                                          |
@@ -210,19 +210,53 @@ Con la migración CSS completa, se realizó una auditoría de responsividad sobr
 | ✅ OK     | `Contacto.css`           | Layout single-column aguanta bien; bajo riesgo                                                                              |
 | ✅ OK     | `Cotizador.css`          | Breakpoints 1000px, 800px, 700px — bien cubierto (salvo el caso de éxito)                                                   |
 
-**Nota sobre `PortalDashboard.css`:** Tiene 2 428 líneas y alberga breakpoints de `DetalleSeguro` y `PerfilCliente`. Requiere revisión separada por tamaño. Al corregir esos dos archivos, sus breakpoints deben migrar a sus propios CSS y eliminarse de `PortalDashboard.css`.
+**Nota sobre `PortalDashboard.css`:** Tenía 2 428 líneas y albergaba los breakpoints de `DetalleSeguro` y `PerfilCliente`. ✅ Esos breakpoints ya se movieron a sus propios CSS y se eliminaron de `PortalDashboard.css` (ya no quedan selectores `detalle-seguro`/`perfil-cliente` ahí).
 
 ### Orden de trabajo (responsividad)
 
-1. 🔴 `Nosotros.css` — **próximo a editar**
-2. 🔴 `DetalleSeguro.css` + `PerfilCliente.css` (mover breakpoints desde `PortalDashboard.css`)
-3. 🟡 `LoginClientes.css`
-4. 🟡 `RegistroOnboarding.css`
-5. 🟡 `Testimonials.css` (incluye limpieza de duplicación con `Home.css`)
-6. 🟡 `Legal.css`
-7. 🟡 `Clientes.css`
+1. ✅ `Nosotros.css` — hecho
+2. ✅ `DetalleSeguro.css` + `PerfilCliente.css` — hecho (breakpoints movidos desde `PortalDashboard.css`)
+3. ✅ `LoginClientes.css` — hecho
+4. ✅ `RegistroOnboarding.css` — hecho
+5. ✅ `Testimonials.css` — hecho (única fuente; duplicación eliminada de `Home.css`)
+6. ✅ `Legal.css` — hecho (`clamp()` + breakpoint ≤700px movido a 700px; índice encoge con `clamp()`; `min-width:0`+`overflow-wrap` para que el grid baje; `scroll-margin-top:115px` en secciones por el header fijo; padding vertical reducido)
+7. 🟡 `Clientes.css` — **← PRÓXIMO A EDITAR** (ruta `/clientes`; falta breakpoint ≤1000px para el grid; ⚠️ fondo compartido `Fondo-login.png`)
 8. 🟢 `Seguros.css`
 9. 🟢 `Cotizador.css`
+
+> **Nota:** todo el trabajo de responsividad listado como ✅ está en el working tree **sin commitear**.
+>
+> **Pendiente menor (Legal):** revisar el espaciado vertical entre textos del documento (`line-height`/`margin` de `p`, `li`, `h2`) — quedó para después.
+
+---
+
+## ✅ Resuelto — `Testimonials.css` (paso 5, hecho)
+
+Ya ejecutado el plan de abajo: `Testimonials.css` es ahora la única fuente y el bloque duplicado se eliminó de `Home.css` (incluidas sus reglas en el `@media 700px`). Se conservaron `.testimonios.visible` + `opacity:0` en Testimonials, así que el fade-in del observer sigue funcionando. Pendiente: verificar en navegador y commitear. Hallazgos originales (referencia):
+
+### Contexto
+`<Testimonials />` se renderiza **solo dentro de `Home.jsx`** (línea 21). Por eso en Home se cargan a la vez `Home.css` y `Testimonials.css`, y **ambos definen las mismas clases** (`.testimonios`, `.testimonial-card`, `.quote`, `.cliente`, swiper…). Es duplicación casi total con cascada frágil (gana el que el bundle importe último).
+
+### La copia de `Home.css` (líneas 434–567 + reglas en su `@media 700px`) es la "buena"; la de `Testimonials.css` está peor:
+
+| Aspecto | `Home.css` (mejor) | `Testimonials.css` (peor) |
+| --- | --- | --- |
+| Fade-in al scroll | ✅ `opacity:0` + `.testimonios.visible` | ❌ **falta** — sin esto la animación del `IntersectionObserver` del JSX no existiría |
+| Selectores Swiper | ✅ scopeados: `.testimonios .swiper-button-prev` | ❌ **globales**: `.swiper-button-prev` → se filtran a cualquier otro Swiper del sitio |
+| Colores | ✅ `var(--pc-blue/orange)` | ❌ hardcodeados `#07195a` / `#f47c20` |
+| `h2` font-weight | 800 | 700 |
+| Breakpoint | 700px | 900px |
+
+> **Dato clave:** la regla `.testimonios.visible` **solo existe en `Home.css`**. El JSX agrega la clase `visible` por el observer, así que hoy la animación de entrada depende enteramente de `Home.css`, no del CSS del propio componente.
+
+Detalle menor: `Testimonials.css` tiene formato raro (una línea en blanco entre cada propiedad), herencia de copy-paste.
+
+### Plan a ejecutar
+1. **`Testimonials.css` pasa a ser la única fuente:** reemplazar su contenido con la versión buena de `Home.css` (con `var()`, swiper scopeado a `.testimonios`, y el fade-in `.visible`).
+2. Responsividad: mantener el breakpoint **900px** (cuando el Swiper baja a 2 tarjetas) **y agregar ≤700px** propio.
+3. **Eliminar de `Home.css`** el bloque testimonios (líneas 434–567 + las reglas `.testimonios*` dentro de su `@media 700px`), dejándolo solo con lo de Home.
+
+⚠️ **Riesgo a cuidar:** al borrar de `Home.css` hay que llevarse **sí o sí** el `.testimonios.visible` y el estado inicial `opacity:0`, o se pierde la animación de entrada.
 
 ---
 

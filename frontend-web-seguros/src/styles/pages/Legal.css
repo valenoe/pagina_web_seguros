@@ -4,14 +4,17 @@
 
 .legal-premium-page {
   background: #f3f6fb;
-  padding: 150px 30px 100px;
+  /* el header fijo ya está compensado por .header-spacer (95px);
+     como el hero es una tarjeta sobre fondo gris, arriba va solo
+     un respiro mínimo para que no se vea hueco vacío */
+  padding: clamp(16px, 2.5vw, 32px) clamp(16px, 4vw, 30px) clamp(32px, 5vw, 60px);
 }
 
 .legal-hero {
   max-width: 1300px;
   margin: auto;
   margin-bottom: 30px;
-  padding: 60px;
+  padding: clamp(28px, 5vw, 60px);
   border-radius: 34px;
   background:
     linear-gradient(135deg, rgba(7, 25, 90, 0.96), rgba(3, 19, 68, 0.88)),
@@ -34,8 +37,8 @@
 }
 
 .legal-hero h1 {
-  font-size: 64px;
-  line-height: 1;
+  font-size: clamp(34px, 6vw, 64px);
+  line-height: 1.05;
   margin-bottom: 20px;
   color: white;
 }
@@ -58,7 +61,8 @@
   max-width: 1300px;
   margin: auto;
   display: grid;
-  grid-template-columns: 290px 1fr;
+  /* el índice encoge (290→200px) antes de colapsar a 1 columna en ≤700px */
+  grid-template-columns: clamp(200px, 24vw, 290px) 1fr;
   gap: 28px;
   align-items: start;
 }
@@ -93,8 +97,12 @@
 
 .legal-document {
   background: white;
-  padding: 60px;
+  padding: clamp(24px, 4vw, 60px);
   border-radius: 34px;
+  /* permite que la columna del grid baje de su min-content;
+     break-word evita que el correo largo trabe el ancho */
+  min-width: 0;
+  overflow-wrap: break-word;
   box-shadow: 0 22px 70px rgba(7, 25, 90, 0.08);
 }
 
@@ -102,6 +110,8 @@
   padding-bottom: 42px;
   margin-bottom: 42px;
   border-bottom: 1px solid #edf1f7;
+  /* compensa el header fijo (95px) al saltar a un ancla del índice */
+  scroll-margin-top: 115px;
 }
 
 .legal-document section:last-child {
@@ -110,7 +120,7 @@
 }
 
 .legal-document h2 {
-  font-size: 34px;
+  font-size: clamp(24px, 3.5vw, 34px);
   color: #07195a;
   margin-bottom: 20px;
 }
@@ -155,7 +165,7 @@
   margin-top: 10px;
 }
 
-@media (max-width: 980px) {
+@media (max-width: 700px) {
   .legal-layout {
     grid-template-columns: 1fr;
   }
@@ -165,11 +175,12 @@
     top: auto;
   }
 
+  .legal-hero,
   .legal-document {
-    padding: 34px;
+    border-radius: 22px;
   }
 
-  .legal-hero h1 {
-    font-size: 42px;
+  .legal-contact-box {
+    padding: 24px !important;
   }
 }
