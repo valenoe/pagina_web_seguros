@@ -220,8 +220,8 @@ Con la migración CSS completa, se realizó una auditoría de responsividad sobr
 4. ✅ `RegistroOnboarding.css` — hecho
 5. ✅ `Testimonials.css` — hecho (única fuente; duplicación eliminada de `Home.css`)
 6. ✅ `Legal.css` — hecho (`clamp()` + breakpoint ≤700px movido a 700px; índice encoge con `clamp()`; `min-width:0`+`overflow-wrap` para que el grid baje; `scroll-margin-top:115px` en secciones por el header fijo; padding vertical reducido)
-7. 🟡 `Clientes.css` — **← PRÓXIMO A EDITAR** (ruta `/clientes`; falta breakpoint ≤1000px para el grid; ⚠️ fondo compartido `Fondo-login.png`)
-8. 🟢 `Seguros.css`
+7. ⏭️ `Clientes.css` — **OMITIDO.** La ruta `/clientes` (hub de tarjetas) quedó deshabilitada (comentada en `Router.jsx`, import incluido) porque el botón "Mi Sucursal" del header ya da acceso a Ejecutivo Comercial y a Clientes. La página `Clientes.jsx`/`Clientes.css` siguen en el repo pero sin ruta. No requiere responsividad.
+8. 🟢 `Seguros.css` — **← PRÓXIMO A EDITAR**
 9. 🟢 `Cotizador.css`
 
 > **Nota:** todo el trabajo de responsividad listado como ✅ está en el working tree **sin commitear**.

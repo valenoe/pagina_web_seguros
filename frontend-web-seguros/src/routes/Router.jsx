@@ -14,7 +14,7 @@ import Contacto from "../pages/Contacto";
 import Privacidad from "../pages/Privacidad";
 
 /* Portal */
-import Clientes from "../pages/Clientes";
+// import Clientes from "../pages/Clientes"; // hub /clientes deshabilitado: el botón "Mi Sucursal" del header ya da acceso
 import LoginClientes from "../pages/LoginClientes";
 import RegistroClientes from "../pages/RegistroClientes";
 import Dashboard from "../pages/Dashboard";
@@ -59,10 +59,13 @@ export default function Router() {
 
         {/* Portal */}
 
+        {/* Hub /clientes deshabilitado: el botón "Mi Sucursal" del header
+            ya da acceso a Ejecutivo Comercial y a Clientes.
         <Route
           path="/clientes"
           element={<Clientes />}
         />
+        */}
 
         <Route
           path="/login-clientes"
