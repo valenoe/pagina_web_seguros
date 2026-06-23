@@ -310,7 +310,8 @@
 .service-card,
 .news-card {
   min-height: 340px;
-  padding: 42px;
+  /* padding fluido para que las cards no se sientan tan apretadas al achicar */
+  padding: clamp(26px, 3vw, 42px);
   background: white;
   border: 1px solid #edf1f8;
   border-radius: 26px;
@@ -440,7 +441,9 @@
   background: #f7f8fb;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1300px) {
+  /* 4 columnas se aprietan por debajo de ~1300px → pasar a 2.
+     (Antes el corte estaba en 1100px y las 4 cards quedaban muy angostas.) */
   .why-grid,
   .services-grid,
   .news-grid {

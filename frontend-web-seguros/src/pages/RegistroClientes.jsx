@@ -4,7 +4,10 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import PhoneInput from "../components/PhoneInput";
 import { registroCliente, verificarRutDisponible } from "../services/api";
+import { regionesComunas } from "../data/regionesComunas";
 import "../styles/pages/RegistroOnboarding.css";
+
+const REGIONES = Object.keys(regionesComunas);
 
 function validarRut(rut) {
   const limpio = rut.replace(/[^0-9kK]/g, "").toUpperCase();
@@ -81,6 +84,11 @@ function RegistroClientes() {
 
   function cambiarTelefono(campo, valor) {
     setFormulario((prev) => ({ ...prev, [campo]: valor }));
+  }
+
+  // Al cambiar de región se resetea la comuna (las comunas dependen de la región).
+  function cambiarRegion(e) {
+    setFormulario((prev) => ({ ...prev, region: e.target.value, comuna: "" }));
   }
 
   async function siguientePaso() {
@@ -224,13 +232,7 @@ function RegistroClientes() {
           </div>
 
           <div className="registro-onboarding-right">
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
+            <div className="registro-tipo-row">
               <div className="registro-steps">
                 <div className={paso >= 1 ? "step active" : "step"}>1</div>
                 <div className={paso >= 2 ? "step active" : "step"}>2</div>
@@ -240,23 +242,19 @@ function RegistroClientes() {
               {paso >= 2 && (
                 <button
                   type="button"
+                  className="registro-tipo-chip"
                   onClick={() => {
                     setError("");
                     setPaso(1);
                   }}
-                  style={{
-                    fontSize: "0.78rem",
-                    color: "#555",
-                    background: "#f3f4f6",
-                    padding: "0.2rem 0.7rem",
-                    borderRadius: "4px",
-                    border: "1px solid #d1d5db",
-                    cursor: "pointer",
-                  }}
+                  title="Cambiar tipo de cuenta"
                 >
-                  {formulario.tipo_cliente === "persona"
-                    ? "👤 Persona"
-                    : "🏢 Empresa"}
+                  <span>
+                    {formulario.tipo_cliente === "persona"
+                      ? "Persona"
+                      : "Empresa"}
+                  </span>
+                  <small>Cambiar</small>
                 </button>
               )}
             </div>
@@ -323,57 +321,96 @@ function RegistroClientes() {
                   </h2>
 
                   <div className="registro-form-grid">
-                    <input
-                      name="nombre"
-                      value={formulario.nombre}
-                      onChange={cambiarDato}
-                      placeholder={
-                        formulario.tipo_cliente === "empresa"
-                          ? "Razón social"
-                          : "Nombre completo"
-                      }
-                    />
+                    <label className="registro-campo">
+                      <span>
+                        {formulario.tipo_cliente === "empresa"
+                          ? "Razón social *"
+                          : "Nombre completo *"}
+                      </span>
+                      <input
+                        name="nombre"
+                        value={formulario.nombre}
+                        onChange={cambiarDato}
+                        placeholder={
+                          formulario.tipo_cliente === "empresa"
+                            ? "Razón social"
+                            : "Nombre completo"
+                        }
+                      />
+                    </label>
 
-                    <input
-                      name="rut"
-                      value={formulario.rut}
-                      onChange={cambiarDato}
-                      placeholder={
-                        formulario.tipo_cliente === "empresa"
-                          ? "RUT empresa"
-                          : "RUT persona"
-                      }
-                    />
+                    <label className="registro-campo">
+                      <span>
+                        {formulario.tipo_cliente === "empresa"
+                          ? "RUT empresa *"
+                          : "RUT persona *"}
+                      </span>
+                      <input
+                        name="rut"
+                        value={formulario.rut}
+                        onChange={cambiarDato}
+                        placeholder="12.345.678-9"
+                      />
+                    </label>
 
                     {formulario.tipo_cliente === "persona" && (
-                      <input
-                        name="fecha_nacimiento"
-                        type="date"
-                        value={formulario.fecha_nacimiento}
-                        onChange={cambiarDato}
-                      />
+                      <label className="registro-campo">
+                        <span>Fecha de nacimiento</span>
+                        <input
+                          name="fecha_nacimiento"
+                          type="date"
+                          value={formulario.fecha_nacimiento}
+                          onChange={cambiarDato}
+                        />
+                      </label>
                     )}
 
-                    <input
-                      name="direccion"
-                      value={formulario.direccion}
-                      onChange={cambiarDato}
-                      placeholder="Dirección"
-                    />
+                    <label className="registro-campo">
+                      <span>Dirección *</span>
+                      <input
+                        name="direccion"
+                        value={formulario.direccion}
+                        onChange={cambiarDato}
+                        placeholder="Calle y número"
+                      />
+                    </label>
 
-                    <input
-                      name="region"
-                      value={formulario.region}
-                      onChange={cambiarDato}
-                      placeholder="Región"
-                    />
+                    <label className="registro-campo">
+                      <span>Región *</span>
+                      <select
+                        name="region"
+                        value={formulario.region}
+                        onChange={cambiarRegion}
+                      >
+                        <option value="">Selecciona región</option>
+                        {REGIONES.map((r) => (
+                          <option key={r} value={r}>
+                            {r}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
 
-                    <input
-                      name="comuna"
-                      value={formulario.comuna}
-                      onChange={cambiarDato}
-                      placeholder="Comuna"
-                    />
+                    <label className="registro-campo">
+                      <span>Comuna *</span>
+                      <select
+                        name="comuna"
+                        value={formulario.comuna}
+                        onChange={cambiarDato}
+                        disabled={!formulario.region}
+                      >
+                        <option value="">
+                          {formulario.region
+                            ? "Selecciona comuna"
+                            : "Elige una región primero"}
+                        </option>
+                        {(regionesComunas[formulario.region] || []).map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                   </div>
                 </div>
               )}
@@ -383,29 +420,38 @@ function RegistroClientes() {
                   <span>Paso 3</span>
                   <h2>Datos de contacto</h2>
 
-                  <div className="registro-form-grid">
-                    <input
-                      name="correo"
-                      type="email"
-                      value={formulario.correo}
-                      onChange={cambiarDato}
-                      placeholder="Correo electrónico"
-                    />
+                  <div className="registro-form-grid registro-form-grid-stack">
+                    <label className="registro-campo">
+                      <span>Correo electrónico *</span>
+                      <input
+                        name="correo"
+                        type="email"
+                        value={formulario.correo}
+                        onChange={cambiarDato}
+                        placeholder="correo@ejemplo.cl"
+                      />
+                    </label>
 
-                    <PhoneInput
-                      name="telefono"
-                      value={formulario.telefono}
-                      onChange={(val) => cambiarTelefono("telefono", val)}
-                      placeholder="Teléfono"
-                      required
-                    />
+                    <div className="registro-campo">
+                      <span>Teléfono *</span>
+                      <PhoneInput
+                        name="telefono"
+                        value={formulario.telefono}
+                        onChange={(val) => cambiarTelefono("telefono", val)}
+                        placeholder="9 1234 5678"
+                        required
+                      />
+                    </div>
 
-                    <PhoneInput
-                      name="whatsapp"
-                      value={formulario.whatsapp}
-                      onChange={(val) => cambiarTelefono("whatsapp", val)}
-                      placeholder="WhatsApp (opcional)"
-                    />
+                    <div className="registro-campo">
+                      <span>WhatsApp (opcional)</span>
+                      <PhoneInput
+                        name="whatsapp"
+                        value={formulario.whatsapp}
+                        onChange={(val) => cambiarTelefono("whatsapp", val)}
+                        placeholder="9 1234 5678"
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -416,23 +462,29 @@ function RegistroClientes() {
                   <h2>Seguridad</h2>
 
                   <div className="registro-form-grid">
-                    <input
-                      name="password"
-                      type={mostrarPasswords ? "text" : "password"}
-                      autoComplete="new-password"
-                      value={formulario.password}
-                      onChange={cambiarDato}
-                      placeholder="Contraseña"
-                    />
+                    <label className="registro-campo">
+                      <span>Contraseña *</span>
+                      <input
+                        name="password"
+                        type={mostrarPasswords ? "text" : "password"}
+                        autoComplete="new-password"
+                        value={formulario.password}
+                        onChange={cambiarDato}
+                        placeholder="Mínimo 6 caracteres"
+                      />
+                    </label>
 
-                    <input
-                      name="confirmar_password"
-                      type={mostrarPasswords ? "text" : "password"}
-                      autoComplete="new-password"
-                      value={formulario.confirmar_password}
-                      onChange={cambiarDato}
-                      placeholder="Confirmar contraseña"
-                    />
+                    <label className="registro-campo">
+                      <span>Confirmar contraseña *</span>
+                      <input
+                        name="confirmar_password"
+                        type={mostrarPasswords ? "text" : "password"}
+                        autoComplete="new-password"
+                        value={formulario.confirmar_password}
+                        onChange={cambiarDato}
+                        placeholder="Repite la contraseña"
+                      />
+                    </label>
                   </div>
 
                   <label

@@ -3,8 +3,9 @@
 }
 
 .seguros-hero {
-  height: 420px;
-  padding: 0 130px 0 95px;
+  /* min-height (no height fija) para que el texto no se recorte en móvil */
+  min-height: clamp(300px, 45vw, 420px);
+  padding: clamp(40px, 6vw, 60px) clamp(24px, 8vw, 95px);
   display: flex;
   align-items: center;
   background-image:
@@ -35,7 +36,7 @@
   max-width: 620px;
   margin-bottom: 24px;
   color: white;
-  font-size: 50px;
+  font-size: clamp(30px, 5vw, 50px);
   font-weight: 900;
   line-height: 1.08;
 }
@@ -62,21 +63,26 @@
   border-radius: 999px;
   background: white;
   color: var(--pc-blue);
-  font-size: 13px;
-  font-weight: 900;
-  transition: 0.25s;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.25s,
+    color 0.25s,
+    border-color 0.25s;
 }
 
 .seguros-categorias button:hover,
 .seguros-categorias button.activo {
   background: var(--pc-blue);
+  border-color: var(--pc-blue);
   color: white;
 }
 
 .seguros-bloques {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 12px 22px 80px;
+  padding: 12px 22px 25px;
   display: grid;
   gap: 20px;
 }
@@ -125,12 +131,12 @@
 
 .seguro-bloque-info > span {
   width: fit-content;
-  padding: 6px 12px;
+  padding: 6px 14px;
   margin-bottom: 12px;
   background: rgba(244, 124, 32, 0.12);
   color: var(--pc-orange);
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 900;
 }
 
@@ -164,44 +170,44 @@
   display: block;
   margin-bottom: 4px;
   color: #98a2b3;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 900;
 }
 
 .seguro-precios strong {
   color: var(--pc-blue);
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .seguro-mini-coberturas {
   margin-bottom: 14px;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .seguro-mini-coberturas span {
-  padding: 5px 10px;
+  padding: 6px 12px;
   border: 1px solid #e5e7ef;
   border-radius: 999px;
   color: var(--pc-blue);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
 }
 
 .seguro-bloque-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .seguro-bloque-actions button,
 .seguro-online-link {
-  height: 38px;
-  padding: 0 16px;
+  height: 40px;
+  padding: 0 18px;
   border: none;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 900;
 }
 
@@ -222,7 +228,8 @@
   position: fixed;
   inset: 0;
   z-index: 99999;
-  padding: 30px;
+  /* clamp: el separador backdrop↔card escala suave (no salta en un breakpoint) */
+  padding: clamp(14px, 4vw, 30px);
   display: grid;
   place-items: center;
 }
@@ -240,7 +247,8 @@
   width: min(900px, 100%);
   max-height: 90vh;
   overflow-y: auto;
-  padding: 38px;
+  /* padding fluido: en vez de saltar de 38px a 22px en un breakpoint */
+  padding: clamp(22px, 4vw, 38px);
   background: white;
   border-radius: 30px;
   box-shadow: 0 35px 90px rgba(0, 0, 0, 0.28);
@@ -261,14 +269,14 @@
 
 .seguro-modal-head {
   display: flex;
-  gap: 20px;
+  gap: clamp(14px, 3vw, 20px);
   align-items: flex-start;
   padding-right: 45px;
 }
 
 .seguro-modal-head img {
-  width: 74px;
-  height: 74px;
+  width: clamp(60px, 9vw, 74px);
+  height: clamp(60px, 9vw, 74px);
   object-fit: contain;
   background: rgba(244, 124, 32, 0.12);
   padding: 14px;
@@ -286,7 +294,7 @@
 
 .seguro-modal-head h2 {
   color: var(--pc-blue);
-  font-size: 36px;
+  font-size: clamp(24px, 4.5vw, 36px);
   margin: 8px 0 12px;
 }
 
@@ -294,14 +302,29 @@
 .seguro-modal-grid p {
   color: var(--pc-muted);
   line-height: 1.7;
+  font-size: clamp(14px, 2vw, 15px);
+}
+
+.seguro-modal-grid h3 {
+  margin-bottom: 10px;
 }
 
 .seguro-modal-price,
 .seguro-modal-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 16px;
   margin: 26px 0;
+}
+
+/* auto-fit: las cajas de precio se reacomodan a 1 columna solas, cuando dejan
+   de caber, en vez de saltar en un breakpoint fijo (así el tope del modal no
+   da el tirón brusco). */
+.seguro-modal-price {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.seguro-modal-grid {
+  grid-template-columns: 1fr 1fr;
 }
 
 .seguro-modal-price div,
@@ -311,15 +334,37 @@
   border-radius: 18px;
 }
 
+/* Las cajas de precio usaban <small>/<strong> sin estilo (quedaban en una
+   línea y diminutos). Se espeja la tarjeta de la página: etiqueta en bloque
+   arriba, valor en azul abajo. */
+.seguro-modal-price small {
+  display: block;
+  margin-bottom: 6px;
+  color: #98a2b3;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.seguro-modal-price strong {
+  display: block;
+  color: var(--pc-blue);
+  font-size: clamp(15px, 2.2vw, 18px);
+  line-height: 1.35;
+}
+
 .seguro-modal-actions {
   display: flex;
   gap: 12px;
   margin-top: 26px;
+  flex-wrap: wrap;
 }
 
 .seguro-modal-actions button {
-  flex: 1;
+  /* basis 200px: si los dos no caben lado a lado, se apilan en vez de apretarse */
+  flex: 1 1 200px;
   height: 54px;
+  padding: 0 16px;
   border: none;
   border-radius: 999px;
   color: white;
@@ -333,27 +378,7 @@
   background: var(--pc-orange);
 }
 
-@media (max-width: 700px) {
-  .seguro-bloque-actions,
-  .seguro-modal-actions {
-    flex-direction: column;
-  }
-
-  .seguro-bloque-actions button,
-  .seguro-online-link {
-    width: 100%;
-  }
-}
-
 @media (max-width: 1000px) {
-  .seguros-hero h1 {
-    font-size: 42px;
-  }
-
-  .seguros-hero {
-    padding: 60px 30px;
-  }
-
   .seguro-bloque,
   .seguro-bloque.reverse {
     grid-template-columns: 1fr;
@@ -368,14 +393,34 @@
 
   .seguro-bloque-imagen {
     height: 240px;
+    /* anular el min-height base (360px) para que la imagen sí baje a 240px */
+    min-height: auto;
   }
 
   .seguro-bloque-info {
     height: auto;
+    min-height: auto;
+  }
+}
+
+@media (max-width: 700px) {
+  /* Tarjeta de la página: los botones se apilan a ancho completo. */
+  .seguro-bloque-actions {
+    flex-direction: column;
   }
 
-  .seguro-modal-price,
+  .seguro-bloque-actions button,
+  .seguro-online-link {
+    width: 100%;
+  }
+
+  /* Modal: la grilla de cubre/beneficios pasa a 1 columna.
+     (Las cajas de precio NO van aquí: se reacomodan solas con auto-fit.) */
   .seguro-modal-grid {
     grid-template-columns: 1fr;
   }
 }
+
+/* (El bloque @media 480px que compactaba el modal se eliminó: ahora el padding
+   del modal/card, el gap de la cabecera y el ícono escalan con clamp(), así no
+   hay salto brusco — la card ya no se ensancha ni sube de golpe.) */

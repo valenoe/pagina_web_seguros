@@ -5,12 +5,7 @@ import "../styles/pages/Cotizador.css";
 import Footer from "../components/Footer";
 import useFetch from "../hooks/useFetch";
 import { obtenerSeguros, enviarCotizacion } from "../services/api";
-
-const regionesComunas = {
-  "Arica y Parinacota": ["Arica", "Camarones", "Putre", "General Lagos"],
-  Maule: ["Talca", "Constitución", "Curicó", "Linares", "Colbún", "Longaví", "Parral", "Retiro", "San Javier", "Villa Alegre", "Yerbas Buenas"],
-  "Metropolitana de Santiago": ["Santiago", "San Miguel", "Ñuñoa", "Providencia", "Las Condes", "Maipú", "La Florida", "Puente Alto"],
-};
+import { regionesComunas } from "../data/regionesComunas";
 
 function Cotizador() {
   const navigate = useNavigate();

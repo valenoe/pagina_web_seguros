@@ -15,6 +15,8 @@ const PAISES = [
   { code: "+34", name: "España" },
 ];
 
+const OTRO = "otro";
+
 function parsear(value) {
   if (!value) return { code: "+56", numero: "" };
   const sorted = [...PAISES].sort((a, b) => b.code.length - a.code.length);
@@ -30,9 +32,14 @@ export default function PhoneInput({ placeholder, value, onChange, name, require
   const { code: codeInit, numero: numInit } = parsear(value);
   const [code, setCode] = useState(codeInit);
   const [numero, setNumero] = useState(numInit);
+  // "Otro": el usuario escribe a mano un código que no está en la lista
+  const [personalizado, setPersonalizado] = useState(false);
   const emitido = useRef(false);
 
   useEffect(() => {
+    // No re-derivar desde value mientras el usuario escribe un código personalizado
+    // (parsear no reconocería ese código y lo metería dentro del número).
+    if (personalizado) return;
     const { code: c, numero: n } = parsear(value);
     setCode(c);
     setNumero(n);
@@ -44,32 +51,66 @@ export default function PhoneInput({ placeholder, value, onChange, name, require
     } else if (normalizado === value) {
       emitido.current = false;
     }
-  }, [value]);
+  }, [value, personalizado]);
+
+  function emitir(nextCode, nextNumero) {
+    onChange(nextNumero ? `${nextCode}${nextNumero}` : "");
+  }
 
   function handleNumero(e) {
     const solo = e.target.value.replace(/\D/g, "");
     setNumero(solo);
-    onChange(solo ? `${code}${solo}` : "");
+    emitir(code, solo);
   }
 
-  function handleCode(e) {
-    setCode(e.target.value);
-    onChange(numero ? `${e.target.value}${numero}` : "");
+  function handleSelect(e) {
+    if (e.target.value === OTRO) {
+      setPersonalizado(true);
+      setCode("+");
+      emitir("+", numero);
+    } else {
+      setPersonalizado(false);
+      setCode(e.target.value);
+      emitir(e.target.value, numero);
+    }
+  }
+
+  function handleCodePersonalizado(e) {
+    // Forzar un solo "+" al inicio y solo dígitos después
+    const limpio = e.target.value.replace(/[^\d]/g, "");
+    const nuevoCode = "+" + limpio;
+    setCode(nuevoCode);
+    emitir(nuevoCode, numero);
   }
 
   return (
     <div style={{ display: "flex", gap: "0.4rem" }}>
       <select
-        value={code}
-        onChange={handleCode}
-        style={{ flexShrink: 0, width: "8rem" }}
+        value={personalizado ? OTRO : code}
+        onChange={handleSelect}
+        /* width:auto → la caja se adapta al largo del texto de cada país */
+        style={{ flexShrink: 0, width: "auto" }}
       >
         {PAISES.map((p) => (
           <option key={p.code} value={p.code}>
             {p.name} ({p.code})
           </option>
         ))}
+        <option value={OTRO}>Otro…</option>
       </select>
+
+      {personalizado && (
+        <input
+          type="text"
+          inputMode="numeric"
+          value={code}
+          onChange={handleCodePersonalizado}
+          placeholder="+00"
+          aria-label="Código de país"
+          style={{ flexShrink: 0, width: "4.5rem" }}
+        />
+      )}
+
       <input
         name={name}
         type="tel"
@@ -78,7 +119,7 @@ export default function PhoneInput({ placeholder, value, onChange, name, require
         placeholder={placeholder || "912345678"}
         required={required}
         autoComplete="off"
-        style={{ flex: 1 }}
+        style={{ flex: 1, minWidth: 0 }}
       />
     </div>
   );

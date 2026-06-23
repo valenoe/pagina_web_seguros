@@ -201,9 +201,9 @@ Con la migración CSS completa, se realizó una auditoría de responsividad sobr
 | ✅ Hecho  | `RegistroOnboarding.css` | ~~Padding y `h1` sin ajuste en ≤700px~~ → breakpoints 1000px + 700px añadidos                                               |
 | ✅ Hecho  | `Testimonials.css`       | ~~Swiper global sin scope; duplicación con `Home.css`; sin ≤700px~~ → reescrito como única fuente (con `var()`, swiper scopeado, fade-in `.visible`), `clamp()` en tipografía/padding, breakpoints 900px + 700px. Bloque duplicado eliminado de `Home.css`. |
 | ✅ Hecho  | `Legal.css`              | ~~Sin breakpoint ≤700px~~ → `clamp()` en padding página/hero/documento y en `h1`/`h2`; breakpoint ≤700px (radios + caja de contacto). El 980px quedó solo con el colapso de grid e índice. |
-| 🟡 Media  | `Clientes.css`           | **← PRÓXIMO.** Sin breakpoint ≤1000px intermedio para el grid                                                               |
-| 🟢 Baja   | `Seguros.css`            | Hero con `height: 420px` fija sin ajuste                                                                                    |
-| 🟢 Baja   | `Cotizador.css`          | `height: calc(100vh - 95px)` en pantalla de éxito se corta con teclado virtual                                              |
+| ⏭️ Omitido | `Clientes.css`          | Ruta `/clientes` deshabilitada (comentada en `Router.jsx`); el botón "Mi Sucursal" del header ya da el acceso. No requiere responsividad. |
+| ✅ Hecho  | `Seguros.css`            | ~~Hero con `height: 420px` fija~~ → `min-height: clamp()` + padding `clamp()`, `font-size: clamp()` en `h1`; corregido bug `min-height: 360px` que impedía que la imagen bajara a 240px en ≤1000px; media queries reordenadas. **Modal:** paddings/gap/ícono con `clamp()` (se eliminó el `@media 480px` que saltaba); cajas de precio con `repeat(auto-fit, minmax(180px,1fr))` para que reflowen solas; `<small>/<strong>` del precio estilizados; `h2`/`p` con `clamp()`. |
+| ✅ Hecho  | `Cotizador.css`          | ~~`height: calc(100vh - 95px)` en pantalla de éxito se cortaba~~ → `min-height` + sin `overflow:hidden`. **Padding:** `.cotizador` y `.cotizador-box/-info` con `clamp()` (se eliminó el `@media 800px` que bajaba el padding de golpe). |
 | ✅ OK     | `Header.css`             | Breakpoints 1300px, 1100px, 1000px — bien cubierto                                                                          |
 | ✅ OK     | `Footer.css`             | Breakpoints 1000px, 700px — bien cubierto                                                                                   |
 | ✅ OK     | `Home.css`               | Breakpoints 1100px, 1000px, 700px — el mejor cubierto del proyecto                                                          |
@@ -221,12 +221,58 @@ Con la migración CSS completa, se realizó una auditoría de responsividad sobr
 5. ✅ `Testimonials.css` — hecho (única fuente; duplicación eliminada de `Home.css`)
 6. ✅ `Legal.css` — hecho (`clamp()` + breakpoint ≤700px movido a 700px; índice encoge con `clamp()`; `min-width:0`+`overflow-wrap` para que el grid baje; `scroll-margin-top:115px` en secciones por el header fijo; padding vertical reducido)
 7. ⏭️ `Clientes.css` — **OMITIDO.** La ruta `/clientes` (hub de tarjetas) quedó deshabilitada (comentada en `Router.jsx`, import incluido) porque el botón "Mi Sucursal" del header ya da acceso a Ejecutivo Comercial y a Clientes. La página `Clientes.jsx`/`Clientes.css` siguen en el repo pero sin ruta. No requiere responsividad.
-8. 🟢 `Seguros.css` — **← PRÓXIMO A EDITAR**
-9. 🟢 `Cotizador.css`
+8. ✅ `Seguros.css` — hecho (hero `clamp()`; fix `min-height` imagen ≤1000px; modal pasado a `clamp()`/`auto-fit`, ver fila de la tabla)
+9. ✅ `Cotizador.css` — hecho (pantalla de éxito `min-height`; padding `.cotizador`/`.cotizador-box` a `clamp()`, eliminado `@media 800px`)
+
+**Con esto la primera auditoría de responsividad está completa** — todos los CSS de la web pública revisados.
+
+### Segunda pasada (en curso) — pulir saltos bruscos con `clamp()`
+
+Re-revisión para cazar cosas que se pasaron en la primera vuelta: reemplazar saltos de un breakpoint por `clamp()` donde el cambio se sienta brusco (paddings, gaps, tamaños). Criterio: si una propiedad sólo cambia de valor (no de layout) entre breakpoints, es candidata a `clamp()`. Los cambios de layout (grid 2→1, flex-direction) se dejan como media query o se pasan a `repeat(auto-fit, minmax())` cuando aplique.
+
+- ✅ `Header.css` — `gap`/`margin-right` del nav pasados a `clamp(... calc(Nvw - Mpx) ...)`; eliminados `@media 1300px` y `1100px`. El cambio a hamburguesa sigue en 1000px.
+- ✅ Why-cards (`Home.css`) — corte 4→2 columnas movido de `@media 1100px` a `1300px` (las 4 cards se apretaban antes); padding de card a `clamp(26px,3vw,42px)`.
+- ✅ `Contacto.css` — eliminado `min-height: calc(100vh-150px)` + `align-items:center` (la tarjeta flotaba al medio con huecos enormes arriba/abajo en pantallas altas); paddings y `h1` a `clamp()`, eliminados `@media 1000/800px`.
+- ⏳ `Nosotros.css` — **pendiente (estético, dejado para cuando completen la sección).** El `h2` en columnas a mitad de ancho (`historia-left`, `corporativo-text`) se sobredimensiona entre 1000-1300px porque el `vw` se calcula sobre el viewport completo, no sobre la columna. Fix propuesto: bajar el coeficiente a ~`3.6vw` en esos `h2` (separándolos del `.valores-corporativos-header h2`, que es de ancho completo y se queda con `4.5vw`).
+- ✅ `RegistroOnboarding.css` — la 1.ª pasada solo colapsaba columnas; ahora pasada completa: `clamp()` en paddings de página/paneles, `h1` (56px), `h2` (38px), logo, botones tipo; fila steps+chip con `flex-wrap` (se desbordaba en móvil) y margen movido al contenedor; botones Atrás/Continuar `flex:1` en ≤700 (se desbordaban por `min-width:150`); fix grid blowout a ~1200px (`minmax(0,…)` en columnas + `min-width:0` en panel e inputs — el panel derecho se "separaba"). Chip Persona/Empresa rediseñado (plomo como los steps, sin emojis). **+ mejoras funcionales, ver sección abajo.**
+- ⬜ Falta en la 2.ª pasada: `Footer.css` y el resto del `Home.css` (hero, purpose, partners).
 
 > **Nota:** todo el trabajo de responsividad listado como ✅ está en el working tree **sin commitear**.
 >
 > **Pendiente menor (Legal):** revisar el espaciado vertical entre textos del documento (`line-height`/`margin` de `p`, `li`, `h2`) — quedó para después.
+>
+> **Sugerencia pendiente (para después):** en `Seguros.jsx` los precios UF/CLP están escritos a mano (`precioUf`/`precioClp`). Reemplazar la conversión manual por el valor en pesos calculado en vivo con la UF del día de Chile (API tipo `mindicador.cl`). Solo en la página de Seguros, no en el Home.
+
+---
+
+## Validación / seguridad del formulario de Contacto
+
+**Hecho esta sesión** (working tree, sin commitear):
+
+- **Front (`Contacto.jsx`):** validación por campo (errores bajo cada input, `.campo-error`), `noValidate` en el form. Obligatorios: **nombre** (solo letras, filtrado en tiempo real — no se pueden teclear `[] <> {}`), **email** (regex) y **mensaje** (no vacío, sin largo mínimo). Teléfono opcional con `PhoneInput` (mín. 5 dígitos). `PhoneInput`: `<select>` con `width:auto` (se adapta al texto) + opción **"Otro…"** para código de país manual.
+- **Back (`schemas/contacto.py`):** `nombre` `min_length=1, max_length=100` + `strip()`; `email` `max_length=100`; `mensaje` `max_length=2000`; teléfono regex bajada a `\d{5,15}` para cuadrar con el front. Verificado con pruebas. SQL injection ya cubierto (ORM SQLAlchemy); XSS cubierto por React.
+
+**⬜ Pendientes (NO olvidar):**
+
+1. **Anti-spam / rate-limiting en endpoints públicos.** `/contacto/` (y `/cotizaciones/`) no tienen captcha ni límite de tasa → se pueden automatizar miles de envíos. No es inyección, pero es abuso real. Opciones: `slowapi` (rate-limit por IP), honeypot, o captcha. Tema aparte más grande.
+2. **Aplicar el mismo arreglo de teléfono a `RegistroClientes.jsx`.** Su validación es `telefono.replace(/\D/g,"").length < 7`, que incluye el código de país en la cuenta (mismo bug que tenía Contacto) y deja pasar números cortos. Alinear con el criterio de Contacto (mín. 5 dígitos) para consistencia.
+
+---
+
+## Registro de clientes — mejoras funcionales (esta sesión, sin commitear)
+
+- **Labels arriba de cada campo** (`.registro-campo` = `<span>` + control), con `*` en los obligatorios. Antes solo había placeholder (se perdía al escribir). Formato igual a Contacto (azul, sin mayúsculas, pegado al cuadro).
+- **Steps + chip fijos arriba:** el panel derecho pasó a `justify-content: flex-start` y el `<form>` ocupa el alto restante con `.registro-actions { margin-top:auto }` → los botones quedan anclados abajo. Antes todo iba centrado y los steps "saltaban" según los campos de cada paso.
+- **Región/Comuna como `<select>` dependientes:** la lista que estaba hardcodeada en `Cotizador.jsx` se extrajo a **`src/data/regionesComunas.js`** (compartida; ya con las 16 regiones). La importan **Cotizador** y **Registro**; editar ese archivo actualiza ambos. Comuna se deshabilita hasta elegir región y se resetea al cambiarla (`cambiarRegion`).
+- **Paso 3 (contacto) en 1 columna** (`.registro-form-grid-stack`): correo/teléfono/whatsapp apilados a ancho completo para dar espacio al `PhoneInput`.
+
+---
+
+## ⬜ PRÓXIMO — Rama de Matías: dashboard del cliente
+
+La **parte principal (web pública)** quedó lista: Home, Seguros, Cotizador, Contacto, Nosotros (salvo el detalle estético del `h2`), Legal, Login y Registro — responsividad + validación + las mejoras de esta sesión.
+
+**Lo que falta:** integrar/tratar la **rama de Matías**, que tiene la **dashboard del cliente** (portal interno: `Dashboard.jsx`, `DetalleSeguro.jsx`, `PerfilClientes.jsx` y los CSS `PortalDashboard.css`, etc.). Pendiente: revisar esa rama, resolver merge con `rama-integracion`, y aplicar la misma auditoría de responsividad/`clamp()` al portal si hace falta.
 
 ---
 
