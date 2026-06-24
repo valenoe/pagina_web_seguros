@@ -1,0 +1,303 @@
+.registro-onboarding-page {
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(4, 18, 68, 0.65), rgba(4, 18, 68, 0.78)),
+    url("/Fondo-login.png");
+  background-size: cover;
+  background-position: center;
+}
+
+.registro-onboarding-page {
+  min-height: calc(100vh - 110px);
+  padding: clamp(20px, 4vw, 55px) clamp(16px, 6vw, 70px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.registro-onboarding-card {
+  width: 100%;
+  max-width: 1250px;
+  min-height: 650px;
+  background: white;
+  border-radius: 34px;
+  display: grid;
+  /* minmax(0,…) deja que las columnas se encojan bajo el ancho mínimo de su
+     contenido (inputs/PhoneInput), en vez de desbordar la card a ~1200px. */
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  overflow: hidden;
+  box-shadow: 0 35px 90px rgba(0, 0, 0, 0.28);
+}
+
+.registro-onboarding-left {
+  padding: clamp(40px, 6vw, 70px) clamp(28px, 5vw, 55px);
+  background: linear-gradient(135deg, var(--pc-blue), var(--pc-text));
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.registro-onboarding-left img {
+  width: clamp(100px, 12vw, 130px);
+  background: white;
+  padding: 12px;
+  border-radius: 18px;
+  margin-bottom: clamp(24px, 4vw, 38px);
+}
+
+.registro-onboarding-left span,
+.registro-step-content span {
+  color: var(--pc-orange);
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.registro-onboarding-left h1 {
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1.05;
+  margin-bottom: 24px;
+}
+
+.registro-onboarding-left p {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: clamp(15px, 1.6vw, 18px);
+  line-height: 1.7;
+  margin-bottom: 34px;
+}
+
+.registro-onboarding-right {
+  padding: clamp(28px, 5vw, 55px);
+  display: flex;
+  flex-direction: column;
+  /* flex-start (no center): los steps quedan fijos arriba y no se mueven según
+     la cantidad de campos de cada paso. */
+  justify-content: flex-start;
+  min-width: 0; /* permite que el panel se ajuste a su columna del grid */
+}
+
+/* El form ocupa el alto restante para poder empujar las acciones al fondo. */
+.registro-onboarding-right form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.registro-tipo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: clamp(24px, 4vw, 36px);
+}
+
+.registro-steps {
+  display: flex;
+  gap: 12px;
+}
+
+/* Chip que muestra el tipo elegido (Persona/Empresa) y, al tocarlo, vuelve
+   al paso 1 para cambiarlo. */
+.registro-tipo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px; /* igual que .step */
+  padding: 0 16px;
+  border: none;
+  border-radius: 999px;
+  background: #eef1f7; /* igual que .step */
+  color: #667085; /* igual que .step */
+  font-size: 0.85rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.registro-tipo-chip:hover {
+  background: #e2e6ee; /* plomo un poco más oscuro */
+}
+
+.registro-tipo-chip small {
+  padding-left: 10px;
+  border-left: 1px solid #d4d9e3;
+  color: var(--pc-orange);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.step {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: #eef1f7;
+  color: #667085;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+}
+
+.step.active {
+  background: var(--pc-orange);
+  color: white;
+}
+
+.registro-step-content h2 {
+  color: var(--pc-blue);
+  font-size: clamp(26px, 3.5vw, 38px);
+  margin: 10px 0 12px;
+}
+
+.registro-step-content p {
+  color: #667085;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.registro-tipo-grid,
+.registro-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+/* Paso de contacto: correo/teléfono/whatsapp apilados (1 columna) para dar
+   ancho completo al PhoneInput (el código de país necesita espacio). */
+.registro-form-grid-stack {
+  grid-template-columns: 1fr;
+}
+
+/* Los hijos (campos, botones y el div del PhoneInput) deben poder encogerse
+   bajo su ancho mínimo intrínseco, si no rompen el grid a ~1200px. */
+.registro-tipo-grid > *,
+.registro-form-grid > * {
+  min-width: 0;
+}
+
+/* Campo = label (texto arriba) + input/select debajo. */
+.registro-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.registro-campo > span {
+  /* Anula la regla .registro-step-content span (que pone mayúsculas y
+     margin-bottom:18px en el tag "Paso N") para que el label quede pegado
+     al cuadro y en formato normal, como en Contacto. */
+  margin-bottom: 0;
+  color: var(--pc-blue);
+  font-size: 0.85rem;
+  font-weight: 900;
+  text-transform: none;
+}
+
+.registro-tipo-grid button {
+  min-height: clamp(120px, 16vw, 150px);
+  border: 2px solid #e2e8f0;
+  background: white;
+  border-radius: 22px;
+  padding: clamp(20px, 3vw, 28px);
+  text-align: left;
+  transition: 0.25s ease;
+}
+
+.registro-tipo-grid button.active,
+.registro-tipo-grid button:hover {
+  border-color: var(--pc-blue);
+  background: var(--pc-blue);
+  color: white;
+}
+
+.registro-tipo-grid strong {
+  display: block;
+  font-size: clamp(19px, 2.2vw, 24px);
+  margin-bottom: 12px;
+}
+
+.registro-form-grid input,
+.registro-form-grid select {
+  width: 100%;
+  min-width: 0;
+  height: 58px;
+  border: 1px solid #d9deea;
+  border-radius: 16px;
+  padding: 0 18px;
+  font-size: 15px;
+  background: white;
+  outline: none;
+}
+
+.registro-form-grid select:disabled {
+  background: #f3f4f6;
+  color: #98a2b3;
+  cursor: not-allowed;
+}
+
+.registro-check {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 24px;
+  color: var(--pc-muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.registro-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--pc-blue);
+}
+
+.registro-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  /* auto empuja las acciones al fondo del panel (quedan fijas abajo);
+     padding-top garantiza un espacio mínimo cuando el contenido llena el alto. */
+  margin-top: auto;
+  padding-top: 28px;
+}
+
+.registro-actions button {
+  min-width: 150px;
+  height: 54px;
+  border: none;
+  border-radius: 999px;
+  background: var(--pc-blue);
+  color: white;
+  font-weight: 900;
+}
+
+.registro-actions button:first-child {
+  background: #eef1f7;
+  color: var(--pc-blue);
+}
+
+@media (max-width: 1000px) {
+  .registro-onboarding-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .registro-form-grid,
+  .registro-tipo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Atrás/Continuar se reparten el ancho en vez de desbordar (min-width 150 + gap) */
+  .registro-actions button {
+    flex: 1;
+    min-width: 0;
+  }
+}

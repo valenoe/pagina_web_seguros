@@ -1,0 +1,96 @@
+.contacto {
+  /* Sin min-height forzado ni centrado vertical: antes la tarjeta flotaba en el
+     medio de una sección de casi 100vh, dejando huecos enormes arriba y abajo
+     en pantallas altas. Ahora fluye bajo el header con un padding normal. */
+  padding: clamp(40px, 6vw, 70px) clamp(20px, 8vw, 90px);
+  background: #f6f7fb;
+  display: flex;
+  justify-content: center;
+}
+
+.contacto-box {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 30px;
+  padding: clamp(30px, 4.5vw, 48px);
+  box-shadow: 0 18px 55px rgba(7, 25, 90, 0.08);
+}
+
+.contacto-box h1 {
+  color: var(--pc-blue);
+  font-size: clamp(32px, 4vw, 44px);
+  margin-bottom: 10px;
+}
+
+.contacto-box > p {
+  color: #667085;
+  margin-bottom: 32px;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.contacto-box form {
+  display: grid;
+  gap: 18px;
+}
+
+.contacto-box label {
+  color: var(--pc-blue);
+  font-weight: 900;
+  display: grid;
+  gap: 8px;
+}
+
+.contacto-box input,
+.contacto-box textarea {
+  width: 100%;
+  border: 1px solid #dfe4ef;
+  border-radius: 14px;
+  padding: 16px 18px;
+  font-size: 15px;
+  outline: none;
+}
+
+.contacto-box textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+/* Input con error de validación */
+.contacto-box .input-invalido {
+  border-color: #dc2626;
+  background: rgba(239, 68, 68, 0.04);
+}
+
+/* Mensaje de error chico bajo cada campo */
+.contacto-box .campo-error {
+  display: block;
+  margin-top: 6px;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.contacto-obligatorios {
+  margin: -4px 0 0;
+  color: #98a2b3;
+  font-size: 13px;
+}
+
+.contacto-box button {
+  height: 56px;
+  border: none;
+  border-radius: 999px;
+  background: var(--pc-blue);
+  color: white;
+  font-weight: 900;
+}
+
+.contacto-box button:hover {
+  background: var(--pc-orange);
+}
+
+/* (Los @media 1000px y 800px se eliminaron: el h1 y los paddings ahora
+   escalan con clamp(), sin saltos.) */

@@ -1,6 +1,9 @@
 # Entorno virtual Python
 entorno_web_seguros/
 
+# Archivos subidos por usuarios
+backend-web-seguros/uploads/
+
 # Variables de entorno
 .env
 

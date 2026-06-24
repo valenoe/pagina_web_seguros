@@ -7,17 +7,18 @@ from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
 from database import get_db
 from models.catalogo import SeguroCatalogo
-from models.cliente import Cliente
+from models.cliente import Cliente, ClienteEmail, ClienteTelefono
 from models.contacto import LeadContacto
 from models.cotizacion import Cotizacion
 from models.imagen import Imagen
-from models.poliza import Poliza
+from models.poliza import Poliza, PolizaPago
 from models.usuario_interno import UsuarioInterno
 from services.username import generar_username
 from schemas.admin import (
     SeguroIn, SeguroAdminOut,
     ClienteIn, ClienteAdminOut,
     PolizaIn, PolizaAdminOut,
+    PagoIn, PagoAdminOut,
     ImagenIn, ImagenOut,
     UsuarioInternoIn, UsuarioInternoUpdate, UsuarioInternoAdminOut,
     LeadAdminOut, CotizacionAdminOut,
@@ -135,8 +136,16 @@ def obtener_cliente(id_cliente: int, db: Session = Depends(get_db), _=Depends(ge
 
 @router.post("/clientes", response_model=ClienteAdminOut, status_code=201)
 def crear_cliente(datos: ClienteIn, db: Session = Depends(get_db), _=Depends(solo_admin)):
-    obj = Cliente(**datos.model_dump())
+    datos_dict = datos.model_dump()
+    email = datos_dict.pop("email", None)
+    telefono = datos_dict.pop("telefono", None)
+    obj = Cliente(**datos_dict)
     db.add(obj)
+    db.flush()
+    if email:
+        db.add(ClienteEmail(cliente_id=obj.id_cliente, email=email))
+    if telefono:
+        db.add(ClienteTelefono(cliente_id=obj.id_cliente, telefono=telefono, tipo="telefono"))
     db.commit()
     db.refresh(obj)
     return obj
@@ -146,8 +155,20 @@ def actualizar_cliente(id_cliente: int, datos: ClienteIn, db: Session = Depends(
     obj = db.query(Cliente).filter(Cliente.id_cliente == id_cliente).first()
     if not obj:
         raise HTTPException(status_code=404, detail="No encontrado")
-    for k, v in datos.model_dump().items():
+    datos_dict = datos.model_dump()
+    email = datos_dict.pop("email", None)
+    telefono = datos_dict.pop("telefono", None)
+    for k, v in datos_dict.items():
         setattr(obj, k, v)
+    db.query(ClienteEmail).filter(ClienteEmail.cliente_id == id_cliente).delete()
+    if email:
+        db.add(ClienteEmail(cliente_id=id_cliente, email=email))
+    db.query(ClienteTelefono).filter(
+        ClienteTelefono.cliente_id == id_cliente,
+        ClienteTelefono.tipo == "telefono",
+    ).delete()
+    if telefono:
+        db.add(ClienteTelefono(cliente_id=id_cliente, telefono=telefono, tipo="telefono"))
     db.commit()
     db.refresh(obj)
     return obj
@@ -200,6 +221,36 @@ def eliminar_poliza(id_poliza: int, db: Session = Depends(get_db), _=Depends(sol
         raise HTTPException(status_code=404, detail="No encontrada")
     db.delete(obj)
     db.commit()
+
+
+# ── Pagos de pólizas ──────────────────────────────────────────────────────────
+
+@router.get("/polizas/{id_poliza}/pagos", response_model=list[PagoAdminOut])
+def listar_pagos(id_poliza: int, db: Session = Depends(get_db), _=Depends(get_usuario_activo)):
+    if not db.query(Poliza).filter(Poliza.id_poliza == id_poliza).first():
+        raise HTTPException(status_code=404, detail="Póliza no encontrada")
+    return db.query(PolizaPago).filter(PolizaPago.poliza_id == id_poliza).order_by(PolizaPago.numero_cuota).all()
+
+@router.post("/polizas/{id_poliza}/pagos", response_model=PagoAdminOut, status_code=201)
+def crear_pago(id_poliza: int, datos: PagoIn, db: Session = Depends(get_db), _=Depends(solo_admin)):
+    if not db.query(Poliza).filter(Poliza.id_poliza == id_poliza).first():
+        raise HTTPException(status_code=404, detail="Póliza no encontrada")
+    obj = PolizaPago(poliza_id=id_poliza, **datos.model_dump())
+    db.add(obj)
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+@router.put("/pagos/{id_pago}", response_model=PagoAdminOut)
+def actualizar_pago(id_pago: int, datos: PagoIn, db: Session = Depends(get_db), _=Depends(solo_admin)):
+    obj = db.query(PolizaPago).filter(PolizaPago.id_pago == id_pago).first()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Pago no encontrado")
+    for k, v in datos.model_dump().items():
+        setattr(obj, k, v)
+    db.commit()
+    db.refresh(obj)
+    return obj
 
 
 # ── Imágenes ──────────────────────────────────────────────────────────────────

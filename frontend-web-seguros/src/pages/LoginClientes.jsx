@@ -1,13 +1,24 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { login } from "../services/api";
-import "../App.css";
+import { login, getMiCuenta } from "../services/api";
+import "../styles/pages/LoginClientes.css";
+
+function formatearRut(valor) {
+  const limpio = valor.replace(/[^0-9kK]/g, "").toUpperCase();
+  if (limpio.length <= 1) return limpio;
+  const cuerpo = limpio.slice(0, -1);
+  const dv = limpio.slice(-1);
+  let formateado = "";
+  for (let i = cuerpo.length - 1, count = 0; i >= 0; i--, count++) {
+    if (count > 0 && count % 3 === 0) formateado = "." + formateado;
+    formateado = cuerpo[i] + formateado;
+  }
+  return `${formateado}-${dv}`;
+}
 
 function LoginClientes() {
-  const navigate = useNavigate();
-
   const [mostrarPassword, setMostrarPassword] = useState(false);
   const [recordarCuenta, setRecordarCuenta] = useState(false);
 
@@ -24,33 +35,27 @@ function LoginClientes() {
     const cuentaGuardada = localStorage.getItem("cuenta_recordada");
 
     if (cuentaGuardada) {
-      const cuenta = JSON.parse(cuentaGuardada);
+      try {
+        const cuenta = JSON.parse(cuentaGuardada);
 
-      setFormulario({
-        rut: cuenta.rut || "",
-        tipo_cliente: cuenta.tipo_cliente || "persona",
-        password: "",
-      });
+        setFormulario({
+          rut: cuenta.rut || "",
+          tipo_cliente: cuenta.tipo_cliente || "persona",
+          password: "",
+        });
 
-      setRecordarCuenta(true);
-    } else {
-      setFormulario({
-        rut: "",
-        tipo_cliente: "persona",
-        password: "",
-      });
-
-      setRecordarCuenta(false);
+        setRecordarCuenta(true);
+      } catch {
+        localStorage.removeItem("cuenta_recordada");
+      }
     }
-
-    setMostrarPassword(false);
-    setError("");
   }, []);
 
   function cambiarDato(e) {
+    const { name, value } = e.target;
     setFormulario({
       ...formulario,
-      [e.target.name]: e.target.value,
+      [name]: name === "rut" ? formatearRut(value) : value,
     });
   }
 
@@ -62,12 +67,7 @@ function LoginClientes() {
   }
 
   function cambiarRecordarCuenta() {
-    const nuevoValor = !recordarCuenta;
-    setRecordarCuenta(nuevoValor);
-
-    if (!nuevoValor) {
-      localStorage.removeItem("cuenta_recordada");
-    }
+    setRecordarCuenta(!recordarCuenta);
   }
 
   async function ingresar(e) {
@@ -79,7 +79,36 @@ function LoginClientes() {
     try {
       const data = await login(formulario);
 
-      localStorage.setItem("token", data.access_token);
+      const token = data?.access_token;
+
+      if (!token) {
+        throw new Error("No se recibió token desde el backend");
+      }
+
+      [
+        "nombre_cliente",
+        "rut_cliente",
+        "correo_cliente",
+        "telefono_cliente",
+        "direccion_cliente",
+        "tipo_cliente",
+        "avatar_cliente",
+      ].forEach((k) => localStorage.removeItem(k));
+
+      localStorage.setItem("token", token);
+
+      try {
+        const perfil = await getMiCuenta(token);
+        localStorage.setItem(
+          "nombre_cliente",
+          perfil.nombre_o_razon_social || formulario.rut,
+        );
+        localStorage.setItem("rut_cliente", perfil.rut || formulario.rut);
+        localStorage.setItem("correo_cliente", perfil.email || "");
+        localStorage.setItem("telefono_cliente", perfil.telefono || "");
+      } catch {
+        localStorage.setItem("nombre_cliente", formulario.rut);
+      }
 
       if (recordarCuenta) {
         localStorage.setItem(
@@ -87,16 +116,20 @@ function LoginClientes() {
           JSON.stringify({
             rut: formulario.rut,
             tipo_cliente: formulario.tipo_cliente,
-          })
+          }),
         );
       } else {
         localStorage.removeItem("cuenta_recordada");
       }
 
-      navigate("/clientes/dashboard");
+      window.location.href = "/clientes/dashboard";
     } catch (error) {
-      console.error(error);
-      setError("RUT o contraseña incorrectos.");
+      console.error("ERROR LOGIN:", error);
+      localStorage.removeItem("token");
+      localStorage.removeItem("nombre_cliente");
+      setError(
+        "RUT o contraseña incorrectos. Verifica que estés en la pestaña correcta (Persona / Empresa).",
+      );
     } finally {
       setCargando(false);
     }
@@ -119,37 +152,26 @@ function LoginClientes() {
             siempre contigo
           </h1>
 
-          <p>
-            Accede a tus pólizas, documentos y estado
-            de solicitudes.
-          </p>
+          <p>Accede a tus pólizas, documentos y estado de solicitudes.</p>
         </div>
 
         <div className="login-clientes-card">
-          <Link to="/clientes" className="login-volver">
-            ← Volver
-          </Link>
-
           <img
-            src="/Logo Prieto.png"
+            src="/LOGO_TRANSPARENTE.svg"
             alt="Prieto & Correa"
             className="login-logo"
           />
 
           <h2>Mi Portal de Seguros</h2>
 
-          <p className="login-subtitle">
-            Ingresa con tus credenciales
-          </p>
+          <p className="login-subtitle">Ingresa con tus credenciales</p>
 
           <form onSubmit={ingresar} autoComplete="off">
             <div className="tipo-cliente-tabs">
               <button
                 type="button"
                 className={
-                  formulario.tipo_cliente === "persona"
-                    ? "active"
-                    : ""
+                  formulario.tipo_cliente === "persona" ? "active" : ""
                 }
                 onClick={() => cambiarTipoCliente("persona")}
               >
@@ -159,9 +181,7 @@ function LoginClientes() {
               <button
                 type="button"
                 className={
-                  formulario.tipo_cliente === "empresa"
-                    ? "active"
-                    : ""
+                  formulario.tipo_cliente === "empresa" ? "active" : ""
                 }
                 onClick={() => cambiarTipoCliente("empresa")}
               >
@@ -226,13 +246,14 @@ function LoginClientes() {
 
             {error && <p className="form-error">{error}</p>}
 
-            <button
-              type="submit"
-              className="login-submit"
-              disabled={cargando}
-            >
+            <button type="submit" className="login-submit" disabled={cargando}>
               {cargando ? "Ingresando..." : "Ingresar"}
             </button>
+
+            <div className="registro-login-link">
+              ¿No tienes cuenta?{" "}
+              <Link to="/registro-clientes">Crear cuenta</Link>
+            </div>
           </form>
         </div>
       </section>

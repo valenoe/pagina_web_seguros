@@ -1,0 +1,115 @@
+/* ==================================================
+PERFIL CLIENTE SEPARADO
+================================================== */
+
+.perfil-cliente {
+  display: grid;
+  gap: 26px;
+}
+
+.perfil-cliente-header {
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(244, 124, 32, 0.12),
+      transparent 35%
+    ),
+    #f6f7fb;
+  border-radius: 24px;
+  padding: 34px;
+}
+
+.perfil-cliente-header span,
+.perfil-cliente-security span {
+  color: var(--pc-orange);
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.perfil-cliente-header h2 {
+  color: var(--pc-blue);
+  font-size: clamp(24px, 3.5vw, 38px);
+  margin: 10px 0;
+}
+
+.perfil-cliente-header p {
+  color: var(--pc-muted);
+  line-height: 1.7;
+}
+
+.perfil-cliente-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.perfil-cliente-card {
+  background: white;
+  border: 1px solid #e8ebf2;
+  border-radius: 22px;
+  padding: 26px;
+  box-shadow: 0 10px 30px rgba(7, 25, 90, 0.04);
+}
+
+.perfil-cliente-card small {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.perfil-cliente-card strong {
+  color: var(--pc-blue);
+  font-size: 20px;
+}
+
+.perfil-cliente-security {
+  background: linear-gradient(135deg, var(--pc-blue), var(--pc-text));
+  color: white;
+  border-radius: 26px;
+  padding: 34px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 28px;
+}
+
+.perfil-cliente-security h3 {
+  font-size: clamp(20px, 2.5vw, 28px);
+  margin: 10px 0;
+}
+
+.perfil-cliente-security p {
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.7;
+}
+
+.perfil-cliente-security button {
+  border: none;
+  background: var(--pc-orange);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 999px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+@media (max-width: 1000px) {
+  .perfil-cliente-security {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 700px) {
+  .perfil-cliente-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .perfil-cliente-security button {
+    width: 100%;
+  }
+}

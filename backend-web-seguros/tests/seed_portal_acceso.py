@@ -1,16 +1,16 @@
 import bcrypt
 from database import SessionLocal
-from models.cliente import Cliente, PortalAcceso
+from models.cliente import Cliente, PortalAcceso, ClienteTelefono, ClienteEmail
 
 CLIENTE = {
     "rut": "12.456.789-3",
     "tipo_cliente": "persona",
     "nombre_o_razon_social": "Valentina Andrea Muñoz Cisternas",
-    "email": "valentina.munoz@gmail.com",
-    "telefono": "+56 9 6123 4987",
     "cliente_activo": True,
 }
 
+EMAIL = "valentina.munoz@gmail.com"
+TELEFONO = "+56961234987"
 PASSWORD_PRUEBA = "Seguros2024!"
 
 
@@ -26,6 +26,9 @@ def seed():
         db.add(cliente)
         db.flush()
 
+        db.add(ClienteEmail(cliente_id=cliente.id_cliente, email=EMAIL))
+        db.add(ClienteTelefono(cliente_id=cliente.id_cliente, telefono=TELEFONO, tipo="telefono"))
+
         acceso = PortalAcceso(
             cliente_id=cliente.id_cliente,
             tipo_acceso="password",
@@ -38,6 +41,8 @@ def seed():
         db.commit()
 
         print(f"Cliente insertado:  [{cliente.id_cliente}] {cliente.nombre_o_razon_social} — {cliente.rut}")
+        print(f"Email:              {EMAIL}")
+        print(f"Teléfono:           {TELEFONO}")
         print(f"Acceso creado:      id_acceso={acceso.id_acceso} | tipo_acceso=password")
         print(f"Credenciales:       rut={cliente.rut} | tipo_cliente=persona | password={PASSWORD_PRUEBA}")
     finally:

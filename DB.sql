@@ -40,8 +40,7 @@ CREATE TABLE `web_clientes` (
   `rut` varchar(20) NOT NULL,
   `tipo_cliente` varchar(10) NOT NULL,
   `nombre_o_razon_social` varchar(200) NOT NULL,
-  `email` varchar(100),
-  `telefono` varchar(20),
+  `foto_perfil` varchar(500) DEFAULT NULL,
   `cliente_activo` boolean DEFAULT true,
   `fecha_registro` timestamp DEFAULT (now()),
   `updated_at` timestamp
@@ -71,7 +70,11 @@ CREATE TABLE `web_polizas` (
   `fecha_vencimiento` date,
   `prima` decimal(12,2),
   `estado` varchar(20) DEFAULT 'activa',
-  `origen` varchar(20) NOT NULL
+  `origen` varchar(20) NOT NULL,
+  `frecuencia_pago` varchar(20) DEFAULT NULL,
+  `num_cuotas` integer DEFAULT NULL,
+  `monto_cuota` decimal(12,2) DEFAULT NULL,
+  `fecha_proximo_pago` date DEFAULT NULL
 );
 
 CREATE TABLE `web_poliza_beneficiarios` (
@@ -80,6 +83,19 @@ CREATE TABLE `web_poliza_beneficiarios` (
   `nombre` varchar(100) NOT NULL,
   `rut` varchar(20),
   `relacion` varchar(50)
+);
+
+CREATE TABLE `web_poliza_pagos` (
+  `id_pago` integer PRIMARY KEY AUTO_INCREMENT,
+  `poliza_id` integer NOT NULL,
+  `numero_cuota` integer NOT NULL,
+  `monto` decimal(12,2) NOT NULL,
+  `fecha_vencimiento` date NOT NULL,
+  `fecha_pago` date DEFAULT NULL,
+  `estado` varchar(20) NOT NULL DEFAULT 'pendiente',
+  `metodo_pago` varchar(50) DEFAULT NULL,
+  `referencia_transaccion` varchar(100) DEFAULT NULL,
+  `fecha_registro` timestamp DEFAULT (now())
 );
 
 CREATE TABLE `web_imagenes` (
@@ -117,6 +133,61 @@ ALTER TABLE `web_polizas` ADD FOREIGN KEY (`seguro_id`) REFERENCES `web_seguros_
 ALTER TABLE `web_polizas` ADD FOREIGN KEY (`cotizacion_id`) REFERENCES `web_cotizaciones` (`id_cotizacion`);
 
 ALTER TABLE `web_poliza_beneficiarios` ADD FOREIGN KEY (`poliza_id`) REFERENCES `web_polizas` (`id_poliza`);
+
+ALTER TABLE `web_poliza_pagos` ADD FOREIGN KEY (`poliza_id`) REFERENCES `web_polizas` (`id_poliza`);
+
+CREATE TABLE `web_cliente_telefonos` (
+  `id_telefono` integer PRIMARY KEY AUTO_INCREMENT,
+  `cliente_id` integer NOT NULL,
+  `telefono` varchar(20) NOT NULL,
+  `tipo` varchar(10) NOT NULL DEFAULT 'telefono',
+  FOREIGN KEY (`cliente_id`) REFERENCES `web_clientes` (`id_cliente`) ON DELETE CASCADE
+);
+
+CREATE TABLE `web_cliente_emails` (
+  `id_email` integer PRIMARY KEY AUTO_INCREMENT,
+  `cliente_id` integer NOT NULL,
+  `email` varchar(100) NOT NULL,
+  FOREIGN KEY (`cliente_id`) REFERENCES `web_clientes` (`id_cliente`) ON DELETE CASCADE
+);
+
+CREATE TABLE `web_siniestros` (
+  `id_siniestro` integer PRIMARY KEY AUTO_INCREMENT,
+  `cliente_id` integer NOT NULL,
+  `poliza_id` integer NOT NULL,
+  `tipo` varchar(100) NOT NULL,
+  `descripcion` text,
+  `fecha_ocurrencia` date,
+  `etapa` integer NOT NULL DEFAULT 1,
+  `estado` varchar(20) NOT NULL DEFAULT 'reportado',
+  `fecha_registro` timestamp DEFAULT (now()),
+  FOREIGN KEY (`cliente_id`) REFERENCES `web_clientes` (`id_cliente`),
+  FOREIGN KEY (`poliza_id`) REFERENCES `web_polizas` (`id_poliza`)
+);
+
+CREATE TABLE `web_documentos_cliente` (
+  `id_documento` integer PRIMARY KEY AUTO_INCREMENT,
+  `cliente_id` integer NOT NULL,
+  `poliza_id` integer,
+  `nombre` varchar(200) NOT NULL,
+  `tipo` varchar(50) NOT NULL DEFAULT 'Documento',
+  `estado` varchar(20) NOT NULL DEFAULT 'Disponible',
+  `url` varchar(500),
+  `fecha_emision` timestamp DEFAULT (now()),
+  FOREIGN KEY (`cliente_id`) REFERENCES `web_clientes` (`id_cliente`),
+  FOREIGN KEY (`poliza_id`) REFERENCES `web_polizas` (`id_poliza`)
+);
+
+CREATE TABLE `web_metodos_pago` (
+  `id_metodo` integer PRIMARY KEY AUTO_INCREMENT,
+  `cliente_id` integer NOT NULL,
+  `tipo` varchar(50) NOT NULL,
+  `descripcion` varchar(200),
+  `ultimo4` varchar(4),
+  `activo` boolean DEFAULT true,
+  `fecha_registro` timestamp DEFAULT (now()),
+  FOREIGN KEY (`cliente_id`) REFERENCES `web_clientes` (`id_cliente`)
+);
 
 INSERT INTO `web_seguros_catalogo` (`nombre`, `categoria`, `descripcion`, `permite_digital`, `permite_tradicional`, `url_externa`, `seguro_activo`, `orden_display`) VALUES
 ('Seguro de Autos', 'Vehículos', 'Cobertura completa para tu vehículo ante accidentes, robo, daños materiales y responsabilidad civil. Incluye vehículo de reemplazo y robo de accesorios.', false, true, NULL, true, 1),

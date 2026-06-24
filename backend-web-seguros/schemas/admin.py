@@ -1,7 +1,8 @@
+import re
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal, Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
 
 class SeguroIn(BaseModel):
@@ -28,6 +29,15 @@ class SeguroAdminOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+def _validar_telefono(v):
+    if v is None or v == "":
+        return None
+    v = re.sub(r"\s+", "", v)
+    if not re.match(r"^\+\d{7,15}$", v):
+        raise ValueError("Debe incluir código de país y solo dígitos (ej: +56912345678)")
+    return v
+
+
 class ClienteIn(BaseModel):
     rut: str
     tipo_cliente: Literal["persona", "empresa"]
@@ -36,17 +46,40 @@ class ClienteIn(BaseModel):
     telefono: Optional[str] = None
     cliente_activo: bool = True
 
+    @field_validator("telefono", mode="before")
+    @classmethod
+    def validar_telefono(cls, v):
+        return _validar_telefono(v)
+
 
 class ClienteAdminOut(BaseModel):
     id_cliente: int
     rut: str
     tipo_cliente: str
     nombre_o_razon_social: str
-    email: Optional[str]
-    telefono: Optional[str]
+    email: Optional[str] = None
+    telefono: Optional[str] = None
     cliente_activo: bool
     fecha_registro: datetime
     model_config = {"from_attributes": True}
+
+    @model_validator(mode="before")
+    @classmethod
+    def extraer_contacto(cls, v):
+        if isinstance(v, dict):
+            return v
+        emails = list(v.emails) if hasattr(v, "emails") else []
+        telefonos = list(v.telefonos) if hasattr(v, "telefonos") else []
+        return {
+            "id_cliente": v.id_cliente,
+            "rut": v.rut,
+            "tipo_cliente": v.tipo_cliente,
+            "nombre_o_razon_social": v.nombre_o_razon_social,
+            "email": emails[0].email if emails else None,
+            "telefono": next((t.telefono for t in telefonos if t.tipo == "telefono"), None),
+            "cliente_activo": v.cliente_activo,
+            "fecha_registro": v.fecha_registro,
+        }
 
 
 class PolizaIn(BaseModel):
@@ -60,6 +93,10 @@ class PolizaIn(BaseModel):
     prima: Optional[Decimal] = None
     estado: str = "activa"
     origen: Literal["digital", "tradicional"]
+    frecuencia_pago: Optional[str] = None
+    num_cuotas: Optional[int] = None
+    monto_cuota: Optional[Decimal] = None
+    fecha_proximo_pago: Optional[date] = None
 
 
 class PolizaAdminOut(BaseModel):
@@ -74,6 +111,34 @@ class PolizaAdminOut(BaseModel):
     prima: Optional[Decimal]
     estado: str
     origen: str
+    frecuencia_pago: Optional[str]
+    num_cuotas: Optional[int]
+    monto_cuota: Optional[Decimal]
+    fecha_proximo_pago: Optional[date]
+    model_config = {"from_attributes": True}
+
+
+class PagoIn(BaseModel):
+    numero_cuota: int
+    monto: Decimal
+    fecha_vencimiento: date
+    fecha_pago: Optional[date] = None
+    estado: str = "pendiente"
+    metodo_pago: Optional[str] = None
+    referencia_transaccion: Optional[str] = None
+
+
+class PagoAdminOut(BaseModel):
+    id_pago: int
+    poliza_id: int
+    numero_cuota: int
+    monto: Decimal
+    fecha_vencimiento: date
+    fecha_pago: Optional[date]
+    estado: str
+    metodo_pago: Optional[str]
+    referencia_transaccion: Optional[str]
+    fecha_registro: datetime
     model_config = {"from_attributes": True}
 
 

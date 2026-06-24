@@ -24,7 +24,7 @@ background:
 color:
 #07195a;
 
-overflow-x:hidden;
+overflow-x:clip; /* clip en lugar de hidden para no romper position: sticky */
 
 -webkit-font-smoothing:antialiased;
 

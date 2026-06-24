@@ -1,7 +1,9 @@
 import Header from "../components/Header";
-import Hero from "../components/Hero";
+import "../styles/pages/Home.css";
+import PromoCarrusel from "../components/PromoCarrusel";
 import Purpose from "../components/Purpose";
 import WhyChooseUs from "../components/WhyChooseUs";
+import Testimonials from "../components/Testimonials";
 import InsurancePartners from "../components/InsurancePartners";
 import Footer from "../components/Footer";
 
@@ -10,11 +12,13 @@ function Home() {
     <>
       <Header />
 
-      <Hero />
+      <PromoCarrusel />
 
       <Purpose />
 
       <WhyChooseUs />
+
+      <Testimonials />
 
       <InsurancePartners />
 

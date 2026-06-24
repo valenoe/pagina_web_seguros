@@ -1,4 +1,4 @@
-import "./App.css";
+import "./styles/global.css";
 import Router from "./routes/Router";
 import WhatsAppButton from "./components/WhatsAppButton";
 

@@ -1,0 +1,186 @@
+/* ==========================
+   POLÍTICA PRIVACIDAD
+========================== */
+
+.legal-premium-page {
+  background: #f3f6fb;
+  /* el header fijo ya está compensado por .header-spacer (95px);
+     como el hero es una tarjeta sobre fondo gris, arriba va solo
+     un respiro mínimo para que no se vea hueco vacío */
+  padding: clamp(16px, 2.5vw, 32px) clamp(16px, 4vw, 30px) clamp(32px, 5vw, 60px);
+}
+
+.legal-hero {
+  max-width: 1300px;
+  margin: auto;
+  margin-bottom: 30px;
+  padding: clamp(28px, 5vw, 60px);
+  border-radius: 34px;
+  background:
+    linear-gradient(135deg, rgba(7, 25, 90, 0.96), rgba(3, 19, 68, 0.88)),
+    url("/Fondo-login.png");
+  background-size: cover;
+  background-position: center;
+  color: white;
+  box-shadow: 0 30px 80px rgba(7, 25, 90, 0.18);
+}
+
+.legal-hero span {
+  display: inline-flex;
+  padding: 10px 18px;
+  background: #f47c20;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 22px;
+  text-transform: uppercase;
+}
+
+.legal-hero h1 {
+  font-size: clamp(34px, 6vw, 64px);
+  line-height: 1.05;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.legal-hero p {
+  max-width: 850px;
+  font-size: 18px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.legal-hero small {
+  display: block;
+  margin-top: 20px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.legal-layout {
+  max-width: 1300px;
+  margin: auto;
+  display: grid;
+  /* el índice encoge (290→200px) antes de colapsar a 1 columna en ≤700px */
+  grid-template-columns: clamp(200px, 24vw, 290px) 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.legal-index {
+  position: sticky;
+  top: 120px;
+  background: white;
+  padding: 28px;
+  border-radius: 30px;
+  box-shadow: 0 18px 50px rgba(7, 25, 90, 0.08);
+}
+
+.legal-index h3 {
+  color: #07195a;
+  margin-bottom: 18px;
+}
+
+.legal-index a {
+  display: block;
+  padding: 14px;
+  border-radius: 14px;
+  text-decoration: none;
+  font-weight: 700;
+  color: #526072;
+}
+
+.legal-index a:hover {
+  background: #f3f6fb;
+  color: #07195a;
+}
+
+.legal-document {
+  background: white;
+  padding: clamp(24px, 4vw, 60px);
+  border-radius: 34px;
+  /* permite que la columna del grid baje de su min-content;
+     break-word evita que el correo largo trabe el ancho */
+  min-width: 0;
+  overflow-wrap: break-word;
+  box-shadow: 0 22px 70px rgba(7, 25, 90, 0.08);
+}
+
+.legal-document section {
+  padding-bottom: 42px;
+  margin-bottom: 42px;
+  border-bottom: 1px solid #edf1f7;
+  /* compensa el header fijo (95px) al saltar a un ancla del índice */
+  scroll-margin-top: 115px;
+}
+
+.legal-document section:last-child {
+  margin-bottom: 0;
+  border: none;
+}
+
+.legal-document h2 {
+  font-size: clamp(24px, 3.5vw, 34px);
+  color: #07195a;
+  margin-bottom: 20px;
+}
+
+.legal-document p {
+  line-height: 2;
+  color: #526072;
+  font-size: 17px;
+}
+
+.legal-document ul {
+  margin-top: 18px;
+  padding-left: 25px;
+}
+
+.legal-document li {
+  margin-bottom: 12px;
+  line-height: 1.9;
+  color: #526072;
+}
+
+.legal-document strong {
+  color: #07195a;
+}
+
+.legal-contact-box {
+  background: linear-gradient(135deg, #07195a, #031344);
+  padding: 40px !important;
+  border-radius: 24px;
+}
+
+.legal-contact-box h2,
+.legal-contact-box p,
+.legal-contact-box strong,
+.legal-contact-box span {
+  color: white;
+}
+
+.legal-contact-box strong,
+.legal-contact-box span {
+  display: block;
+  margin-top: 10px;
+}
+
+@media (max-width: 700px) {
+  .legal-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .legal-index {
+    position: relative;
+    top: auto;
+  }
+
+  .legal-hero,
+  .legal-document {
+    border-radius: 22px;
+  }
+
+  .legal-contact-box {
+    padding: 24px !important;
+  }
+}
