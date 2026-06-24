@@ -152,6 +152,30 @@ Archivo: `backend-web-seguros/.env` (basado en `.env.example`)
 
 ---
 
+## Frontend — organización y convenciones
+
+### Estilos (CSS)
+
+- Un archivo de estilos **por página/componente** en `frontend-web-seguros/src/styles/` (`pages/` y `components/`), más `global.css` con el reset, las variables de color (`--pc-blue`, `--pc-orange`, …) y la tipografía. No hay un `App.css` monolítico.
+
+### Responsividad
+
+- **`clamp()`** para todo lo que escala de forma continua: tamaños de fuente, paddings y gaps. Evita acumular breakpoints solo para achicar valores (p. ej. `font-size: clamp(30px, 5vw, 50px)`).
+- **`@media`** solo para cambios de *layout* (columnas que colapsan, `flex-direction`, ocultar/mostrar). Breakpoints objetivo: `≤1000px` (tablet) y `≤700px` (móvil).
+- **`grid-template-columns: repeat(auto-fit, minmax(Npx, 1fr))`** para grillas que se reacomodan solas, sin un breakpoint fijo.
+- En grids de 2 columnas con inputs, `minmax(0, …)` + `min-width: 0` para evitar desbordes por el ancho mínimo de los campos.
+
+### Datos compartidos
+
+- `src/data/regionesComunas.js`: lista estática de **regiones y comunas de Chile** (16 regiones). La consumen el **Cotizador** y el **Registro** (selects dependientes región → comuna). Editar ese archivo actualiza ambos formularios.
+
+### Formularios
+
+- Validación en **cliente** por campo (mensaje de error bajo cada input) y en **backend** con Pydantic (`max_length`, formato de email, etc.).
+- `PhoneInput` (`src/components/`): selector de código de país + número, con opción **"Otro…"** para códigos que no estén en la lista.
+
+---
+
 ## Base de datos — Tablas principales
 
 | Tabla | Descripción |
