@@ -286,13 +286,13 @@ La rama de Matías **se separó ANTES de la migración de CSS**: trae de vuelta 
 - 📊 **Dashboard: traer de Matías** → `Dashboard.jsx`, `DetalleSeguro.jsx`, `PerfilClientes.jsx`.
 - 🆕 **Features nuevas suyas: traer** → `components/ChatBot.jsx`, `knowledge/corredinKnowledge.js`, `services/corredinService.js`, + imágenes nuevas de `public/`.
 
-### ✅ Hecho en esta sesión (rama `integracion-dashboard`, sin commitear)
+### ✅ Hecho (rama `integracion-dashboard`)
 
 - Traídos los archivos del dashboard + chatbot + imágenes de `public/`.
 - **Fix de estilos del dashboard:** sus 3 páginas (`Dashboard.jsx`, `DetalleSeguro.jsx`, `PerfilClientes.jsx`) **no importaban ningún CSS** (dependían del `App.css` global de él). Se les agregó el import correcto: `PortalDashboard.css`, `DetalleSeguro.css`, `PerfilCliente.css` respectivamente. `PortalDashboard.css` ya cubre ~80% de las clases (65/81); el usuario copió a mano las que faltaban (modal de beneficios `pc-beneficio-modal-*`).
 - **El build pasa sin errores** (`npm run build`) → `services/api.js` de main ya tiene las funciones que usa el `Dashboard.jsx` de Matías. **No** hizo falta merge de api.js.
 
-### ✅ Hecho — sesión 2026-06-24 (sin commitear)
+### ✅ Hecho — sesión 2026-06-24
 
 - **ChatBot montado.** Agregado `import ChatBot` + `<ChatBot />` en `src/App.jsx` (junto a `<WhatsAppButton />`). Ya se renderiza.
 - **Estilos del ChatBot recuperados.** Las clases `corredin-*` NO existían en el repo (estaban solo en el App.css de Matías, que no trajimos). Se extrajo el bloque desde `App_MATI.css` **líneas 5599–6021** → nuevo archivo `src/styles/components/ChatBot.css`, importado en `ChatBot.jsx`. (OJO: NO incluir las líneas 6023+ → esas son `pc-beneficio-modal-*`, que ya están en `PortalDashboard.css`.) Las variables `--pc-blue/-dark/-orange` que usa ya están en `global.css`.
@@ -374,9 +374,27 @@ La rama de Matías **se separó ANTES de la migración de CSS**: trae de vuelta 
 
    **🔜 Plan acordado (2026-07-02):** **extraer las vistas que faltan y DESPUÉS pasar el CSS a archivos propios** (como se hizo con Mis Seguros). Empezando por **Cuotas**.
 
-   **📍 Estado del monolito (Dashboard.jsx ≈ 3.461 líneas):**
-   - **Extraídas a `pages/dashboard/`:** `MisSeguros` ✅ (revisada a fondo), `Cuotas` ✅ (extraída y montada como **3ª pestaña de Mis Seguros**, no vista aparte; build pasa, **falta verificar en navegador + pasada de CSS**), `ReportarSiniestro` 🟡 (falta verificar en navegador), `ClubBeneficios` (`Club-PC`) 🟡 (falta verificar en navegador).
-   - **Aún inline (por extraer + revisar):** `perfil` (~1.100 líneas, la más grande), `cotizaciones`/Explorar Seguros (~780), `resumen`/Inicio (~200, **dejar para el final** — la más acoplada), `polizas` (~40).
+   **📍 Estado del monolito (Dashboard.jsx ≈ 1.288 líneas):**
+   - **Extraídas a `pages/dashboard/`:** `MisSeguros` ✅ (revisada a fondo), `Cuotas` ✅ (3ª pestaña de Mis Seguros con estilo de Documentos; buscador con lupita), `ExplorarSeguros` ✅ (build pasa, **falta verificar en navegador + CSS**), `Perfil` ✅ (recién extraída, build pasa, **falta verificar en navegador + CSS**), `ReportarSiniestro` 🟡 (falta verificar en navegador), `ClubBeneficios` (`Club-PC`) 🟡 (falta verificar en navegador).
+   - **Aún inline (por extraer + revisar):** `resumen`/Inicio (~200, **la última** — es la portada, la más acoplada), `polizas` (~40).
+
+   **✅ Hecho — extracción de Perfil (sesión 2026-07-02):** Nuevo **`src/pages/dashboard/Perfil.jsx`** (1.152 líneas: datos personales, avatar, cambio de clave con OTP simulado, preferencias de notificación). **AUTOCONTENIDO**: se movieron 9 `useState` exclusivos (editandoPerfil, modalClaveAbierto, pasoClave, codigoSeguridad, codigoIngresado, nuevaClave, confirmarClave, mensajePerfil, preferenciasPerfil). Los helpers del render ya eran locales al IIFE → se movieron con el render. Solo **5 props compartidas**: `datosPerfil`/`setDatosPerfil`, `avatarPerfil`/`setAvatarPerfil`, `nombreCliente` (alimentan también header/saludo/avatar). Extracción por cirugía Node. Dashboard **2.404 → 1.288**. Build pasa, sin huérfanos, sin refs del padre.
+
+   **🔤 Slug de URL:** la vista `cotizaciones` se renombró a **`explora`** (URL `/clientes/dashboard/explora`) en los 7 puntos donde era key de vista (VISTAS_PERMITIDAS, `setVista(...)`, `vista === ...`, y `volverAlPortal` de DetalleSeguro). NO se tocó la variable de datos `cotizaciones` (cotizaciones del cliente) ni `getMisCotizaciones`.
+
+   **🎉 Acumulado de la división:** Dashboard **7.647 → 1.288** líneas. Extraídos: Club, Reportar Siniestro, Mis Seguros (+ Cuotas y Pólizas como pestañas), Explorar Seguros, Perfil.
+
+   **✅ Perfil a CSS propio:** nuevo `styles/pages/Perfil.css` (clases `perfil-*`), `Perfil.jsx` sin estilos inline. Conversión 1:1. **Responsividad de Perfil: PENDIENTE** (quedó sin media queries).
+
+   **✅ DECISIÓN — Inicio se queda en Dashboard:** NO se extrae `resumen`/Inicio; es la portada/hub, se deja inline en el monolito a propósito (lo pidió la usuaria).
+
+   **✅ Hecho — vista huérfana `polizas` → pestaña "Pólizas" de Mis Seguros (sesión 2026-07-02):** `polizas` era **código muerto** (en VISTAS_PERMITIDAS pero nada navegaba a ella, solo por URL). Se **eliminó** y se **reconvirtió en la 1ª pestaña de Mis Seguros: "Pólizas"** (seguros contratados: seguro/categoría, número, compañía, estado, vencimiento) con el estilo de Documentos (tira compacta + buscador + tabla `ms-cols-pol` con scroll + estado vacío). Sin props nuevas (usa `polizasNormalizadas`; +1 `useState` local para el buscador). **Default de `tabMisSeguros` → `polizas`**; los botones de Inicio "Ver todas"/"Revisar mis seguros" abren esa pestaña. Mis Seguros = **4 pestañas: Pólizas · Documentos · Beneficiarios · Pagos y cuotas.** Build pasa.
+   - **⚠️ Pendiente (descripción de la póliza):** la "descripción general del seguro" saldrá de **NUESTRA BD** (`web_seguros_catalogo` / `GET /seguros/`) matcheando la póliza con el catálogo — **el broker NO tiene esa sección**. Por ahora la pestaña va sin descripción.
+
+   **Pendiente de CSS propio:** **Explorar Seguros** y **Cuotas** (se extrajeron con estilos inline).
+
+   **✅ Hecho — extracción de Explorar Seguros (`cotizaciones`) (sesión 2026-07-02):** Nuevo **`src/pages/dashboard/ExplorarSeguros.jsx`** (1.064 líneas: catálogo con carrusel filtrable + detalle con formulario de cotización compacta WhatsApp/correo). **AUTOCONTENIDO**: TODO era exclusivo de esta vista → se movieron 6 `useState` (seguroDetalleId, seguroSlide, filtroSeguros, ordenSeguros, segurosPorVista, cotizacionCompacta), los 2 `useEffect` (resize→segurosPorVista, reset de slide), el catálogo hardcodeado `segurosDisponibles` (8 seguros), 6 derivaciones del carrusel y ~11 funciones. Solo **4 props compartidas**: `cotizaciones`, `nombreCliente`, `abrirWhatsApp`, `formatearFecha`. En `abrirDetalleCotizacion` se quitó el `setVista("cotizaciones")` (ya redundante dentro de la vista). Extracción por **cirugía con Node** (bloques interleaved con derivaciones de otras vistas). Dashboard **3.461 → 2.404**. Build pasa, sin huérfanos, sin refs del padre. Sigue con estilos inline (CSS a futuro).
+   - **Menú:** se eliminó el ítem duplicado **"Explorar Seguros"** del sidebar (lo había agregado la usuaria); el botón **"Conoce más"** de la promo ya lleva a la misma vista `cotizaciones`.
 
    **✅ Hecho — extracción de Cuotas + integrada como PESTAÑA de Mis Seguros (sesión 2026-07-02):** Nuevo **`src/pages/dashboard/Cuotas.jsx`** ("Pagos y cuotas"). **AUTOCONTENIDO**: `normalizarPago`, `pagosNormalizados/Pendientes/Realizados`, `montoPendiente`, `proximoPago` e `iniciarPago` eran exclusivos de cuotas → se MOVIERON al componente (del padre se borraron 81 líneas). Recibe 8 props: `pagos` (state crudo, sigue en el padre porque el fetch está en el `Promise.allSettled`), `polizasNormalizadas` (derivación compartida), y los helpers `normalizarEstado`/`formatearMoneda`/`formatearFecha`/`textoEstado`/`abrirWhatsApp`/`setVista`. Extraído **con los estilos inline tal cual** (CSS propio queda para la pasada de CSS).
    - **DECISIÓN (usuaria):** Pagos y cuotas **NO es una vista/página aparte** → es la **3ª pestaña dentro de la carpeta Mis Seguros** (Documentos · Beneficiarios · **Pagos y cuotas**). Por eso: se quitó `"cuotas"` de `VISTAS_PERMITIDAS` y el bloque `{vista === "cuotas"}` del padre; `Cuotas` ahora se importa y renderiza **dentro de `MisSeguros.jsx`** (pestaña `cuotas`); su root dejó de ser `pc-panel pc-full-panel` (pasó a fragment, sin `<h2>` — el cuerpo de la carpeta ya es el panel). `MisSeguros` recibe 3 props extra (`pagos`, `polizasNormalizadas`, `formatearMoneda`) y las reenvía a `Cuotas`. El botón "Realizar pago" de Inicio pasó de `setVista("cuotas")` a `abrirMisSeguros("cuotas")` (abre Mis Seguros en esa pestaña). Etiqueta corta móvil: `Pagos`.

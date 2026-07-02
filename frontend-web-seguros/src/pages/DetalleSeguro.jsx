@@ -61,7 +61,7 @@ function DetalleSeguro() {
   }
 
   function volverAlPortal() {
-    navigate("/clientes/dashboard/cotizaciones");
+    navigate("/clientes/dashboard/explora");
   }
 
   function enviarSolicitud(e) {

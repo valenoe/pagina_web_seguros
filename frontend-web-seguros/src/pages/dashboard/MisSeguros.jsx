@@ -1,10 +1,11 @@
+import { useState } from "react";
 import "../../styles/pages/PortalDashboard.css";
 import "../../styles/pages/MisSeguros.css";
 import Cuotas from "./Cuotas";
 
 /**
- * Mis Seguros — vista del portal del cliente con 2 pestanas:
- * Beneficiarios y Documentos.
+ * Mis Seguros — vista del portal del cliente con 4 pestanas:
+ * Pólizas, Documentos, Beneficiarios y Pagos y cuotas.
  *
  * (La pestana Coberturas se elimino: para una corredora las coberturas exactas
  * las define la aseguradora y viven en el PDF de la poliza -> pestana Documentos.
@@ -50,6 +51,29 @@ function MisSeguros({
   setVista,
   abrirWhatsApp,
 }) {
+  const [busquedaPolizas, setBusquedaPolizas] = useState("");
+
+  const polizasActivas = polizasNormalizadas.filter((p) =>
+    ["vigente", "activa"].includes(p.estado),
+  ).length;
+  const companiasPolizas = new Set(
+    polizasNormalizadas.map((p) => p.compania).filter(Boolean),
+  ).size;
+  const proximaPolizaVenc = [...polizasNormalizadas]
+    .filter((p) => p.fecha_vencimiento)
+    .sort(
+      (a, b) => new Date(a.fecha_vencimiento) - new Date(b.fecha_vencimiento),
+    )[0];
+
+  const qPolizas = busquedaPolizas.toLowerCase().trim();
+  const polizasFiltradas = polizasNormalizadas.filter(
+    (p) =>
+      !qPolizas ||
+      p.seguro.toLowerCase().includes(qPolizas) ||
+      String(p.numero_poliza).toLowerCase().includes(qPolizas) ||
+      p.compania.toLowerCase().includes(qPolizas),
+  );
+
   return (
     <div className="pc-panel pc-full-panel">
       <div className="pc-panel-title ms-head">
@@ -62,7 +86,7 @@ function MisSeguros({
           <button
             type="button"
             className="ms-btn ms-btn--primary"
-            onClick={() => setVista("cotizaciones")}
+            onClick={() => setVista("explora")}
           >
             Explorar seguros
           </button>
@@ -81,6 +105,7 @@ function MisSeguros({
 
       <div className="ms-tabs">
         {[
+          ["polizas", "Pólizas", "Pól"],
           ["documentos", "Documentos", "Doc"],
           ["beneficiarios", "Beneficiarios", "Ben"],
           ["cuotas", "Pagos y cuotas", "Pagos"],
@@ -98,6 +123,77 @@ function MisSeguros({
       </div>
 
       <div className="ms-folder-body">
+      {tabMisSeguros === "polizas" && (
+        <div>
+          <div className="ms-stats-strip">
+            <span>
+              <strong>{polizasNormalizadas.length}</strong>Pólizas
+            </span>
+            <span>
+              <strong>{polizasActivas}</strong>Activas
+            </span>
+            <span>
+              <strong>{companiasPolizas}</strong>Compañías
+            </span>
+            <span>
+              <strong>
+                {proximaPolizaVenc
+                  ? formatearFecha(proximaPolizaVenc.fecha_vencimiento)
+                  : "—"}
+              </strong>
+              Próximo vencimiento
+            </span>
+          </div>
+
+          <div className="ms-filters ms-filters-pol">
+            <input
+              type="text"
+              className="ms-input ms-input--search"
+              value={busquedaPolizas}
+              onChange={(e) => setBusquedaPolizas(e.target.value)}
+              placeholder="Buscar póliza..."
+            />
+          </div>
+
+          <div className="ms-table">
+            <div className="ms-thead ms-cols-pol">
+              <span>Seguro</span>
+              <span>Número</span>
+              <span>Compañía</span>
+              <span>Estado</span>
+              <span>Vencimiento</span>
+            </div>
+
+            {polizasFiltradas.length === 0 ? (
+              <div className="pc-empty">
+                <h3>No tienes pólizas registradas</h3>
+                <p>
+                  Cuando tengas seguros contratados, aparecerán aquí con su
+                  número, compañía, estado y vencimiento.
+                </p>
+              </div>
+            ) : (
+              polizasFiltradas.map((p) => (
+                <div className="ms-row ms-cols-pol" key={p.id}>
+                  <div className="ms-cell-stack">
+                    <strong>{p.seguro}</strong>
+                    <small>{p.categoria}</small>
+                  </div>
+                  <span className="ms-cell-muted">{p.numero_poliza}</span>
+                  <span className="ms-cell-muted">{p.compania}</span>
+                  <span className={`pc-status ${p.estado}`}>
+                    {textoEstado(p.estado)}
+                  </span>
+                  <span className="ms-cell-muted">
+                    {formatearFecha(p.fecha_vencimiento)}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
       {tabMisSeguros === "beneficiarios" && (
         <div>
           <div className="ms-stats-strip">

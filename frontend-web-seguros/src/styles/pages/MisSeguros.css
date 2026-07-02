@@ -211,6 +211,11 @@
   min-width: 820px;
 }
 
+.ms-cols-pol {
+  grid-template-columns: 1.3fr 1fr 1.1fr 0.8fr 0.9fr;
+  min-width: 640px;
+}
+
 .ms-cell-strong {
   color: var(--pc-blue);
   font-weight: 700;
@@ -249,6 +254,11 @@
 /* Cuotas usa 3 filtros: buscar + seguro + estado */
 .ms-filters-cuotas {
   grid-template-columns: 1.4fr 1fr 1fr;
+}
+
+/* Pólizas usa solo el buscador (a lo ancho) */
+.ms-filters-pol {
+  grid-template-columns: 1fr;
 }
 
 .ms-input,
@@ -353,20 +363,9 @@
   }
 }
 
-@media (max-width: 460px) {
-  .ms-filters {
-    grid-template-columns: 1fr;
-  }
-
-  /* 50/50 aprieta demasiado el texto → los botones vuelven a apilarse */
-  .ms-actions {
-    flex-direction: column;
-  }
-}
-
 /* Muy angosto: las lengüetas ya no caben con el texto completo → se achican
    un poco y pasan a su versión corta (Doc / Ben) para no salirse del cuerpo. */
-@media (max-width: 350px) {
+@media (max-width: 590px) {
   .ms-tab {
     padding: 0 14px;
     font-size: 13px;
@@ -378,5 +377,16 @@
 
   .ms-tab-short {
     display: inline;
+  }
+}
+
+@media (max-width: 460px) {
+  .ms-filters {
+    grid-template-columns: 1fr;
+  }
+
+  /* 50/50 aprieta demasiado el texto → los botones vuelven a apilarse */
+  .ms-actions {
+    flex-direction: column;
   }
 }
