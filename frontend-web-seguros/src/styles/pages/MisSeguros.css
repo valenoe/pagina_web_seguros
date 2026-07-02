@@ -264,6 +264,14 @@
   padding: 0 10px;
 }
 
+/* Buscador: lupita a la izquierda para que se sienta un campo de búsqueda */
+.ms-input--search {
+  padding-left: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%238a97ad' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+}
+
 .ms-select {
   padding: 0 12px;
   background: #ffffff;

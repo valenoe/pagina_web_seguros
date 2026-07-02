@@ -161,7 +161,7 @@ function Cuotas({
         <input
           type="text"
           name="busqueda"
-          className="ms-input"
+          className="ms-input ms-input--search"
           value={filtros.busqueda}
           onChange={actualizarFiltro}
           placeholder="Buscar pago..."

@@ -182,7 +182,7 @@ function MisSeguros({
             <input
               type="text"
               name="busqueda"
-              className="ms-input"
+              className="ms-input ms-input--search"
               value={filtrosDocumentos.busqueda}
               onChange={actualizarFiltroDocumento}
               placeholder="Buscar documento..."
