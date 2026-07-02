@@ -172,14 +172,6 @@ function Dashboard() {
     setSeguroSlide(0);
   }, [filtroSeguros, ordenSeguros, segurosPorVista]);
 
-  useEffect(() => {
-    const intervalo = window.setInterval(() => {
-      setBeneficioSlide((actual) => actual + 1);
-    }, 5000);
-
-    return () => window.clearInterval(intervalo);
-  }, []);
-
   const segurosDisponibles = [
     {
       id: "autos",
