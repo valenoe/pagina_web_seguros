@@ -1,4 +1,15 @@
-const API_URL = "http://localhost:8000";
+export const API_URL = "http://localhost:8000";
+
+// Convierte una foto (URL relativa del backend, data: o http) en algo mostrable
+// por <img src>. El backend devuelve rutas tipo "/uploads/fotos/xxx" → hay que
+// anteponerle el host del backend.
+export function fotoUrl(foto) {
+  if (!foto) return "";
+  if (foto.startsWith("data:") || foto.startsWith("http") || foto.startsWith("blob:")) {
+    return foto;
+  }
+  return `${API_URL}${foto}`;
+}
 
 /* ========================================
 BASE FETCH

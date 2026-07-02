@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { subirFotoPerfil, fotoUrl } from "../../services/api";
 import "../../styles/pages/PortalDashboard.css";
 import "../../styles/pages/Perfil.css";
 
@@ -29,7 +30,7 @@ function Perfil({
   const [codigoIngresado, setCodigoIngresado] = useState("");
   const [nuevaClave, setNuevaClave] = useState("");
   const [confirmarClave, setConfirmarClave] = useState("");
-  const [mensajePerfil, setMensajePerfil] = useState("");
+  const [mensaje, setMensaje] = useState({ texto: "", tipo: "info" });
   const [preferenciasPerfil, setPreferenciasPerfil] = useState({
     email: true,
     whatsapp: true,
@@ -50,38 +51,57 @@ function Perfil({
     setDatosPerfil((actual) => ({ ...actual, [campo]: valor }));
   };
 
+  const mostrarMensaje = (texto, tipo = "info", ms = 4000) => {
+    setMensaje({ texto, tipo });
+    setTimeout(
+      () => setMensaje((m) => (m.texto === texto ? { texto: "", tipo } : m)),
+      ms,
+    );
+  };
+
   const guardarPerfil = () => {
     localStorage.setItem("nombre_cliente", datosPerfil.nombre || "Cliente");
     localStorage.setItem("correo_cliente", datosPerfil.correo || "");
     localStorage.setItem("telefono_cliente", datosPerfil.telefono || "");
     localStorage.setItem("direccion_cliente", datosPerfil.direccion || "");
     setEditandoPerfil(false);
-    setMensajePerfil(
-      "Datos actualizados correctamente. Cuando conectes backend, este cambio quedará guardado en la cuenta.",
-    );
-    setTimeout(() => setMensajePerfil(""), 4200);
+    mostrarMensaje("Datos actualizados correctamente.", "success", 4200);
   };
 
-  const manejarAvatar = (event) => {
+  const manejarAvatar = async (event) => {
     const archivo = event.target.files?.[0];
     if (!archivo) return;
 
-    const lector = new FileReader();
-    lector.onload = () => {
-      const resultado = String(lector.result || "");
-      setAvatarPerfil(resultado);
-      localStorage.setItem("avatar_cliente", resultado);
-      setMensajePerfil("Foto de perfil actualizada correctamente.");
-      setTimeout(() => setMensajePerfil(""), 3600);
-    };
-    lector.readAsDataURL(archivo);
+    const anterior = avatarPerfil;
+    // vista previa inmediata mientras se sube al servidor
+    setAvatarPerfil(URL.createObjectURL(archivo));
+    mostrarMensaje("Subiendo foto...", "info", 10000);
+
+    try {
+      const token = localStorage.getItem("token");
+      const cuenta = await subirFotoPerfil(token, archivo);
+      const url = fotoUrl(cuenta.foto_perfil);
+      setAvatarPerfil(url);
+      localStorage.setItem("avatar_cliente", url);
+      mostrarMensaje(
+        "Foto de perfil actualizada correctamente.",
+        "success",
+        3600,
+      );
+    } catch (error) {
+      setAvatarPerfil(anterior);
+      mostrarMensaje(
+        `No se pudo subir la foto. ${error.message || "Revisa tu conexión con el servidor."}`,
+        "error",
+        5000,
+      );
+    }
   };
 
   const limpiarAvatar = () => {
     setAvatarPerfil("");
     localStorage.removeItem("avatar_cliente");
-    setMensajePerfil("Foto de perfil eliminada.");
-    setTimeout(() => setMensajePerfil(""), 3200);
+    mostrarMensaje("Foto de perfil eliminada.", "info", 3200);
   };
 
   const generarCodigoSeguridad = () => {
@@ -91,34 +111,39 @@ function Perfil({
     setNuevaClave("");
     setConfirmarClave("");
     setPasoClave("codigo");
-    setMensajePerfil(
+    mostrarMensaje(
       `Código de seguridad generado para prueba frontend: ${codigo}`,
+      "info",
+      6500,
     );
-    setTimeout(() => setMensajePerfil(""), 6500);
   };
 
   const validarCodigo = () => {
     if (codigoIngresado.trim() !== codigoSeguridad) {
-      setMensajePerfil("El código ingresado no coincide.");
-      setTimeout(() => setMensajePerfil(""), 3500);
+      mostrarMensaje("El código ingresado no coincide.", "error", 3500);
       return;
     }
 
     setPasoClave("clave");
-    setMensajePerfil("Código validado. Ingresa tu nueva contraseña.");
-    setTimeout(() => setMensajePerfil(""), 3500);
+    mostrarMensaje(
+      "Código validado. Ingresa tu nueva contraseña.",
+      "success",
+      3500,
+    );
   };
 
   const actualizarClave = () => {
     if (nuevaClave.length < 8) {
-      setMensajePerfil("La contraseña debe tener al menos 8 caracteres.");
-      setTimeout(() => setMensajePerfil(""), 3500);
+      mostrarMensaje(
+        "La contraseña debe tener al menos 8 caracteres.",
+        "error",
+        3500,
+      );
       return;
     }
 
     if (nuevaClave !== confirmarClave) {
-      setMensajePerfil("Las contraseñas no coinciden.");
-      setTimeout(() => setMensajePerfil(""), 3500);
+      mostrarMensaje("Las contraseñas no coinciden.", "error", 3500);
       return;
     }
 
@@ -128,10 +153,7 @@ function Perfil({
     setCodigoIngresado("");
     setNuevaClave("");
     setConfirmarClave("");
-    setMensajePerfil(
-      "Contraseña actualizada en modo frontend. Después se conectará al backend con OTP real.",
-    );
-    setTimeout(() => setMensajePerfil(""), 5000);
+    mostrarMensaje("Contraseña actualizada correctamente.", "success", 5000);
   };
 
   const alternarPreferencia = (clave) => {
@@ -181,7 +203,11 @@ function Perfil({
   return (
     <div className="pc-panel pc-full-panel perfil">
       <div className="perfil-wrap">
-        {mensajePerfil && <div className="perfil-mensaje">{mensajePerfil}</div>}
+        {mensaje.texto && (
+          <div className={`perfil-mensaje perfil-mensaje--${mensaje.tipo}`}>
+            {mensaje.texto}
+          </div>
+        )}
 
         <section className="perfil-hero">
           <div className="perfil-hero-info">
@@ -197,23 +223,14 @@ function Perfil({
               <small className="perfil-hero-eyebrow">Mi cuenta</small>
               <h2>{datosPerfil.nombre || nombreCliente}</h2>
               <div className="perfil-chips">
-                {[
-                  `RUT ${rutCliente}`,
-                  "Cliente activo",
-                  "Persona natural",
-                  "Backend ready",
-                ].map((item) => (
-                  <span key={item} className="perfil-chip">
-                    {item}
-                  </span>
-                ))}
+                <span className="perfil-chip">RUT {rutCliente}</span>
               </div>
             </div>
           </div>
 
           <div className="perfil-hero-actions">
             <label className="perfil-btn-foto">
-              Subir foto
+              {avatarPerfil ? "Cambiar foto" : "Subir foto"}
               <input type="file" accept="image/*" onChange={manejarAvatar} />
             </label>
 
@@ -237,23 +254,6 @@ function Perfil({
               {editandoPerfil ? "Guardar cambios" : "Editar perfil"}
             </button>
           </div>
-        </section>
-
-        <section className="perfil-stats">
-          {[
-            ["Último acceso", "Hoy", "Portal clientes"],
-            ["Estado", "Activo", "Cliente Prieto & Correa"],
-            ["Seguridad", "Protegida", "Código para cambios sensibles"],
-            ["Notificaciones", "Activas", "Preferencias configurables"],
-          ].map(([titulo, valor, bajada]) => (
-            <article key={titulo} className="perfil-stat">
-              <small>{titulo}</small>
-              <strong className={valor === "Activo" ? "is-activo" : ""}>
-                {valor}
-              </strong>
-              <span>{bajada}</span>
-            </article>
-          ))}
         </section>
 
         <section className="perfil-grid">
@@ -342,35 +342,6 @@ function Perfil({
               >
                 Cambiar contraseña
               </button>
-            </article>
-
-            <article className="perfil-card">
-              <h3 className="perfil-card-title">Sesiones y actividad</h3>
-
-              {[
-                ["Inicio de sesión", "Hoy · Portal clientes"],
-                ["Actualización de perfil", "Pendiente backend"],
-                ["Cambio de contraseña", "Requiere código"],
-              ].map(([titulo, texto]) => (
-                <div key={titulo} className="perfil-list-item">
-                  <strong className="perfil-list-title">{titulo}</strong>
-                  <span className="perfil-list-sub">{texto}</span>
-                </div>
-              ))}
-            </article>
-
-            <article className="perfil-card">
-              <h3 className="perfil-card-title">Privacidad y documentos</h3>
-              {[
-                "Política de privacidad",
-                "Términos del portal",
-                "Consentimiento de datos",
-              ].map((item) => (
-                <div key={item} className="perfil-list-item">
-                  <strong className="perfil-list-title">{item}</strong>
-                  <span className="perfil-list-sub">Disponible próximamente</span>
-                </div>
-              ))}
             </article>
           </aside>
         </section>

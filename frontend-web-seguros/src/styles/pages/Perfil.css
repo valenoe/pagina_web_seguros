@@ -14,15 +14,49 @@
   gap: 12px;
 }
 
-/* Mensaje de estado */
+/* Mensaje de estado — toast flotante (no empuja el layout) + color por tipo */
 .perfil-mensaje {
-  background: rgba(244, 124, 32, 0.12);
-  color: var(--pc-blue);
-  border: 1px solid rgba(244, 124, 32, 0.24);
+  position: fixed;
+  top: 84px;
+  right: 24px;
+  z-index: 200;
+  max-width: 360px;
+  border: 1px solid;
   border-radius: 14px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   font-size: 12px;
   font-weight: 850;
+  box-shadow: 0 16px 40px rgba(7, 25, 90, 0.18);
+  animation: perfil-toast-in 0.2s ease;
+}
+
+@keyframes perfil-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.perfil-mensaje--success {
+  background: #ecfdf3;
+  color: #067647;
+  border-color: #a6f4c5;
+}
+
+.perfil-mensaje--error {
+  background: #fef3f2;
+  color: #b42318;
+  border-color: #fecdca;
+}
+
+.perfil-mensaje--info {
+  background: rgba(244, 124, 32, 0.12);
+  color: var(--pc-blue);
+  border-color: rgba(244, 124, 32, 0.24);
 }
 
 /* ── Hero (cabecera azul) ── */
@@ -161,46 +195,6 @@
 
 .perfil-btn-block {
   width: 100%;
-}
-
-/* ── Stats (4 tarjetas) ── */
-.perfil-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.perfil-stat {
-  background: #ffffff;
-  border-radius: 17px;
-  padding: 14px;
-  border: 1px solid rgba(7, 25, 90, 0.08);
-}
-
-.perfil-stat small {
-  display: block;
-  color: #667085;
-  font-size: 10px;
-  font-weight: 950;
-  text-transform: uppercase;
-}
-
-.perfil-stat strong {
-  display: block;
-  margin-top: 5px;
-  color: var(--pc-blue);
-  font-size: 20px;
-  font-weight: 950;
-}
-
-.perfil-stat strong.is-activo {
-  color: #15803d;
-}
-
-.perfil-stat span {
-  color: #667085;
-  font-size: 11px;
-  font-weight: 750;
 }
 
 /* ── Grid principal ── */
@@ -373,27 +367,6 @@
   display: block;
 }
 
-/* Lista de items (sesiones, privacidad) */
-.perfil-list-item {
-  background: #f5f7fb;
-  border-radius: 13px;
-  padding: 10px 11px;
-  margin-bottom: 8px;
-}
-
-.perfil-list-title {
-  display: block;
-  color: var(--pc-blue);
-  font-size: 12px;
-  font-weight: 950;
-}
-
-.perfil-list-sub {
-  color: #667085;
-  font-size: 11px;
-  font-weight: 750;
-}
-
 /* ── Modal cambio de contraseña ── */
 .perfil-modal-overlay {
   position: fixed;
@@ -476,4 +449,51 @@
   padding: 12px;
   font-weight: 900;
   outline: none;
+}
+
+/* ── Responsivo ── */
+
+/* ≤1000px: la sidebar pasa a cajón → el contenido ocupa todo el ancho.
+   El aside baja bajo la columna principal y los stats pasan a 2 columnas. */
+@media (max-width: 1000px) {
+  .perfil {
+    width: 100%;
+    padding: 14px;
+  }
+
+  .perfil-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ≤700px: el hero apila info y acciones; datos y preferencias a 1 columna. */
+@media (max-width: 700px) {
+  .perfil-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .perfil-hero-actions {
+    width: 100%;
+  }
+
+  .perfil-datos-grid,
+  .perfil-prefs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ≤460px: título del hero más chico. */
+@media (max-width: 460px) {
+  .perfil-hero h2 {
+    font-size: 24px;
+  }
+
+  /* el aviso flotante ocupa el ancho (con margen) para no salirse en móvil */
+  .perfil-mensaje {
+    left: 12px;
+    right: 12px;
+    top: 76px;
+    max-width: none;
+  }
 }

@@ -7,6 +7,7 @@ import ReportarSiniestro from "./dashboard/ReportarSiniestro";
 import ExplorarSeguros from "./dashboard/ExplorarSeguros";
 import Perfil from "./dashboard/Perfil";
 import {
+  fotoUrl,
   getMiCuenta,
   getMisAlertas,
   getMisBeneficiarios,
@@ -212,8 +213,9 @@ function Dashboard() {
             cuenta.cliente?.foto_perfil;
 
           if (fotoCuenta) {
-            setAvatarPerfil(fotoCuenta);
-            localStorage.setItem("avatar_cliente", fotoCuenta);
+            const urlCuenta = fotoUrl(fotoCuenta);
+            setAvatarPerfil(urlCuenta);
+            localStorage.setItem("avatar_cliente", urlCuenta);
           }
         }
 
@@ -716,54 +718,14 @@ Estado: ${documento.estado}`);
             <span />
           </button>
 
-          <div
-            className="pc-header-greeting"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setVista("perfil")}
-              title="Ir a Mi Cuenta"
-              style={{
-                width: "54px",
-                height: "54px",
-                border: "3px solid #ffffff",
-                borderRadius: "999px",
-                background: "#eef3ff",
-                boxShadow: "0 12px 28px rgba(7, 25, 90, 0.12)",
-                overflow: "hidden",
-                display: "grid",
-                placeItems: "center",
-                color: "#07195a",
-                fontWeight: 900,
-                fontSize: "18px",
-                flexShrink: 0,
-              }}
-            >
-              {avatarPerfil ? (
-                <img
-                  src={avatarPerfil}
-                  alt={`Foto de ${nombreVisible}`}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                />
-              ) : (
-                <span>{inicialVisible}</span>
-              )}
-            </button>
-
-            <div>
-              <h1>¡Hola, {nombreVisible}!</h1>
-              <p>Nos alegra tenerte de vuelta.</p>
+          {vista !== "perfil" && (
+            <div className="pc-header-greeting">
+              <div>
+                <h1>¡Hola, {nombreVisible}!</h1>
+                <p>Nos alegra tenerte de vuelta.</p>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="pc-header-user" style={{ position: "relative" }}>
             <button
@@ -895,6 +857,7 @@ Estado: ${documento.estado}`);
               </div>
             )}
 
+            {vista !== "perfil" && (
             <div
               style={{
                 display: "grid",
@@ -955,6 +918,7 @@ Estado: ${documento.estado}`);
                 Editar perfil
               </button>
             </div>
+            )}
           </div>
         </header>
 
