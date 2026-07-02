@@ -1,0 +1,352 @@
+/* Mis Seguros — estilos propios de la vista (Beneficiarios / Documentos).
+   Extraídos de los estilos inline del JSX para poder revisarlos completos.
+   Las clases compartidas con el resto del portal (pc-panel, pc-full-panel,
+   pc-panel-title, pc-empty, pc-status) siguen en PortalDashboard.css. */
+
+/* Tira compacta de totales — reemplaza los 4 cuadros grandes (solo informativa) */
+.ms-stats-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px clamp(14px, 3vw, 26px);
+  padding: 12px clamp(12px, 2.5vw, 18px);
+  margin-bottom: 14px;
+  background: #f5f7fb;
+  border: 1px solid var(--pc-border);
+  border-radius: 14px;
+}
+
+.ms-stats-strip span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--pc-muted);
+  white-space: nowrap;
+}
+
+.ms-stats-strip strong {
+  color: var(--pc-blue);
+  font-size: 17px;
+  font-weight: 900;
+}
+
+/* ── Encabezado: título/descripción a la izquierda, acciones a la derecha ── */
+.ms-head {
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.ms-head h2 {
+  margin-bottom: 6px;
+}
+
+.ms-head p {
+  margin: 0;
+  color: #667085;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* Botones de acción: apilados a la derecha en desktop */
+.ms-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.ms-btn {
+  min-height: 42px;
+  border-radius: 12px;
+  padding: 0 18px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 1px 5px rgba(7, 25, 90, 0.08);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.ms-btn--primary {
+  border: 1px solid var(--pc-blue);
+  background: var(--pc-blue);
+  color: #ffffff;
+}
+
+.ms-btn--outline {
+  border: 1px solid #c3d0e6;
+  background: #ffffff;
+  color: var(--pc-blue);
+}
+
+/* Hover unificado para ambos botones: fondo oscuro + letras blancas */
+.ms-btn:hover {
+  background: var(--pc-blue-dark);
+  border-color: var(--pc-blue-dark);
+  color: #ffffff;
+}
+
+/* ── Pestañas tipo carpeta ── */
+/* Las pestañas se apoyan sobre el cuerpo (.ms-folder-body): la activa se
+   "pega" al cuerpo (mismo borde, sin borde inferior) y la inactiva queda
+   detrás, en plomo, un poco más oscura pero legible. */
+.ms-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  flex-wrap: nowrap;
+  margin-bottom: 0;
+  /* Acoplado con el radius de .ms-folder-body: ambos encogen a la par para que
+     la lengüeta calce con la curva del cuerpo. */
+  padding: 0 15px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Inactiva: plomo suave, más baja → se ve "atrás". Suave para que NO parezca
+   deshabilitada, pero con texto legible. */
+.ms-tab {
+  height: 40px;
+  padding: 0 clamp(14px, 3.5vw, 26px);
+  border: 1px solid #cfd6e2;
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  margin-bottom: -1px;
+  background: #e6eaf2;
+  color: #6b7690;
+  font-weight: 900;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.ms-tab:hover:not(.is-active) {
+  background: #dbe1ec;
+  color: #4a5674;
+}
+
+/* Etiqueta corta (Doc / Ben): oculta salvo en pantallas muy angostas */
+.ms-tab-short {
+  display: none;
+}
+
+/* Activa: blanca y brillante, un poco más alta y con leve elevación → se ve
+   "adelante" y se conecta sin costura con el cuerpo blanco de la carpeta. */
+.ms-tab.is-active {
+  height: 46px;
+  background: #ffffff;
+  border-color: #c8cfdb;
+  color: var(--pc-blue);
+  position: relative;
+  z-index: 2;
+  /*box-shadow: 0 -1px 5px 0 rgba(7, 25, 90, 0.08);*/
+}
+
+/* Cuerpo de la carpeta: contiene el resumen, filtros y tabla de la pestaña
+   activa. Esquinas redondeadas (la curvita de la unión). La tabla interior
+   pierde su borde propio para no duplicarlo. */
+.ms-folder-body {
+  border: 1px solid #c8cfdb;
+  /* Acoplado con el padding de .ms-tabs (arriba): mismo rango para que la
+     curva calce con el inset de las lengüetas al encoger. */
+  border-radius: 16px;
+  background: #ffffff;
+  padding: clamp(12px, 2.5vw, 18px);
+}
+
+.ms-folder-body .ms-table {
+  border: none;
+  border-radius: 0;
+}
+
+/* ── Tabla: scroll horizontal en pantallas chicas (no se deforma) ── */
+.ms-table {
+  border: 1px solid #e6ebf2;
+  border-radius: 18px;
+  overflow-x: auto;
+  background: #ffffff;
+}
+
+.ms-thead,
+.ms-row {
+  display: grid;
+  gap: 10px;
+  padding: 12px 16px;
+}
+
+.ms-thead {
+  background: #f5f7fb;
+  color: var(--pc-blue);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.ms-row {
+  align-items: center;
+  border-top: 1px solid #eef2f7;
+  font-size: 13px;
+}
+
+/* Plantillas de columnas por tabla + ancho mínimo que dispara el scroll */
+.ms-cols-ben {
+  grid-template-columns: 1.2fr 0.85fr 0.9fr 1.25fr 0.55fr 0.75fr;
+  min-width: 660px;
+}
+
+.ms-cols-doc {
+  grid-template-columns: 1.2fr 1.35fr 0.75fr 0.8fr 0.75fr 1fr;
+  min-width: 720px;
+}
+
+.ms-cell-strong {
+  color: var(--pc-blue);
+  font-weight: 700;
+}
+
+.ms-cell-muted {
+  color: #475467;
+}
+
+/* El estado vacío ocupa todo el ancho, sin forzar scroll */
+.ms-table .pc-empty {
+  margin: 14px;
+  min-width: 0;
+}
+
+/* ── Filtros de Documentos ── */
+.ms-filters {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 0.9fr 0.9fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.ms-input,
+.ms-select {
+  width: 100%;
+  height: 42px;
+  border: 1px solid #d9e1ec;
+  border-radius: 12px;
+  outline: none;
+}
+
+.ms-input {
+  padding: 0 10px;
+}
+
+.ms-select {
+  padding: 0 12px;
+  background: #ffffff;
+}
+
+/* Badge de estado del documento */
+.ms-doc-badge {
+  display: inline-flex;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ms-doc-badge.is-disponible {
+  color: #067647;
+  background: #ecfdf3;
+}
+
+.ms-doc-badge.is-preparacion {
+  color: #b54708;
+  background: #fffaeb;
+}
+
+.ms-doc-badge.is-otro {
+  color: var(--pc-blue);
+  background: #eef4ff;
+}
+
+/* Acciones por fila (Ver PDF / Descargar) */
+.ms-row-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.ms-btn-sm {
+  min-height: 34px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ms-btn-sm--primary {
+  border: none;
+  background: var(--pc-blue);
+  color: #ffffff;
+}
+
+.ms-btn-sm--outline {
+  border: 1px solid var(--pc-orange);
+  background: #ffffff;
+  color: var(--pc-orange);
+}
+
+/* ── Responsivo ── */
+@media (max-width: 700px) {
+  /* título arriba, acciones abajo a lo ancho */
+  .ms-head {
+    flex-direction: column;
+  }
+
+  /* los 2 botones dejan de ser bloques grandes apilados y pasan a una
+     fila compacta 50/50 (era lo que se veía pesado en móvil) */
+  .ms-actions {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .ms-actions .ms-btn {
+    flex: 1;
+  }
+
+  /* filtros de documentos: de 4 columnas a 2 */
+  .ms-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 460px) {
+  .ms-filters {
+    grid-template-columns: 1fr;
+  }
+
+  /* 50/50 aprieta demasiado el texto → los botones vuelven a apilarse */
+  .ms-actions {
+    flex-direction: column;
+  }
+}
+
+/* Muy angosto: las lengüetas ya no caben con el texto completo → se achican
+   un poco y pasan a su versión corta (Doc / Ben) para no salirse del cuerpo. */
+@media (max-width: 350px) {
+  .ms-tab {
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  .ms-tab-full {
+    display: none;
+  }
+
+  .ms-tab-short {
+    display: inline;
+  }
+}

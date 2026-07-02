@@ -201,23 +201,26 @@ export async function getDetallePoliza(token, id) {
 COBERTURAS
 ======================================== */
 
-export async function getMisCoberturas(token) {
-  try {
-    return await apiFetch("/portal/mis-coberturas", {
-      headers: authHeaders(token),
-    });
-  } catch {
-    const polizas = await getMisPolizas(token);
-
-    return polizas.map((p) => ({
-      id_poliza: p.id_poliza,
-      seguro: p.seguro?.nombre,
-      compania: p.compania,
-      numero_poliza: p.numero_poliza,
-      coberturas: [],
-    }));
-  }
-}
+// Sin uso: la pestaña "Coberturas" de Mis Seguros se eliminó (las coberturas
+// exactas viven en el PDF de la póliza → pestaña Documentos). Se deja comentada
+// por si el broker nuevo llega a devolver coberturas estructuradas más adelante.
+// export async function getMisCoberturas(token) {
+//   try {
+//     return await apiFetch("/portal/mis-coberturas", {
+//       headers: authHeaders(token),
+//     });
+//   } catch {
+//     const polizas = await getMisPolizas(token);
+//
+//     return polizas.map((p) => ({
+//       id_poliza: p.id_poliza,
+//       seguro: p.seguro?.nombre,
+//       compania: p.compania,
+//       numero_poliza: p.numero_poliza,
+//       coberturas: [],
+//     }));
+//   }
+// }
 
 /* ========================================
 BENEFICIARIOS

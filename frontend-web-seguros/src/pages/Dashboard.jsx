@@ -9,7 +9,6 @@ import {
   getMisAlertas,
   getMisBeneficiarios,
   getMisBeneficios,
-  getMisCoberturas,
   getMisCotizaciones,
   getMisDocumentos,
   getMisPagos,
@@ -66,7 +65,6 @@ function Dashboard() {
 
   const [cotizaciones, setCotizaciones] = useState([]);
   const [polizas, setPolizas] = useState([]);
-  const [coberturas, setCoberturas] = useState([]);
   const [beneficiarios, setBeneficiarios] = useState([]);
   const [beneficios, setBeneficios] = useState([]);
   const [documentos, setDocumentos] = useState([]);
@@ -112,7 +110,7 @@ function Dashboard() {
     estado: "todos",
   });
 
-  const [tabMisSeguros, setTabMisSeguros] = useState("coberturas");
+  const [tabMisSeguros, setTabMisSeguros] = useState("documentos");
 
   const [documentoSeleccionado, setDocumentoSeleccionado] = useState(null);
 
@@ -286,7 +284,6 @@ function Dashboard() {
           alertasResult,
           cotsResult,
           polsResult,
-          cobResult,
           benResult,
           docsResult,
           pagosResult,
@@ -296,7 +293,6 @@ function Dashboard() {
           getMisAlertas(token),
           getMisCotizaciones(token),
           getMisPolizas(token),
-          getMisCoberturas(token),
           getMisBeneficiarios(token),
           getMisDocumentos(token),
           getMisPagos(token),
@@ -382,10 +378,6 @@ function Dashboard() {
 
         if (polsResult.status === "fulfilled") {
           setPolizas(Array.isArray(polsResult.value) ? polsResult.value : []);
-        }
-
-        if (cobResult.status === "fulfilled") {
-          setCoberturas(Array.isArray(cobResult.value) ? cobResult.value : []);
         }
 
         if (benResult.status === "fulfilled") {
@@ -777,64 +769,6 @@ Estado: ${documento.estado}`);
           }));
         });
 
-  const coberturasNormalizadas =
-    coberturas.length > 0
-      ? coberturas.map((item, index) => ({
-          id:
-            item.id_cobertura ||
-            item.id_poliza ||
-            item.id ||
-            `cobertura-${index}`,
-          seguro:
-            item.seguro ||
-            item.nombre_seguro ||
-            item.poliza?.seguro?.nombre ||
-            "Seguro asociado",
-          poliza:
-            item.numero_poliza ||
-            item.poliza?.numero_poliza ||
-            item.poliza ||
-            "—",
-          estado: normalizarEstado(item.estado || item.poliza?.estado),
-          monto:
-            item.monto_asegurado ||
-            item.capital_asegurado ||
-            item.monto ||
-            "Según póliza",
-          deducible: item.deducible || "Según condiciones",
-          coberturas: Array.isArray(item.coberturas)
-            ? item.coberturas
-                .map((c) => (typeof c === "string" ? c : c.nombre || c.detalle))
-                .filter(Boolean)
-            : item.nombre
-              ? [item.nombre]
-              : ["Cobertura principal según póliza"],
-          exclusiones: Array.isArray(item.exclusiones)
-            ? item.exclusiones
-            : ["Revisar condiciones generales del contrato"],
-        }))
-      : polizasNormalizadas.map((poliza) => ({
-          id: poliza.id_poliza || poliza.id,
-          seguro: poliza.seguro,
-          poliza: poliza.numero_poliza,
-          estado: poliza.estado,
-          monto:
-            poliza.raw.monto_cobertura ||
-            poliza.raw.capital_asegurado ||
-            "Según póliza",
-          deducible: poliza.raw.deducible || "Según condiciones",
-          coberturas: Array.isArray(poliza.raw.coberturas)
-            ? poliza.raw.coberturas
-            : [
-                "Cobertura principal según póliza",
-                "Asistencia y acompañamiento Prieto & Correa",
-                "Revisión de vigencia y condiciones contratadas",
-              ],
-          exclusiones: poliza.raw.exclusiones || [
-            "Revisar condiciones generales del contrato",
-          ],
-        }));
-
   const documentosDesdePolizas = polizasNormalizadas.flatMap((poliza) => [
     {
       id: `poliza-${poliza.id}`,
@@ -933,7 +867,6 @@ Estado: ${documento.estado}`);
     documentosDemo.map((documento) => documento.seguro),
   ).size;
 
-  const coberturasMisSeguros = coberturasNormalizadas;
   const beneficiariosMisSeguros = beneficiariosNormalizados;
 
   const beneficiariosTotales = beneficiariosMisSeguros.length;
@@ -947,45 +880,6 @@ Estado: ${documento.estado}`);
   const polizasConBeneficiarios = new Set(
     beneficiariosMisSeguros
       .map((beneficiario) => beneficiario.poliza || beneficiario.seguro)
-      .filter(Boolean),
-  ).size;
-
-  const coberturasFilas = coberturasMisSeguros.flatMap((item) => {
-    const incluidas = (item.coberturas || []).map((cobertura, index) => ({
-      id: `${item.id}-incluida-${index}`,
-      nombre: cobertura,
-      seguro: item.seguro || "Seguro asociado",
-      poliza: item.poliza || "—",
-      condicion: "Incluida",
-      monto: item.monto || "Según póliza",
-      deducible: item.deducible || "Según condiciones",
-      estado: "incluida",
-    }));
-
-    const excluidas = (item.exclusiones || []).map((exclusion, index) => ({
-      id: `${item.id}-excluida-${index}`,
-      nombre: exclusion,
-      seguro: item.seguro || "Seguro asociado",
-      poliza: item.poliza || "—",
-      condicion: "Exclusión",
-      monto: "No aplica",
-      deducible: "No aplica",
-      estado: "excluida",
-    }));
-
-    return [...incluidas, ...excluidas];
-  });
-
-  const coberturasRegistradas = coberturasFilas.length;
-  const coberturasIncluidas = coberturasFilas.filter(
-    (cobertura) => cobertura.estado === "incluida",
-  ).length;
-  const coberturasExcluidas = coberturasFilas.filter(
-    (cobertura) => cobertura.estado === "excluida",
-  ).length;
-  const polizasConCoberturas = new Set(
-    coberturasMisSeguros
-      .map((cobertura) => cobertura.poliza || cobertura.seguro)
       .filter(Boolean),
   ).size;
 
@@ -1086,7 +980,7 @@ Estado: ${documento.estado}`);
     );
   }
 
-  function abrirMisSeguros(tab = "coberturas") {
+  function abrirMisSeguros(tab = "documentos") {
     setTabMisSeguros(tab);
     setVista("mis-seguros");
   }
@@ -1457,8 +1351,8 @@ Estado: ${documento.estado}`);
                         para que sepas qué tienes protegido y qué revisar.
                       </p>
 
-                      <button onClick={() => abrirMisSeguros("coberturas")}>
-                        Revisar cobertura
+                      <button onClick={() => abrirMisSeguros("documentos")}>
+                        Revisar mis seguros
                       </button>
                     </div>
 
@@ -1500,7 +1394,7 @@ Estado: ${documento.estado}`);
                         Mis pólizas activas
                       </h3>
 
-                      <button onClick={() => abrirMisSeguros("coberturas")}>
+                      <button onClick={() => abrirMisSeguros("documentos")}>
                         Ver todas
                       </button>
                     </div>
@@ -1653,11 +1547,6 @@ Estado: ${documento.estado}`);
               <MisSeguros
                 tabMisSeguros={tabMisSeguros}
                 setTabMisSeguros={setTabMisSeguros}
-                coberturasFilas={coberturasFilas}
-                coberturasRegistradas={coberturasRegistradas}
-                coberturasIncluidas={coberturasIncluidas}
-                coberturasExcluidas={coberturasExcluidas}
-                polizasConCoberturas={polizasConCoberturas}
                 beneficiariosMisSeguros={beneficiariosMisSeguros}
                 beneficiariosTotales={beneficiariosTotales}
                 beneficiariosActivos={beneficiariosActivos}
