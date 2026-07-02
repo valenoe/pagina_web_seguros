@@ -1,5 +1,6 @@
 import "../../styles/pages/PortalDashboard.css";
 import "../../styles/pages/MisSeguros.css";
+import Cuotas from "./Cuotas";
 
 /**
  * Mis Seguros — vista del portal del cliente con 2 pestanas:
@@ -25,6 +26,9 @@ import "../../styles/pages/MisSeguros.css";
 function MisSeguros({
   tabMisSeguros,
   setTabMisSeguros,
+  pagos,
+  polizasNormalizadas,
+  formatearMoneda,
   beneficiariosMisSeguros,
   beneficiariosTotales,
   beneficiariosActivos,
@@ -79,6 +83,7 @@ function MisSeguros({
         {[
           ["documentos", "Documentos", "Doc"],
           ["beneficiarios", "Beneficiarios", "Ben"],
+          ["cuotas", "Pagos y cuotas", "Pagos"],
         ].map(([tab, label, corto]) => (
           <button
             key={tab}
@@ -282,6 +287,19 @@ function MisSeguros({
             )}
           </div>
         </div>
+      )}
+
+      {tabMisSeguros === "cuotas" && (
+        <Cuotas
+          pagos={pagos}
+          polizasNormalizadas={polizasNormalizadas}
+          normalizarEstado={normalizarEstado}
+          formatearMoneda={formatearMoneda}
+          formatearFecha={formatearFecha}
+          textoEstado={textoEstado}
+          abrirWhatsApp={abrirWhatsApp}
+          setVista={setVista}
+        />
       )}
       </div>
     </div>

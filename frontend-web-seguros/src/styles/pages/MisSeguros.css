@@ -206,6 +206,11 @@
   min-width: 720px;
 }
 
+.ms-cols-cuotas {
+  grid-template-columns: 1.2fr 0.95fr 0.65fr 0.75fr 0.85fr 0.75fr 0.85fr;
+  min-width: 820px;
+}
+
 .ms-cell-strong {
   color: var(--pc-blue);
   font-weight: 700;
@@ -213,6 +218,18 @@
 
 .ms-cell-muted {
   color: #475467;
+}
+
+/* Celda apilada: nombre del seguro (fuerte) + nº póliza debajo (Cuotas) */
+.ms-cell-stack strong {
+  display: block;
+  color: var(--pc-blue);
+  font-weight: 700;
+}
+
+.ms-cell-stack small {
+  color: #667085;
+  font-weight: 800;
 }
 
 /* El estado vacío ocupa todo el ancho, sin forzar scroll */
@@ -227,6 +244,11 @@
   grid-template-columns: 1.4fr 1fr 0.9fr 0.9fr;
   gap: 10px;
   margin-bottom: 14px;
+}
+
+/* Cuotas usa 3 filtros: buscar + seguro + estado */
+.ms-filters-cuotas {
+  grid-template-columns: 1.4fr 1fr 1fr;
 }
 
 .ms-input,
