@@ -83,6 +83,11 @@ export default function Router() {
         />
 
         <Route
+          path="/clientes/dashboard/:vista"
+          element={<Dashboard />}
+        />
+
+        <Route
           path="/clientes/seguro/:id"
           element={<DetalleSeguro />}
         />

@@ -1,5 +1,4 @@
-﻿
-/* ==================================================
+﻿/* ==================================================
 PORTAL CLIENTE â€” DASHBOARD DEFINITIVO
 ================================================== */
 
@@ -20,6 +19,7 @@ PORTAL CLIENTE â€” DASHBOARD DEFINITIVO
   flex-direction: column;
   gap: 13px;
   overflow: hidden;
+  transition: transform 0.3s ease;
 }
 
 .pc-sidebar-logo {
@@ -146,9 +146,44 @@ PORTAL CLIENTE â€” DASHBOARD DEFINITIVO
   margin-bottom: 16px;
 }
 
+/* Botón hamburguesa: oculto en desktop, visible solo en el cajón móvil (≤1000px) */
+.pc-menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  padding: 0 11px;
+  border: 1px solid var(--pc-border);
+  border-radius: 13px;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(7, 25, 90, 0.08);
+}
+
+.pc-menu-toggle span {
+  display: block;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--pc-blue);
+}
+
+/* Fondo oscuro detrás del cajón; oculto salvo en móvil */
+.pc-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  border: none;
+  background: rgba(4, 18, 68, 0.5);
+  backdrop-filter: blur(2px);
+}
+
 .pc-header h1 {
   color: var(--pc-blue);
-  font-size: 25px;
+  font-size: clamp(20px, 2.6vw, 25px);
   margin-bottom: 4px;
 }
 
@@ -253,7 +288,7 @@ PORTAL CLIENTE â€” DASHBOARD DEFINITIVO
 .pc-hero-card h2 {
   max-width: 620px;
   color: white;
-  font-size: 34px;
+  font-size: clamp(24px, 4.5vw, 34px);
   line-height: 1.08;
   margin: 15px 0 12px;
 }
@@ -296,7 +331,7 @@ PORTAL CLIENTE â€” DASHBOARD DEFINITIVO
 .pc-stats strong {
   display: block;
   color: var(--pc-blue);
-  font-size: 28px;
+  font-size: clamp(22px, 3.2vw, 28px);
   margin-bottom: 5px;
 }
 
@@ -487,7 +522,7 @@ PORTAL CLIENTE â€” DASHBOARD DEFINITIVO
   text-align: left;
   font-size: 11px;
   font-weight: 900;
-  transition: 0.25s;
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
 .pc-actions-grid button img {
@@ -519,7 +554,7 @@ PORTAL CLIENTE â€” DASHBOARD DEFINITIVO
 .pc-next-payment h2 {
   color: var(--pc-blue);
   margin: 8px 0;
-  font-size: 28px;
+  font-size: clamp(22px, 3.2vw, 28px);
 }
 
 .pc-next-payment p,
@@ -574,7 +609,7 @@ PORTAL CLIENTE â€” DASHBOARD DEFINITIVO
 .pc-full-panel h2,
 .pc-full-panel > h2 {
   color: var(--pc-blue);
-  font-size: 30px;
+  font-size: clamp(23px, 3.4vw, 30px);
   margin-bottom: 22px;
 }
 
@@ -634,7 +669,7 @@ PORTAL CLIENTE â€” DASHBOARD DEFINITIVO
 .pc-cotizar-header h2,
 .cotizar-whatsapp-header h2 {
   color: var(--pc-blue);
-  font-size: 24px;
+  font-size: clamp(20px, 2.8vw, 24px);
   margin: 8px 0 10px;
 }
 
@@ -748,7 +783,6 @@ PORTAL CLIENTE â€” DASHBOARD DEFINITIVO
   object-position: center 28%;
 }
 
-
 .search-button {
   font-size: 0;
 }
@@ -796,9 +830,29 @@ RESPONSIVE
     overflow: visible;
   }
 
+  /* La sidebar pasa a ser un cajón deslizante oculto, no se apila arriba */
   .pc-sidebar {
-    position: relative;
-    height: auto;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 999;
+    width: 250px;
+    height: 100vh;
+    transform: translateX(-100%);
+    overflow-y: auto;
+  }
+
+  .pc-sidebar.pc-sidebar-open {
+    transform: translateX(0);
+    box-shadow: 0 0 50px rgba(4, 18, 68, 0.45);
+  }
+
+  .pc-sidebar-backdrop {
+    display: block;
+  }
+
+  .pc-menu-toggle {
+    display: flex;
   }
 
   .pc-main {
@@ -807,7 +861,15 @@ RESPONSIVE
     padding: 24px;
   }
 
-  .pc-header,
+  .pc-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .pc-header-greeting {
+    flex: 1;
+  }
+
   .pc-help-card {
     flex-direction: column;
     align-items: flex-start;
@@ -818,9 +880,7 @@ RESPONSIVE
   .pc-advisor-card {
     grid-template-columns: 1fr;
   }
-
 }
-
 
 @media (max-width: 700px) {
   .pc-stats,
@@ -913,7 +973,7 @@ SEGUROS DISPONIBLES â€” VERSIÃ“N FINAL PREMIUM
 .pc-seguros-disponibles-v2 h2 {
   margin: 0;
   color: var(--pc-blue);
-  font-size: 30px;
+  font-size: clamp(23px, 3.4vw, 30px);
   line-height: 1.08;
 }
 
@@ -2248,7 +2308,8 @@ BENEFICIOS / CLUB PRIETO & CORREA â€” PORTAL CLIENTE
   color: var(--pc-blue);
   font-weight: 900;
   box-shadow: 0 8px 18px rgba(7, 25, 90, 0.035);
-  transition: 0.25s ease;
+  transition: transform 0.25s ease, background 0.25s ease,
+    border-color 0.25s ease, color 0.25s ease;
 }
 
 .pc-beneficios-categorias button img {
@@ -2292,7 +2353,7 @@ BENEFICIOS / CLUB PRIETO & CORREA â€” PORTAL CLIENTE
   display: flex;
   flex-direction: column;
   gap: 16px;
-  transition: 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .pc-beneficio-card:hover {
@@ -2403,4 +2464,200 @@ BENEFICIOS / CLUB PRIETO & CORREA â€” PORTAL CLIENTE
 .pc-beneficio-card {
   min-height: 260px;
   padding-bottom: 28px !important;
+}
+
+/* ==================================================
+MODAL CÓDIGO BENEFICIO — CLUB PRIETO & CORREA
+================================================== */
+
+.pc-beneficio-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+}
+
+.pc-beneficio-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(3, 19, 68, 0.68);
+  backdrop-filter: blur(7px);
+}
+
+.pc-beneficio-modal-card {
+  position: relative;
+  z-index: 2;
+  width: min(560px, 100%);
+  padding: 34px;
+  border-radius: 30px;
+  background: #ffffff;
+  box-shadow: 0 35px 90px rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.pc-beneficio-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 999px;
+  background: #f3f6fb;
+  color: var(--pc-blue);
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.pc-beneficio-modal-success {
+  width: 58px;
+  height: 58px;
+  margin-bottom: 18px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+  font-size: 32px;
+  font-weight: 900;
+}
+
+.pc-beneficio-modal-kicker {
+  display: inline-flex;
+  width: fit-content;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  border-radius: 999px;
+  background: rgba(244, 124, 32, 0.12);
+  color: var(--pc-orange);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.pc-beneficio-modal-card h2 {
+  margin: 0 0 10px;
+  color: var(--pc-blue);
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.pc-beneficio-modal-intro,
+.pc-beneficio-modal-note {
+  color: #56637a;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.pc-beneficio-comprobante {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pc-beneficio-comprobante div {
+  padding: 14px;
+  border-radius: 16px;
+  background: #f7f9ff;
+  border: 1px solid #e5ebf5;
+}
+
+.pc-beneficio-comprobante small,
+.pc-beneficio-codigo-box small {
+  display: block;
+  margin-bottom: 6px;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.pc-beneficio-comprobante strong {
+  color: var(--pc-blue);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.pc-beneficio-codigo-box {
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--pc-blue), var(--pc-blue-dark));
+  color: #ffffff;
+}
+
+.pc-beneficio-codigo-box small {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.pc-beneficio-codigo-box strong {
+  display: block;
+  color: #ffffff;
+  font-size: 24px;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.pc-beneficio-modal-note {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #fff7f0;
+  border: 1px solid #f3e6db;
+  color: #7a4a21;
+  font-weight: 800;
+}
+
+.pc-beneficio-modal-actions {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pc-beneficio-modal-actions button {
+  min-height: 46px;
+  border: none;
+  border-radius: 13px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.pc-beneficio-modal-actions button:first-child {
+  background: #eef3ff;
+  color: var(--pc-blue);
+}
+
+.pc-beneficio-modal-actions button:last-child {
+  background: var(--pc-blue);
+  color: #ffffff;
+}
+
+.pc-beneficio-modal-actions button:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 700px) {
+  .pc-beneficio-modal {
+    padding: 14px;
+  }
+
+  .pc-beneficio-modal-card {
+    padding: 26px;
+    border-radius: 24px;
+  }
+
+  .pc-beneficio-comprobante,
+  .pc-beneficio-modal-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .pc-beneficio-codigo-box strong {
+    font-size: 19px;
+    word-break: break-word;
+  }
 }

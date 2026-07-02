@@ -61,9 +61,7 @@ function DetalleSeguro() {
   }
 
   function volverAlPortal() {
-    navigate("/clientes/dashboard?vista=cotizaciones", {
-      state: { vista: "cotizaciones" },
-    });
+    navigate("/clientes/dashboard/cotizaciones");
   }
 
   function enviarSolicitud(e) {

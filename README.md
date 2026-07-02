@@ -232,3 +232,56 @@ Ejecutar desde `backend-web-seguros/` con el entorno virtual activo:
 ## Deployment
 
 > Pendiente. El proyecto será desplegado en DigitalOcean.
+
+---
+
+## Conectar el Droplet de DigitalOcean a GitHub
+
+El hosting es un **Droplet** (VPS Linux por SSH), no App Platform. No hay "auto-conexión": se **clona el repo con git** dentro del servidor y se actualiza con `git pull`. El permiso de lectura se da una sola vez con una **Deploy Key** (llave SSH de solo lectura para este repo).
+
+### 1. En el Droplet (por SSH) — generar la llave
+
+```bash
+ssh-keygen -t ed25519 -C "droplet-prietocorrea" -f ~/.ssh/github_deploy -N ""
+cat ~/.ssh/github_deploy.pub
+```
+
+Copiar **todo** lo que imprime el `cat` (empieza con `ssh-ed25519 ...`).
+
+### 2. En GitHub (navegador) — registrar la llave
+
+`https://github.com/valenoe/pagina_web_seguros` → **Settings → Deploy keys → Add deploy key**:
+
+- **Title:** `Droplet`
+- **Key:** pegar lo copiado
+- **Allow write access:** ❌ dejar **desmarcado** (el servidor solo necesita leer)
+- **Add key**
+
+### 3. De vuelta en el Droplet — que git use esa llave
+
+```bash
+cat >> ~/.ssh/config <<'EOF'
+Host github.com
+  IdentityFile ~/.ssh/github_deploy
+  IdentitiesOnly yes
+EOF
+```
+
+### 4. Clonar el repo (URL SSH, no HTTPS)
+
+```bash
+git clone git@github.com:valenoe/pagina_web_seguros.git
+```
+
+### 5. Actualizar tras cada cambio subido a GitHub
+
+```bash
+cd pagina_web_seguros && git pull
+```
+
+### ⚠️ Antes de clonar, ojo con esto
+
+1. **Rama:** todo el dashboard, chatbot e integración están en la rama **`integracion-dashboard`**, aún NO mergeada a `main`. Al clonar viene `main` (sin eso). Hacer `git checkout integracion-dashboard` en el servidor, o mergear a `main` primero.
+2. **`.env` no viaja por GitHub** (está en `.gitignore`, así debe ser). Hay que **crearlo a mano en el Droplet** con los datos de producción: `DATABASE_URL` de la MariaDB del servidor, `ALLOWED_ORIGINS` con el dominio real, `SECRET_KEY` nuevo, etc.
+3. **Para que se vean los seguros:** desplegar el backend + correr `python -m tests.seed_catalogo` (los seguros NO aparecen en el frontend sin el backend con el catálogo cargado). Las tablas de descuentos/club y las columnas ricas de Corredín NO son necesarias para esto.
+4. **Sacar `localhost` del frontend (pendiente de código):** hoy `frontend-web-seguros/src/services/api.js` apunta fijo a `http://localhost:8000`. Antes del build de producción hay que hacerlo variable de entorno apuntando al backend publicado, o la página subida no cargará datos.

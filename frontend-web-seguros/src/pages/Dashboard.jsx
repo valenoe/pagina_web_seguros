@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import "../styles/pages/PortalDashboard.css";
+import ClubBeneficios from "./dashboard/ClubBeneficios";
+import MisSeguros from "./dashboard/MisSeguros";
+import ReportarSiniestro from "./dashboard/ReportarSiniestro";
 import {
   getMiCuenta,
   getMisAlertas,
@@ -11,23 +14,34 @@ import {
   getMisDocumentos,
   getMisPagos,
   getMisPolizas,
-  getMisSiniestros,
-  subirFotoPerfil,
 } from "../services/api";
 
 const VISTAS_PERMITIDAS = [
-  "Resumen",
+  "resumen",
   "mis-seguros",
   "polizas",
   "siniestro",
   "cuotas",
-  "beneficios",
-  "documentos",
+  "Club-PC",
   "cotizaciones",
   "beneficiarios",
   "perfil",
 ];
 
+/**
+ * Lee la vista activa desde las DOS formas viejas de pasarla, previas a las
+ * rutas reales con parámetro (`/clientes/dashboard/:vista`):
+ *
+ *   1. Query string:  /clientes/dashboard?vista=Club-PC   → location.search
+ *   2. State de navegación:  navigate("/clientes/dashboard", { state: { vista } })
+ *      (un dato "invisible" que React Router lleva sin mostrarlo en la URL)
+ *
+ * Devuelve esa vista solo si está en la lista blanca; si no, null.
+ *
+ * Hoy es solo un RESPALDO para no romper enlaces antiguos. La fuente principal
+ * de la vista pasó a ser el parámetro de la URL (`useParams()`), que se lee
+ * primero; esta función solo se consulta si ese parámetro no viene.
+ */
 function obtenerVistaDesdeRuta(location) {
   const params = new URLSearchParams(location.search);
   const vistaUrl = params.get("vista");
@@ -47,25 +61,38 @@ function Dashboard() {
   const nombreCliente =
     nombreClienteGuardado && !/[0-9]/.test(nombreClienteGuardado)
       ? nombreClienteGuardado
-      : "Matías";
-  const primerNombreCliente = nombreCliente.split(" ")[0] || "Matías";
+      : "Nombre";
+  const primerNombreCliente = nombreCliente.split(" ")[0] || "Nombre";
 
   const [cotizaciones, setCotizaciones] = useState([]);
   const [polizas, setPolizas] = useState([]);
   const [coberturas, setCoberturas] = useState([]);
   const [beneficiarios, setBeneficiarios] = useState([]);
   const [beneficios, setBeneficios] = useState([]);
-  const [categoriaBeneficioActiva, setCategoriaBeneficioActiva] =
-    useState("todos");
-  const [beneficioSlide, setBeneficioSlide] = useState(0);
   const [documentos, setDocumentos] = useState([]);
   const [pagos, setPagos] = useState([]);
   const [alertas, setAlertas] = useState([]);
-  const [siniestros, setSiniestros] = useState([]);
   const [notificacionesAbiertas, setNotificacionesAbiertas] = useState(false);
-  const [vista, setVista] = useState(
-    () => obtenerVistaDesdeRuta(location) || "resumen",
-  );
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  // La URL es la fuente de verdad de la vista activa:
+  //   /clientes/dashboard            → resumen
+  //   /clientes/dashboard/:vista     → esa vista
+  // `setVista` se conserva como API interna, pero ahora navega en vez de
+  // mutar estado, así cada cambio de componente cambia también la ruta.
+  const { vista: vistaParam } = useParams();
+  const vistaSolicitada =
+    vistaParam || obtenerVistaDesdeRuta(location) || "resumen";
+  const vista = VISTAS_PERMITIDAS.includes(vistaSolicitada)
+    ? vistaSolicitada
+    : "resumen";
+
+  function setVista(nuevaVista) {
+    navigate(
+      nuevaVista === "resumen"
+        ? "/clientes/dashboard"
+        : `/clientes/dashboard/${nuevaVista}`,
+    );
+  }
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [seguroDetalleId, setSeguroDetalleId] = useState(null);
@@ -88,10 +115,6 @@ function Dashboard() {
   const [tabMisSeguros, setTabMisSeguros] = useState("coberturas");
 
   const [documentoSeleccionado, setDocumentoSeleccionado] = useState(null);
-  const [polizaReporteId, setPolizaReporteId] = useState("");
-  const [siniestroSeleccionadoId, setSiniestroSeleccionadoId] = useState("");
-  const [reporteSiniestroActivo, setReporteSiniestroActivo] = useState(false);
-  const [paginaSiniestros, setPaginaSiniestros] = useState(1);
 
   const [avatarPerfil, setAvatarPerfil] = useState(
     localStorage.getItem("avatar_cliente") || "",
@@ -123,11 +146,6 @@ function Dashboard() {
   const nombreVisible = datosPerfil.nombre || nombreCliente || "Cliente";
   const primerNombreVisible = nombreVisible.split(" ")[0] || "Cliente";
   const inicialVisible = primerNombreVisible.charAt(0).toUpperCase();
-
-  useEffect(() => {
-    const vistaRuta = obtenerVistaDesdeRuta(location);
-    if (vistaRuta) setVista(vistaRuta);
-  }, [location]);
 
   useEffect(() => {
     function ajustarSegurosPorVista() {
@@ -281,7 +299,6 @@ function Dashboard() {
           docsResult,
           pagosResult,
           beneficiosResult,
-          siniestrosResult,
         ] = await Promise.allSettled([
           getMiCuenta(token),
           getMisAlertas(token),
@@ -292,7 +309,6 @@ function Dashboard() {
           getMisDocumentos(token),
           getMisPagos(token),
           getMisBeneficios(token),
-          getMisSiniestros(token),
         ]);
 
         if (cuentaResult.status === "fulfilled" && cuentaResult.value) {
@@ -348,23 +364,15 @@ function Dashboard() {
           if (direccionCuenta)
             localStorage.setItem("direccion_cliente", direccionCuenta);
 
-          const fotoRaw =
+          const fotoCuenta =
             cuenta.avatar_url ||
             cuenta.foto_perfil ||
             cuenta.foto ||
             cuenta.cliente?.foto_perfil;
 
-          if (fotoRaw) {
-            const API_BASE =
-              import.meta.env.VITE_API_URL || "http://localhost:8000";
-            const fotoCuenta = fotoRaw.startsWith("http")
-              ? fotoRaw
-              : `${API_BASE}${fotoRaw}`;
+          if (fotoCuenta) {
             setAvatarPerfil(fotoCuenta);
             localStorage.setItem("avatar_cliente", fotoCuenta);
-          } else {
-            setAvatarPerfil("");
-            localStorage.removeItem("avatar_cliente");
           }
         }
 
@@ -410,12 +418,6 @@ function Dashboard() {
           );
         }
 
-        if (siniestrosResult.status === "fulfilled") {
-          setSiniestros(
-            Array.isArray(siniestrosResult.value) ? siniestrosResult.value : [],
-          );
-        }
-
         if (
           cotsResult.status === "rejected" &&
           polsResult.status === "rejected"
@@ -435,16 +437,7 @@ function Dashboard() {
   }, [navigate]);
 
   function cerrarSesion() {
-    [
-      "token",
-      "nombre_cliente",
-      "rut_cliente",
-      "correo_cliente",
-      "telefono_cliente",
-      "direccion_cliente",
-      "tipo_cliente",
-      "avatar_cliente",
-    ].forEach((k) => localStorage.removeItem(k));
+    localStorage.removeItem("token");
     navigate("/login-clientes");
   }
 
@@ -1101,97 +1094,6 @@ Estado: ${documento.estado}`);
     );
   }
 
-  const categoriasBeneficios = [
-    { id: "todos", nombre: "Todos", icono: "/descuento.png" },
-    { id: "sabores", nombre: "Sabores", icono: "/sabores.png" },
-    { id: "viajes", nombre: "Viajes", icono: "/viajes.png" },
-    { id: "bienestar", nombre: "Bienestar", icono: "/bienstar.png" },
-    { id: "panoramas", nombre: "Panoramas", icono: "/panoramas.png" },
-    { id: "marcas", nombre: "Marcas", icono: "/marcas.png" },
-    { id: "delivery", nombre: "Delivery", icono: "/delivery.png" },
-    { id: "mascotas", nombre: "Mascotas", icono: "/mascotas.png" },
-    { id: "descuentos", nombre: "Descuentos", icono: "/descuento.png" },
-  ];
-
-  const beneficiosDemo = [
-    {
-      id_beneficio: "sabores-1",
-      titulo: "40% dcto. en restaurantes asociados",
-      descripcion: "Beneficio exclusivo para clientes con pólizas activas.",
-      categoria: "sabores",
-      estado: "activo",
-      vigencia: "2026-06-30",
-      imagen: "/restaurant.jpg",
-      icono: "/sabores.png",
-      destacado: true,
-    },
-    {
-      id_beneficio: "viajes-1",
-      titulo: "Asistencia preferente para viajes",
-      descripcion: "Orientación y acceso rápido a coberturas de viaje.",
-      categoria: "viajes",
-      estado: "activo",
-      vigencia: "2026-12-31",
-      imagen: "/viaje.jpg",
-      icono: "/viajes.png",
-      destacado: true,
-    },
-    {
-      id_beneficio: "panoramas-1",
-      titulo: "Beneficios en panoramas familiares",
-      descripcion:
-        "Promociones para eventos, entretención y actividades seleccionadas.",
-      categoria: "panoramas",
-      estado: "activo",
-      vigencia: "2026-09-30",
-      imagen: "/panorama.jpg",
-      icono: "/panoramas.png",
-      destacado: true,
-    },
-    {
-      id_beneficio: "bienestar-1",
-      titulo: "Convenios de bienestar y vida saludable",
-      descripcion:
-        "Acceso preferente a beneficios de salud, deporte y bienestar.",
-      categoria: "bienestar",
-      estado: "activo",
-      vigencia: "2026-08-31",
-      imagen: "/bienestargym.jpg",
-      icono: "/bienstar.png",
-      destacado: true,
-    },
-    {
-      id_beneficio: "delivery-1",
-      titulo: "Convenios en delivery y compras online",
-      descripcion: "Promociones disponibles para clientes registrados.",
-      categoria: "delivery",
-      estado: "proximamente",
-      vigencia: "Próximamente",
-      imagen: "/delivery.png",
-      icono: "/delivery.png",
-      destacado: false,
-    },
-  ];
-
-  const beneficiosBase = beneficios.length > 0 ? beneficios : beneficiosDemo;
-  const beneficiosFiltrados = beneficiosBase.filter((beneficio) => {
-    if (categoriaBeneficioActiva === "todos") return true;
-    return (
-      String(beneficio.categoria || "").toLowerCase() ===
-      categoriaBeneficioActiva
-    );
-  });
-  const beneficiosDestacados = beneficiosBase.filter(
-    (beneficio) => beneficio.destacado !== false,
-  );
-  const beneficioPrincipal =
-    beneficiosDestacados.length > 0
-      ? beneficiosDestacados[beneficioSlide % beneficiosDestacados.length]
-      : beneficiosBase[0];
-  const beneficiosActivos = beneficiosBase.filter(
-    (beneficio) => beneficio.estado !== "proximamente",
-  ).length;
-
   function abrirMisSeguros(tab = "coberturas") {
     setTabMisSeguros(tab);
     setVista("mis-seguros");
@@ -1199,24 +1101,83 @@ Estado: ${documento.estado}`);
 
   return (
     <section className="pc-dashboard">
-      <aside className="pc-sidebar">
+      {menuAbierto && (
+        <button
+          type="button"
+          className="pc-sidebar-backdrop"
+          aria-label="Cerrar menú"
+          onClick={() => setMenuAbierto(false)}
+        />
+      )}
+
+      <aside className={`pc-sidebar ${menuAbierto ? "pc-sidebar-open" : ""}`}>
         <div className="pc-sidebar-logo">
-          <img src="/LOGO_TRANSPARENTE.svg" alt="Prieto & Correa" />
+          <img src="/Logo Prieto.png" alt="Prieto & Correa" />
         </div>
 
         <nav className="pc-sidebar-nav">
           <button
             className={vista === "resumen" ? "active" : ""}
-            onClick={() => setVista("resumen")}
+            onClick={() => {
+              setVista("resumen");
+              setMenuAbierto(false);
+            }}
           >
             <img src="/inicio.png" alt="" />
             <span>Inicio</span>
+          </button>
+          <button
+            className={vista === "mis-seguros" ? "active" : ""}
+            onClick={() => {
+              setVista("mis-seguros");
+              setMenuAbierto(false);
+            }}
+          >
+            <img src="/mis-polizas-activas.png" alt="" />
+            <span>Mis Seguros</span>
+          </button>
+          <button
+            className={vista === "siniestro" ? "active" : ""}
+            onClick={() => {
+              setVista("siniestro");
+              setMenuAbierto(false);
+            }}
+          >
+            <img src="/reportar-siniestro.png" alt="" />
+            <span>Reportar Siniestro</span>
+          </button>
+          <button
+            className={vista === "Club-PC" ? "active" : ""}
+            onClick={() => {
+              setVista("Club-PC");
+              setMenuAbierto(false);
+            }}
+          >
+            <img src="/premium.png" alt="" />
+            <span>Club PrietoCorrea</span>
+          </button>
+          <button
+            className={vista === "cotizaciones" ? "active" : ""}
+            onClick={() => {
+              setVista("cotizaciones");
+              setMenuAbierto(false);
+            }}
+          >
+            <img src="/proteger.png" alt="" />
+            <span>Explorar Seguros</span>
           </button>
         </nav>
 
         <div className="pc-sidebar-promo">
           <p>PROTEGEMOS LO QUE MÁS TE IMPORTA</p>
-          <button onClick={() => setVista("cotizaciones")}>Conoce más</button>
+          <button
+            onClick={() => {
+              setVista("cotizaciones");
+              setMenuAbierto(false);
+            }}
+          >
+            Conoce más
+          </button>
         </div>
 
         <button className="pc-logout" onClick={cerrarSesion}>
@@ -1227,6 +1188,18 @@ Estado: ${documento.estado}`);
 
       <main className="pc-main">
         <header className="pc-header">
+          <button
+            type="button"
+            className="pc-menu-toggle"
+            aria-label="Abrir menú"
+            aria-expanded={menuAbierto}
+            onClick={() => setMenuAbierto((abierto) => !abierto)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+
           <div
             className="pc-header-greeting"
             style={{
@@ -1617,7 +1590,7 @@ Estado: ${documento.estado}`);
                         <span>Ver documentos →</span>
                       </button>
 
-                      <button onClick={() => setVista("beneficios")}>
+                      <button onClick={() => setVista("Club-PC")}>
                         <img src="/beneficios.png" alt="" />
                         <span>CLUB PRIETO & CORREA →</span>
                       </button>
@@ -1685,657 +1658,35 @@ Estado: ${documento.estado}`);
             )}
 
             {vista === "mis-seguros" && (
-              <div className="pc-panel pc-full-panel">
-                <div
-                  className="pc-panel-title"
-                  style={{ marginBottom: "16px", alignItems: "flex-start" }}
-                >
-                  <div>
-                    <h2 style={{ marginBottom: "6px" }}>Mis Seguros</h2>
-                    <p
-                      style={{
-                        margin: 0,
-                        color: "#667085",
-                        fontSize: "14px",
-                        lineHeight: 1.55,
-                      }}
-                    >
-                      Visualiza tus pólizas, coberturas, beneficiarios y
-                      documentos en un solo lugar.
-                    </p>
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    display: "inline-flex",
-                    gap: "8px",
-                    padding: "6px",
-                    background: "#f3f6fb",
-                    borderRadius: "14px",
-                    marginBottom: "18px",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  {[
-                    ["coberturas", "Coberturas"],
-                    ["beneficiarios", "Beneficiarios"],
-                    ["documentos", "Documentos"],
-                  ].map(([tab, label]) => (
-                    <button
-                      key={tab}
-                      type="button"
-                      onClick={() => setTabMisSeguros(tab)}
-                      style={{
-                        height: "40px",
-                        padding: "0 18px",
-                        border: "none",
-                        borderRadius: "11px",
-                        background:
-                          tabMisSeguros === tab ? "#07195a" : "transparent",
-                        color: tabMisSeguros === tab ? "#ffffff" : "#07195a",
-                        fontWeight: 900,
-                      }}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
-                {tabMisSeguros === "coberturas" && (
-                  <div>
-                    <div className="pc-stats" style={{ marginBottom: "14px" }}>
-                      <article>
-                        <strong>{coberturasRegistradas}</strong>
-                        <span>Coberturas registradas</span>
-                      </article>
-
-                      <article>
-                        <strong>{polizasConCoberturas}</strong>
-                        <span>Pólizas asociadas</span>
-                      </article>
-
-                      <article>
-                        <strong>{coberturasIncluidas}</strong>
-                        <span>Incluidas</span>
-                      </article>
-
-                      <article>
-                        <strong>{coberturasExcluidas}</strong>
-                        <span>Excluidas</span>
-                      </article>
-                    </div>
-
-                    <div
-                      style={{
-                        border: "1px solid #e6ebf2",
-                        borderRadius: "18px",
-                        overflow: "hidden",
-                        background: "#ffffff",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns:
-                            "1.35fr 1.25fr 0.8fr 0.8fr 0.8fr 0.75fr",
-                          gap: "10px",
-                          padding: "12px 16px",
-                          background: "#f5f7fb",
-                          color: "#07195a",
-                          fontSize: "12px",
-                          fontWeight: 800,
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        <span>Cobertura</span>
-                        <span>Seguro / Póliza</span>
-                        <span>Condición</span>
-                        <span>Monto</span>
-                        <span>Deducible</span>
-                        <span>Estado</span>
-                      </div>
-
-                      {coberturasFilas.length === 0 ? (
-                        <div
-                          style={{
-                            padding: "26px",
-                            borderTop: "1px solid #eef2f7",
-                            background: "#f8faff",
-                          }}
-                        >
-                          <h3 style={{ color: "#07195a", marginBottom: "8px" }}>
-                            No tienes coberturas registradas
-                          </h3>
-
-                          <p
-                            style={{
-                              color: "#56637a",
-                              fontSize: "13px",
-                              lineHeight: 1.6,
-                              marginBottom: "16px",
-                            }}
-                          >
-                            Cuando tus pólizas estén activas, verás aquí qué
-                            cubre cada seguro, sus montos, deducibles y
-                            exclusiones principales.
-                          </p>
-
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: "10px",
-                              flexWrap: "wrap",
-                            }}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => setVista("cotizaciones")}
-                              style={{
-                                minHeight: "42px",
-                                border: "none",
-                                borderRadius: "12px",
-                                background: "#07195a",
-                                color: "#ffffff",
-                                padding: "0 18px",
-                                fontSize: "12px",
-                                fontWeight: 900,
-                              }}
-                            >
-                              Explorar seguros
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                abrirWhatsApp(
-                                  "Hola, necesito orientación sobre las coberturas de mis seguros.",
-                                )
-                              }
-                              style={{
-                                minHeight: "42px",
-                                border: "1px solid #dfe6f3",
-                                borderRadius: "12px",
-                                background: "#ffffff",
-                                color: "#07195a",
-                                padding: "0 18px",
-                                fontSize: "12px",
-                                fontWeight: 900,
-                              }}
-                            >
-                              Contactar ejecutivo
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        coberturasFilas.map((cobertura) => (
-                          <div
-                            key={cobertura.id}
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns:
-                                "1.35fr 1.25fr 0.8fr 0.8fr 0.8fr 0.75fr",
-                              gap: "10px",
-                              alignItems: "center",
-                              padding: "13px 16px",
-                              borderTop: "1px solid #eef2f7",
-                              fontSize: "13px",
-                            }}
-                          >
-                            <strong style={{ color: "#07195a" }}>
-                              {cobertura.nombre}
-                            </strong>
-                            <span style={{ color: "#475467" }}>
-                              {cobertura.seguro} / {cobertura.poliza}
-                            </span>
-                            <span style={{ color: "#475467" }}>
-                              {cobertura.condicion}
-                            </span>
-                            <strong style={{ color: "#07195a" }}>
-                              {cobertura.monto}
-                            </strong>
-                            <span style={{ color: "#475467" }}>
-                              {cobertura.deducible}
-                            </span>
-                            <span
-                              style={{
-                                width: "fit-content",
-                                padding: "7px 12px",
-                                borderRadius: "999px",
-                                background:
-                                  cobertura.estado === "incluida"
-                                    ? "rgba(22, 163, 74, 0.12)"
-                                    : "rgba(244, 124, 32, 0.14)",
-                                color:
-                                  cobertura.estado === "incluida"
-                                    ? "#16a34a"
-                                    : "#f47c20",
-                                fontSize: "12px",
-                                fontWeight: 900,
-                              }}
-                            >
-                              {cobertura.estado === "incluida"
-                                ? "Incluida"
-                                : "Excluida"}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {tabMisSeguros === "beneficiarios" && (
-                  <div>
-                    <div className="pc-stats" style={{ marginBottom: "14px" }}>
-                      <article>
-                        <strong>{beneficiariosTotales}</strong>
-                        <span>Beneficiarios</span>
-                      </article>
-
-                      <article>
-                        <strong>{polizasConBeneficiarios}</strong>
-                        <span>Seguros asociados</span>
-                      </article>
-
-                      <article>
-                        <strong>{beneficiariosActivos}</strong>
-                        <span>Activos</span>
-                      </article>
-
-                      <article>
-                        <strong>
-                          {beneficiariosTotales === 0 ? "—" : "Al día"}
-                        </strong>
-                        <span>Estado general</span>
-                      </article>
-                    </div>
-
-                    <div
-                      style={{
-                        border: "1px solid #e6ebf2",
-                        borderRadius: "18px",
-                        overflow: "hidden",
-                        background: "#ffffff",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns:
-                            "1.2fr 0.85fr 0.9fr 1.25fr 0.55fr 0.75fr",
-                          gap: "10px",
-                          padding: "12px 16px",
-                          background: "#f5f7fb",
-                          color: "#07195a",
-                          fontSize: "12px",
-                          fontWeight: 800,
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        <span>Beneficiario</span>
-                        <span>RUT</span>
-                        <span>Relación</span>
-                        <span>Póliza</span>
-                        <span>%</span>
-                        <span>Estado</span>
-                      </div>
-
-                      {beneficiariosMisSeguros.length === 0 ? (
-                        <>
-                          <div
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns:
-                                "1.2fr 0.85fr 0.9fr 1.25fr 0.55fr 0.75fr",
-                              gap: "10px",
-                              alignItems: "center",
-                              padding: "15px 16px",
-                              borderTop: "1px solid #eef2f7",
-                              color: "#667085",
-                              fontSize: "13px",
-                              fontWeight: 800,
-                            }}
-                          >
-                            <span>No hay beneficiarios registrados</span>
-                            <span>—</span>
-                            <span>—</span>
-                            <span>—</span>
-                            <span>—</span>
-                            <span>—</span>
-                          </div>
-
-                          <div
-                            className="pc-empty"
-                            style={{ margin: "14px", padding: "24px" }}
-                          >
-                            <h3>Aún no tienes beneficiarios asociados</h3>
-                            <p>
-                              Cuando una póliza incluya beneficiarios,
-                              aparecerán aquí automáticamente con su relación,
-                              porcentaje y póliza asociada.
-                            </p>
-
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: "10px",
-                                flexWrap: "wrap",
-                              }}
-                            >
-                              <button onClick={() => setVista("cotizaciones")}>
-                                Explorar seguros
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  abrirWhatsApp(
-                                    "Hola, necesito ayuda para revisar o registrar beneficiarios en mis seguros.",
-                                  )
-                                }
-                                style={{
-                                  background: "#ffffff",
-                                  color: "#07195a",
-                                  border: "1px solid #dfe6f3",
-                                }}
-                              >
-                                Contactar ejecutivo
-                              </button>
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        beneficiariosMisSeguros.map((beneficiario) => (
-                          <div
-                            key={beneficiario.id}
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns:
-                                "1.2fr 0.85fr 0.9fr 1.25fr 0.55fr 0.75fr",
-                              gap: "10px",
-                              alignItems: "center",
-                              padding: "13px 16px",
-                              borderTop: "1px solid #eef2f7",
-                              fontSize: "13px",
-                            }}
-                          >
-                            <strong style={{ color: "#07195a" }}>
-                              {beneficiario.nombre}
-                            </strong>
-                            <span style={{ color: "#475467" }}>
-                              {beneficiario.rut}
-                            </span>
-                            <span style={{ color: "#475467" }}>
-                              {beneficiario.relacion}
-                            </span>
-                            <span style={{ color: "#475467" }}>
-                              {beneficiario.seguro} / {beneficiario.poliza}
-                            </span>
-                            <strong style={{ color: "#07195a" }}>
-                              {beneficiario.porcentaje}
-                            </strong>
-                            <span
-                              className={`pc-status ${normalizarEstado(beneficiario.estado)}`}
-                            >
-                              {textoEstado(
-                                normalizarEstado(beneficiario.estado),
-                              )}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {tabMisSeguros === "documentos" && (
-                  <div>
-                    <div className="pc-stats" style={{ marginBottom: "14px" }}>
-                      <article>
-                        <strong>{documentosDemo.length}</strong>
-                        <span>Documentos totales</span>
-                      </article>
-
-                      <article>
-                        <strong>{polizasConDocumentos}</strong>
-                        <span>Pólizas asociadas</span>
-                      </article>
-
-                      <article>
-                        <strong>{documentosDisponibles}</strong>
-                        <span>Disponibles</span>
-                      </article>
-
-                      <article>
-                        <strong>
-                          {documentosDemo.length - documentosDisponibles}
-                        </strong>
-                        <span>Bajo solicitud</span>
-                      </article>
-                    </div>
-
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1.4fr 1fr 0.9fr 0.9fr",
-                        gap: "10px",
-                        marginBottom: "14px",
-                      }}
-                    >
-                      <input
-                        type="text"
-                        name="busqueda"
-                        value={filtrosDocumentos.busqueda}
-                        onChange={actualizarFiltroDocumento}
-                        placeholder="Buscar documento..."
-                        style={{
-                          width: "100%",
-                          height: "42px",
-                          border: "1px solid #d9e1ec",
-                          borderRadius: "12px",
-                          padding: "0 10px",
-                          outline: "none",
-                        }}
-                      />
-
-                      <select
-                        name="seguro"
-                        value={filtrosDocumentos.seguro}
-                        onChange={actualizarFiltroDocumento}
-                        style={{
-                          width: "100%",
-                          height: "42px",
-                          border: "1px solid #d9e1ec",
-                          borderRadius: "12px",
-                          padding: "0 12px",
-                          outline: "none",
-                          background: "#ffffff",
-                        }}
-                      >
-                        {segurosDocumentos.map((seguro) => (
-                          <option key={seguro} value={seguro}>
-                            {seguro === "todos" ? "Todos los seguros" : seguro}
-                          </option>
-                        ))}
-                      </select>
-
-                      <select
-                        name="tipo"
-                        value={filtrosDocumentos.tipo}
-                        onChange={actualizarFiltroDocumento}
-                        style={{
-                          width: "100%",
-                          height: "42px",
-                          border: "1px solid #d9e1ec",
-                          borderRadius: "12px",
-                          padding: "0 12px",
-                          outline: "none",
-                          background: "#ffffff",
-                        }}
-                      >
-                        {tiposDocumentos.map((tipo) => (
-                          <option key={tipo} value={tipo}>
-                            {tipo === "todos" ? "Todos los tipos" : tipo}
-                          </option>
-                        ))}
-                      </select>
-
-                      <select
-                        name="estado"
-                        value={filtrosDocumentos.estado}
-                        onChange={actualizarFiltroDocumento}
-                        style={{
-                          width: "100%",
-                          height: "42px",
-                          border: "1px solid #d9e1ec",
-                          borderRadius: "12px",
-                          padding: "0 12px",
-                          outline: "none",
-                          background: "#ffffff",
-                        }}
-                      >
-                        {estadosDocumentos.map((estado) => (
-                          <option key={estado} value={estado}>
-                            {estado === "todos" ? "Todos los estados" : estado}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div
-                      style={{
-                        border: "1px solid #e6ebf2",
-                        borderRadius: "18px",
-                        overflow: "hidden",
-                        background: "#ffffff",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns:
-                            "1.2fr 1.35fr 0.75fr 0.8fr 0.75fr 1fr",
-                          gap: "10px",
-                          padding: "12px 16px",
-                          background: "#f5f7fb",
-                          color: "#07195a",
-                          fontSize: "12px",
-                          fontWeight: 800,
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        <span>Documento</span>
-                        <span>Seguro / Póliza</span>
-                        <span>Tipo</span>
-                        <span>Estado</span>
-                        <span>Fecha</span>
-                        <span>Acciones</span>
-                      </div>
-
-                      {documentosFiltrados.length === 0 ? (
-                        <div className="pc-empty" style={{ padding: "26px" }}>
-                          <h3>No se encontraron documentos</h3>
-                          <p>
-                            Prueba cambiando los filtros o contacta a tu
-                            ejecutivo si necesitas apoyo.
-                          </p>
-                        </div>
-                      ) : (
-                        documentosFiltrados.map((documento) => (
-                          <div
-                            key={documento.id}
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns:
-                                "1.2fr 1.35fr 0.75fr 0.8fr 0.75fr 1fr",
-                              gap: "10px",
-                              alignItems: "center",
-                              padding: "13px 16px",
-                              borderTop: "1px solid #eef2f7",
-                              fontSize: "13px",
-                            }}
-                          >
-                            <strong style={{ color: "#07195a" }}>
-                              {documento.nombre}
-                            </strong>
-                            <span style={{ color: "#475467" }}>
-                              {documento.seguro}
-                            </span>
-                            <span>{documento.tipo}</span>
-                            <span
-                              style={{
-                                display: "inline-flex",
-                                justifyContent: "center",
-                                borderRadius: "999px",
-                                padding: "6px 10px",
-                                fontSize: "12px",
-                                fontWeight: 800,
-                                color:
-                                  documento.estado === "Disponible"
-                                    ? "#067647"
-                                    : documento.estado === "En preparación"
-                                      ? "#b54708"
-                                      : "#07195a",
-                                background:
-                                  documento.estado === "Disponible"
-                                    ? "#ecfdf3"
-                                    : documento.estado === "En preparación"
-                                      ? "#fffaeb"
-                                      : "#eef4ff",
-                              }}
-                            >
-                              {documento.estado}
-                            </span>
-                            <span>{formatearFecha(documento.fecha)}</span>
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: "8px",
-                                justifyContent: "flex-end",
-                              }}
-                            >
-                              <button
-                                type="button"
-                                onClick={() => abrirPreviewDocumento(documento)}
-                                style={{
-                                  minHeight: "34px",
-                                  padding: "8px 12px",
-                                  borderRadius: "10px",
-                                  border: "none",
-                                  background: "#07195a",
-                                  color: "#ffffff",
-                                  fontWeight: 800,
-                                  cursor: "pointer",
-                                }}
-                              >
-                                Ver PDF
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => descargarDocumento(documento)}
-                                style={{
-                                  minHeight: "34px",
-                                  padding: "8px 12px",
-                                  borderRadius: "10px",
-                                  border: "1px solid #f47c20",
-                                  background: "#ffffff",
-                                  color: "#f47c20",
-                                  fontWeight: 800,
-                                  cursor: "pointer",
-                                }}
-                              >
-                                {documento.estado === "Disponible"
-                                  ? "Descargar"
-                                  : "Ejecutivo"}
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <MisSeguros
+                tabMisSeguros={tabMisSeguros}
+                setTabMisSeguros={setTabMisSeguros}
+                coberturasFilas={coberturasFilas}
+                coberturasRegistradas={coberturasRegistradas}
+                coberturasIncluidas={coberturasIncluidas}
+                coberturasExcluidas={coberturasExcluidas}
+                polizasConCoberturas={polizasConCoberturas}
+                beneficiariosMisSeguros={beneficiariosMisSeguros}
+                beneficiariosTotales={beneficiariosTotales}
+                beneficiariosActivos={beneficiariosActivos}
+                polizasConBeneficiarios={polizasConBeneficiarios}
+                documentosDemo={documentosDemo}
+                documentosFiltrados={documentosFiltrados}
+                documentosDisponibles={documentosDisponibles}
+                polizasConDocumentos={polizasConDocumentos}
+                segurosDocumentos={segurosDocumentos}
+                tiposDocumentos={tiposDocumentos}
+                estadosDocumentos={estadosDocumentos}
+                filtrosDocumentos={filtrosDocumentos}
+                actualizarFiltroDocumento={actualizarFiltroDocumento}
+                abrirPreviewDocumento={abrirPreviewDocumento}
+                descargarDocumento={descargarDocumento}
+                formatearFecha={formatearFecha}
+                normalizarEstado={normalizarEstado}
+                textoEstado={textoEstado}
+                setVista={setVista}
+                abrirWhatsApp={abrirWhatsApp}
+              />
             )}
 
             {vista === "polizas" && (
@@ -3159,487 +2510,6 @@ Estado: ${documento.estado}`);
               </div>
             )}
 
-            {vista === "documentos" && (
-              <div className="pc-panel pc-full-panel">
-                <div
-                  className="pc-panel-title"
-                  style={{ marginBottom: "14px" }}
-                >
-                  <div>
-                    <h3>
-                      <img src="/documentos.png" alt="" />
-                      Mis documentos
-                    </h3>
-                    <p
-                      style={{
-                        margin: "6px 0 0",
-                        color: "#667085",
-                        fontSize: "14px",
-                      }}
-                    >
-                      Revisa, abre y descarga los documentos asociados a tus
-                      seguros.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pc-stats" style={{ marginBottom: "14px" }}>
-                  <article>
-                    <strong>{documentosDemo.length}</strong>
-                    <span>Documentos totales</span>
-                  </article>
-
-                  <article>
-                    <strong>{polizasConDocumentos}</strong>
-                    <span>Pólizas asociadas</span>
-                  </article>
-
-                  <article>
-                    <strong>{documentosDisponibles}</strong>
-                    <span>Disponibles</span>
-                  </article>
-
-                  <article>
-                    <strong>
-                      {documentosDemo.length - documentosDisponibles}
-                    </strong>
-                    <span>Bajo solicitud</span>
-                  </article>
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1.4fr 1fr 0.9fr 0.9fr",
-                    gap: "10px",
-                    marginBottom: "14px",
-                  }}
-                >
-                  <input
-                    type="text"
-                    name="busqueda"
-                    value={filtrosDocumentos.busqueda}
-                    onChange={actualizarFiltroDocumento}
-                    placeholder="Buscar documento..."
-                    style={{
-                      width: "100%",
-                      height: "42px",
-                      border: "1px solid #d9e1ec",
-                      borderRadius: "12px",
-                      padding: "0 10px",
-                      outline: "none",
-                    }}
-                  />
-
-                  <select
-                    name="seguro"
-                    value={filtrosDocumentos.seguro}
-                    onChange={actualizarFiltroDocumento}
-                    style={{
-                      width: "100%",
-                      height: "42px",
-                      border: "1px solid #d9e1ec",
-                      borderRadius: "12px",
-                      padding: "0 12px",
-                      outline: "none",
-                      background: "#ffffff",
-                    }}
-                  >
-                    {segurosDocumentos.map((seguro) => (
-                      <option key={seguro} value={seguro}>
-                        {seguro === "todos" ? "Todos los seguros" : seguro}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    name="tipo"
-                    value={filtrosDocumentos.tipo}
-                    onChange={actualizarFiltroDocumento}
-                    style={{
-                      width: "100%",
-                      height: "42px",
-                      border: "1px solid #d9e1ec",
-                      borderRadius: "12px",
-                      padding: "0 12px",
-                      outline: "none",
-                      background: "#ffffff",
-                    }}
-                  >
-                    {tiposDocumentos.map((tipo) => (
-                      <option key={tipo} value={tipo}>
-                        {tipo === "todos" ? "Todos los tipos" : tipo}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    name="estado"
-                    value={filtrosDocumentos.estado}
-                    onChange={actualizarFiltroDocumento}
-                    style={{
-                      width: "100%",
-                      height: "42px",
-                      border: "1px solid #d9e1ec",
-                      borderRadius: "12px",
-                      padding: "0 12px",
-                      outline: "none",
-                      background: "#ffffff",
-                    }}
-                  >
-                    {estadosDocumentos.map((estado) => (
-                      <option key={estado} value={estado}>
-                        {estado === "todos" ? "Todos los estados" : estado}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: documentoSeleccionado
-                      ? "1fr 320px"
-                      : "1fr",
-                    gap: "14px",
-                    alignItems: "stretch",
-                  }}
-                >
-                  <div
-                    style={{
-                      border: "1px solid #e6ebf2",
-                      borderRadius: "18px",
-                      overflow: "hidden",
-                      background: "#ffffff",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "1.2fr 1.35fr 0.75fr 0.8fr 0.75fr 1fr",
-                        gap: "10px",
-                        padding: "12px 16px",
-                        background: "#f5f7fb",
-                        color: "#07195a",
-                        fontSize: "12px",
-                        fontWeight: 800,
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      <span>Documento</span>
-                      <span>Seguro / Póliza</span>
-                      <span>Tipo</span>
-                      <span>Estado</span>
-                      <span>Fecha</span>
-                      <span>Acciones</span>
-                    </div>
-
-                    {documentosFiltrados.length === 0 ? (
-                      <div className="pc-empty" style={{ padding: "26px" }}>
-                        <h3>No se encontraron documentos</h3>
-                        <p>
-                          Prueba cambiando los filtros o contacta a tu ejecutivo
-                          si necesitas apoyo.
-                        </p>
-                      </div>
-                    ) : (
-                      documentosFiltrados.map((documento) => (
-                        <div
-                          key={documento.id}
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns:
-                              "1.2fr 1.35fr 0.75fr 0.8fr 0.75fr 1fr",
-                            gap: "10px",
-                            alignItems: "center",
-                            padding: "13px 16px",
-                            borderTop: "1px solid #eef2f7",
-                            fontSize: "13px",
-                          }}
-                        >
-                          <strong style={{ color: "#07195a" }}>
-                            {documento.nombre}
-                          </strong>
-                          <span style={{ color: "#475467" }}>
-                            {documento.seguro}
-                          </span>
-                          <span>{documento.tipo}</span>
-                          <span
-                            style={{
-                              display: "inline-flex",
-                              justifyContent: "center",
-                              borderRadius: "999px",
-                              padding: "6px 10px",
-                              fontSize: "12px",
-                              fontWeight: 800,
-                              color:
-                                documento.estado === "Disponible"
-                                  ? "#067647"
-                                  : documento.estado === "En preparación"
-                                    ? "#b54708"
-                                    : "#07195a",
-                              background:
-                                documento.estado === "Disponible"
-                                  ? "#ecfdf3"
-                                  : documento.estado === "En preparación"
-                                    ? "#fffaeb"
-                                    : "#eef4ff",
-                            }}
-                          >
-                            {documento.estado}
-                          </span>
-                          <span>{formatearFecha(documento.fecha)}</span>
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: "8px",
-                              justifyContent: "flex-end",
-                            }}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => abrirPreviewDocumento(documento)}
-                              style={{
-                                minHeight: "34px",
-                                padding: "8px 12px",
-                                borderRadius: "10px",
-                                border: "none",
-                                background: "#07195a",
-                                color: "#ffffff",
-                                fontWeight: 800,
-                                cursor: "pointer",
-                              }}
-                            >
-                              Ver PDF
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                documento.estado === "Disponible"
-                                  ? descargarDocumento(documento)
-                                  : contactarEjecutivoDocumento(documento)
-                              }
-                              style={{
-                                minHeight: "34px",
-                                padding: "8px 12px",
-                                borderRadius: "10px",
-                                border: "1px solid #f47c20",
-                                background: "#ffffff",
-                                color: "#f47c20",
-                                fontWeight: 800,
-                                cursor: "pointer",
-                              }}
-                            >
-                              {documento.estado === "Disponible"
-                                ? "Descargar"
-                                : "Ejecutivo"}
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {documentoSeleccionado && (
-                    <aside
-                      style={{
-                        borderRadius: "18px",
-                        border: "1px solid #dfe7f3",
-                        background:
-                          "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
-                        padding: "16px",
-                        minHeight: "100%",
-                        boxShadow: "0 12px 28px rgba(7, 25, 90, 0.08)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: "12px",
-                        }}
-                      >
-                        <strong style={{ color: "#07195a", fontSize: "15px" }}>
-                          Vista previa
-                        </strong>
-
-                        <button
-                          type="button"
-                          onClick={() => setDocumentoSeleccionado(null)}
-                          style={{
-                            border: "none",
-                            background: "#eef2f7",
-                            color: "#07195a",
-                            borderRadius: "999px",
-                            width: "28px",
-                            height: "28px",
-                            cursor: "pointer",
-                            fontWeight: 900,
-                          }}
-                        >
-                          ×
-                        </button>
-                      </div>
-
-                      <div
-                        style={{
-                          borderRadius: "16px",
-                          background: "#07195a",
-                          color: "#ffffff",
-                          padding: "18px",
-                          marginBottom: "14px",
-                          minHeight: "170px",
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <div>
-                          <span
-                            style={{
-                              display: "inline-flex",
-                              borderRadius: "999px",
-                              background: "rgba(244, 124, 32, 0.16)",
-                              color: "#f47c20",
-                              padding: "5px 9px",
-                              fontSize: "11px",
-                              fontWeight: 900,
-                              marginBottom: "12px",
-                            }}
-                          >
-                            PDF
-                          </span>
-
-                          <h3 style={{ margin: "0 0 8px", fontSize: "18px" }}>
-                            {documentoSeleccionado.nombre}
-                          </h3>
-
-                          <p
-                            style={{
-                              margin: 0,
-                              color: "rgba(255,255,255,0.78)",
-                              fontSize: "12px",
-                            }}
-                          >
-                            Documento asociado a tu portal de cliente.
-                          </p>
-                        </div>
-
-                        <small style={{ color: "rgba(255,255,255,0.65)" }}>
-                          Prieto & Correa Seguros
-                        </small>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "grid",
-                          gap: "9px",
-                          fontSize: "12px",
-                        }}
-                      >
-                        <div>
-                          <span style={{ color: "#667085", display: "block" }}>
-                            Seguro / Póliza
-                          </span>
-                          <strong style={{ color: "#07195a" }}>
-                            {documentoSeleccionado.seguro}
-                          </strong>
-                        </div>
-
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns: "1fr 1fr",
-                            gap: "10px",
-                          }}
-                        >
-                          <div>
-                            <span
-                              style={{ color: "#667085", display: "block" }}
-                            >
-                              Tipo
-                            </span>
-                            <strong style={{ color: "#07195a" }}>
-                              {documentoSeleccionado.tipo}
-                            </strong>
-                          </div>
-
-                          <div>
-                            <span
-                              style={{ color: "#667085", display: "block" }}
-                            >
-                              Fecha
-                            </span>
-                            <strong style={{ color: "#07195a" }}>
-                              {formatearFecha(documentoSeleccionado.fecha)}
-                            </strong>
-                          </div>
-                        </div>
-
-                        <div>
-                          <span style={{ color: "#667085", display: "block" }}>
-                            Estado
-                          </span>
-                          <strong style={{ color: "#07195a" }}>
-                            {documentoSeleccionado.estado}
-                          </strong>
-                        </div>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "grid",
-                          gap: "8px",
-                          marginTop: "16px",
-                        }}
-                      >
-                        <button
-                          type="button"
-                          onClick={() =>
-                            descargarDocumento(documentoSeleccionado)
-                          }
-                          style={{
-                            minHeight: "38px",
-                            borderRadius: "12px",
-                            border: "none",
-                            background: "#07195a",
-                            color: "#ffffff",
-                            fontWeight: 900,
-                            cursor: "pointer",
-                          }}
-                        >
-                          Descargar PDF
-                        </button>
-
-                        {documentoSeleccionado.estado !== "Disponible" && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              contactarEjecutivoDocumento(documentoSeleccionado)
-                            }
-                            style={{
-                              minHeight: "38px",
-                              borderRadius: "12px",
-                              border: "1px solid #f47c20",
-                              background: "#ffffff",
-                              color: "#f47c20",
-                              fontWeight: 900,
-                              cursor: "pointer",
-                            }}
-                          >
-                            Contactar ejecutivo
-                          </button>
-                        )}
-                      </div>
-                    </aside>
-                  )}
-                </div>
-              </div>
-            )}
-
             {vista === "perfil" && (
               <div
                 className="pc-panel pc-full-panel"
@@ -3703,27 +2573,21 @@ Estado: ${documento.estado}`);
                     setTimeout(() => setMensajePerfil(""), 4200);
                   };
 
-                  const manejarAvatar = async (event) => {
+                  const manejarAvatar = (event) => {
                     const archivo = event.target.files?.[0];
                     if (!archivo) return;
 
-                    const urlPrevia = URL.createObjectURL(archivo);
-                    setAvatarPerfil(urlPrevia);
-
-                    try {
-                      const token = localStorage.getItem("token");
-                      const perfil = await subirFotoPerfil(token, archivo);
-                      const urlServidor = `${import.meta.env.VITE_API_URL || "http://localhost:8000"}${perfil.foto_perfil}`;
-                      setAvatarPerfil(urlServidor);
-                      localStorage.setItem("avatar_cliente", urlServidor);
+                    const lector = new FileReader();
+                    lector.onload = () => {
+                      const resultado = String(lector.result || "");
+                      setAvatarPerfil(resultado);
+                      localStorage.setItem("avatar_cliente", resultado);
                       setMensajePerfil(
                         "Foto de perfil actualizada correctamente.",
                       );
-                    } catch {
-                      localStorage.setItem("avatar_cliente", urlPrevia);
-                      setMensajePerfil("No se pudo subir la foto al servidor.");
-                    }
-                    setTimeout(() => setMensajePerfil(""), 3600);
+                      setTimeout(() => setMensajePerfil(""), 3600);
+                    };
+                    lector.readAsDataURL(archivo);
                   };
 
                   const limpiarAvatar = () => {
@@ -4758,1391 +3622,11 @@ Estado: ${documento.estado}`);
             )}
 
             {vista === "siniestro" && (
-              <div
-                className="pc-panel pc-full-panel"
-                style={{
-                  width: "min(calc(100vw - 300px), 1600px)",
-                  maxWidth: "1600px",
-                  margin: "0 auto",
-                  padding: "18px 20px",
-                }}
-              >
-                {(() => {
-                  const ICONOS = {
-                    upload: "/subir-documento.png",
-                    tick: "/tick.png",
-                    reloj: "/reloj-de-arena.png",
-                    carpeta: "/carpeta.png",
-                    reporte: "/reportar-siniestro.png",
-                  };
-
-                  const siniestrosBackend = siniestros.map((s) => ({
-                    id: String(s.id_siniestro),
-                    poliza: s.numero_poliza || `Póliza ${s.poliza_id}`,
-                    tipoEstado: s.estado,
-                    etapaActual: s.etapa,
-                    tipo: s.tipo,
-                    descripcion: s.descripcion,
-                    fecha_ocurrencia: s.fecha_ocurrencia,
-                    seguro: s.seguro_nombre,
-                  }));
-
-                  const siniestrosCliente = siniestrosBackend;
-
-                  const CASOS_POR_PAGINA = 5;
-                  const totalSiniestros = siniestrosCliente.length;
-                  const totalPaginasSiniestros = Math.max(
-                    1,
-                    Math.ceil(totalSiniestros / CASOS_POR_PAGINA),
-                  );
-                  const paginaActualSiniestros = Math.min(
-                    paginaSiniestros,
-                    totalPaginasSiniestros,
-                  );
-                  const indiceInicioSiniestros =
-                    (paginaActualSiniestros - 1) * CASOS_POR_PAGINA;
-                  const indiceFinSiniestros =
-                    indiceInicioSiniestros + CASOS_POR_PAGINA;
-                  const siniestrosPaginados = siniestrosCliente.slice(
-                    indiceInicioSiniestros,
-                    indiceFinSiniestros,
-                  );
-                  const desdeSiniestro =
-                    totalSiniestros === 0 ? 0 : indiceInicioSiniestros + 1;
-                  const hastaSiniestro = Math.min(
-                    indiceFinSiniestros,
-                    totalSiniestros,
-                  );
-
-                  const polizasReportables = polizas.map((poliza, index) => ({
-                    id: String(
-                      poliza.id_poliza || poliza.numero_poliza || index,
-                    ),
-                    nombre:
-                      poliza.seguro?.nombre ||
-                      poliza.nombre ||
-                      "Seguro contratado",
-                    categoria:
-                      poliza.seguro?.categoria ||
-                      poliza.categoria ||
-                      "Pólizas vigentes",
-                    poliza: poliza.numero_poliza || `Póliza ${index + 1}`,
-                  }));
-
-                  const polizaSeleccionada =
-                    polizasReportables.find(
-                      (item) => item.id === polizaReporteId,
-                    ) || polizasReportables[0];
-
-                  const siniestroPorPoliza = siniestrosCliente.find(
-                    (item) => item.poliza === polizaSeleccionada?.poliza,
-                  );
-
-                  const siniestroSeleccionado =
-                    siniestrosCliente.find(
-                      (item) => item.id === siniestroSeleccionadoId,
-                    ) ||
-                    siniestroPorPoliza ||
-                    null;
-
-                  const etapaActual =
-                    siniestroSeleccionado?.etapaActual ||
-                    (reporteSiniestroActivo ? 1 : 0);
-
-                  const categoriasReportables = polizasReportables.reduce(
-                    (acc, item) => {
-                      if (!acc[item.categoria]) acc[item.categoria] = [];
-                      acc[item.categoria].push(item);
-                      return acc;
-                    },
-                    {},
-                  );
-
-                  const seleccionarPoliza = (idPoliza) => {
-                    setPolizaReporteId(idPoliza);
-                    setReporteSiniestroActivo(false);
-                    setPaginaSiniestros(1);
-
-                    const nuevaPoliza = polizasReportables.find(
-                      (item) => item.id === idPoliza,
-                    );
-                    const caso = siniestrosCliente.find(
-                      (item) => item.poliza === nuevaPoliza?.poliza,
-                    );
-                    setSiniestroSeleccionadoId(caso?.id || "");
-                  };
-
-                  const seleccionarCaso = (caso) => {
-                    setSiniestroSeleccionadoId(caso.id);
-                    const polizaCaso = polizasReportables.find(
-                      (item) => item.poliza === caso.poliza,
-                    );
-                    if (polizaCaso) setPolizaReporteId(polizaCaso.id);
-                    setReporteSiniestroActivo(false);
-                  };
-
-                  const reportarSiniestro = () => {
-                    if (!polizaSeleccionada) return;
-                    setReporteSiniestroActivo(true);
-                    const caso = siniestrosCliente.find(
-                      (item) => item.poliza === polizaSeleccionada.poliza,
-                    );
-                    setSiniestroSeleccionadoId(caso?.id || "");
-                  };
-
-                  const casosActivos = siniestrosCliente.filter(
-                    (item) => item.tipoEstado !== "cerrado",
-                  ).length;
-                  const enGestion = siniestrosCliente.filter(
-                    (item) => item.tipoEstado === "gestion",
-                  ).length;
-                  const pendientes = siniestrosCliente.filter(
-                    (item) => item.tipoEstado === "pendiente",
-                  ).length;
-                  const cerrados = siniestrosCliente.filter(
-                    (item) => item.tipoEstado === "cerrado",
-                  ).length;
-
-                  const estadoMeta = (tipoEstado) => {
-                    if (tipoEstado === "gestion") {
-                      return {
-                        icono: ICONOS.reloj,
-                        texto: "En gestión",
-                        color: "#c2410c",
-                        background: "rgba(244, 124, 32, 0.12)",
-                        border: "rgba(244, 124, 32, 0.32)",
-                      };
-                    }
-
-                    if (tipoEstado === "pendiente") {
-                      return {
-                        icono: ICONOS.carpeta,
-                        texto: "Pendiente respaldo",
-                        color: "#07195a",
-                        background: "#eef4ff",
-                        border: "#cfddf8",
-                      };
-                    }
-
-                    return {
-                      icono: ICONOS.tick,
-                      texto: "Cerrado",
-                      color: "#067647",
-                      background: "#ecfdf3",
-                      border: "#bfead1",
-                    };
-                  };
-
-                  const kpisSiniestro = [
-                    {
-                      titulo: "Casos activos",
-                      valor: casosActivos,
-                      bajada: "Sin casos registrados",
-                      icono: ICONOS.reporte,
-                      fondo: "#eef4ff",
-                      color: "#07195a",
-                    },
-                    {
-                      titulo: "En gestión",
-                      valor: enGestion,
-                      bajada: "En revisión por la compañía",
-                      icono: ICONOS.reloj,
-                      fondo: "rgba(244, 124, 32, 0.14)",
-                      color: "#f47c20",
-                    },
-                    {
-                      titulo: "Pendiente documentos",
-                      valor: pendientes,
-                      bajada: "Requiere tu respaldo",
-                      icono: ICONOS.carpeta,
-                      fondo: "rgba(244, 174, 32, 0.16)",
-                      color: "#f47c20",
-                    },
-                    {
-                      titulo: "Cerrados",
-                      valor: cerrados,
-                      bajada: "Casos finalizados",
-                      icono: ICONOS.tick,
-                      fondo: "rgba(22, 163, 74, 0.14)",
-                      color: "#067647",
-                    },
-                  ];
-
-                  const pasosSiniestro = [
-                    { numero: 1, titulo: "Reportado", texto: "Caso ingresado" },
-                    {
-                      numero: 2,
-                      titulo: "En revisión",
-                      texto: "Evaluación inicial",
-                    },
-                    {
-                      numero: 3,
-                      titulo: "Documentación",
-                      texto: "Respaldo del cliente",
-                    },
-                    {
-                      numero: 4,
-                      titulo: "Resolución",
-                      texto: "Cierre del caso",
-                    },
-                  ].map((paso) => ({
-                    ...paso,
-                    estado:
-                      paso.numero < etapaActual
-                        ? "completado"
-                        : paso.numero === etapaActual
-                          ? "actual"
-                          : "pendiente",
-                  }));
-
-                  const fechaFormateada = (fecha) => {
-                    if (!fecha) return "—";
-                    const partes = String(fecha).split("-");
-                    if (partes.length !== 3) return fecha;
-                    return `${partes[2]}-${partes[1]}-${partes[0]}`;
-                  };
-
-                  const uploadRequerido =
-                    siniestroSeleccionado?.tipoEstado === "pendiente" ||
-                    reporteSiniestroActivo;
-                  const estadoActual = siniestroSeleccionado
-                    ? estadoMeta(siniestroSeleccionado.tipoEstado)
-                    : {
-                        texto: reporteSiniestroActivo
-                          ? "Reporte iniciado"
-                          : "Sin caso activo",
-                      };
-
-                  return (
-                    <>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: "16px",
-                          alignItems: "center",
-                          marginBottom: "14px",
-                        }}
-                      >
-                        <div>
-                          <h2
-                            style={{
-                              margin: 0,
-                              color: "#07195a",
-                              fontSize: "23px",
-                              fontWeight: 950,
-                              letterSpacing: "-0.04em",
-                              lineHeight: 1,
-                            }}
-                          >
-                            Siniestros
-                          </h2>
-
-                          <p
-                            style={{
-                              margin: "6px 0 0",
-                              color: "#667085",
-                              fontSize: "13px",
-                              lineHeight: 1.45,
-                            }}
-                          >
-                            Reporta, revisa y da seguimiento a tus casos
-                            asociados a tus pólizas.
-                          </p>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={reportarSiniestro}
-                          disabled={!polizaSeleccionada}
-                          title={
-                            !polizaSeleccionada
-                              ? "Selecciona una póliza para reportar"
-                              : "Iniciar reporte para la póliza seleccionada"
-                          }
-                          style={{
-                            border: "none",
-                            borderRadius: "15px",
-                            background: polizaSeleccionada
-                              ? "#f47c20"
-                              : "#cbd5e1",
-                            color: "#ffffff",
-                            padding: "11px 18px",
-                            fontWeight: 950,
-                            cursor: polizaSeleccionada
-                              ? "pointer"
-                              : "not-allowed",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "9px",
-                            boxShadow: polizaSeleccionada
-                              ? "0 12px 30px rgba(244, 124, 32, 0.25)"
-                              : "none",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          <span style={{ fontSize: "17px", lineHeight: 1 }}>
-                            +
-                          </span>
-                          <span>Reportar siniestro</span>
-                        </button>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                          gap: "12px",
-                          marginBottom: "12px",
-                        }}
-                      >
-                        {kpisSiniestro.map((kpi) => (
-                          <article
-                            key={kpi.titulo}
-                            style={{
-                              minHeight: "70px",
-                              border: "1px solid #e6ebf2",
-                              borderRadius: "16px",
-                              background: "#ffffff",
-                              padding: "12px 15px",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "14px",
-                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.05)",
-                            }}
-                          >
-                            <span
-                              style={{
-                                width: "44px",
-                                height: "44px",
-                                borderRadius: "999px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                background: kpi.fondo,
-                                flex: "0 0 auto",
-                              }}
-                            >
-                              <img
-                                src={kpi.icono}
-                                alt=""
-                                style={{
-                                  width: "25px",
-                                  height: "25px",
-                                  objectFit: "contain",
-                                }}
-                              />
-                            </span>
-
-                            <span>
-                              <strong
-                                style={{
-                                  display: "block",
-                                  color: "#07195a",
-                                  fontSize: "19px",
-                                  lineHeight: 1,
-                                  fontWeight: 950,
-                                }}
-                              >
-                                {kpi.valor}
-                              </strong>
-
-                              <small
-                                style={{
-                                  display: "block",
-                                  marginTop: "4px",
-                                  color: "#07195a",
-                                  fontSize: "12px",
-                                  fontWeight: 950,
-                                }}
-                              >
-                                {kpi.titulo}
-                              </small>
-
-                              <small
-                                style={{
-                                  display: "block",
-                                  marginTop: "1px",
-                                  color: kpi.color,
-                                  fontSize: "11px",
-                                  fontWeight: 780,
-                                }}
-                              >
-                                {kpi.bajada}
-                              </small>
-                            </span>
-                          </article>
-                        ))}
-                      </div>
-
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "2.18fr 0.82fr",
-                          gap: "12px",
-                          alignItems: "start",
-                        }}
-                      >
-                        <div style={{ display: "grid", gap: "10px" }}>
-                          <section
-                            style={{
-                              border: "1px solid #e6ebf2",
-                              borderRadius: "18px",
-                              background: "#ffffff",
-                              padding: "14px 16px 12px",
-                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.04)",
-                            }}
-                          >
-                            <h3
-                              style={{
-                                margin: "0 0 12px",
-                                color: "#07195a",
-                                fontSize: "17px",
-                                fontWeight: 950,
-                              }}
-                            >
-                              Seguimiento del proceso
-                            </h3>
-
-                            <div
-                              style={{
-                                display: "grid",
-                                gridTemplateColumns:
-                                  "repeat(4, minmax(0, 1fr))",
-                                position: "relative",
-                                alignItems: "start",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  top: "23px",
-                                  left: "10%",
-                                  right: "10%",
-                                  height: "3px",
-                                  background: "#d9e2ef",
-                                  borderRadius: "99px",
-                                  overflow: "hidden",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    display: "block",
-                                    width: `${Math.max(0, Math.min(100, ((etapaActual - 1) / 3) * 100))}%`,
-                                    height: "100%",
-                                    background:
-                                      etapaActual >= 3 ? "#f47c20" : "#07195a",
-                                  }}
-                                />
-                              </div>
-
-                              {pasosSiniestro.map((paso) => {
-                                const esActual = paso.estado === "actual";
-                                const completado = paso.estado === "completado";
-
-                                return (
-                                  <div
-                                    key={paso.numero}
-                                    style={{
-                                      position: "relative",
-                                      zIndex: 1,
-                                      textAlign: "center",
-                                      display: "grid",
-                                      justifyItems: "center",
-                                      gap: "7px",
-                                    }}
-                                  >
-                                    <span
-                                      style={{
-                                        width: esActual ? "48px" : "43px",
-                                        height: esActual ? "48px" : "43px",
-                                        borderRadius: "999px",
-                                        display: "grid",
-                                        placeItems: "center",
-                                        background: esActual
-                                          ? "#f47c20"
-                                          : completado
-                                            ? "#07195a"
-                                            : "#ffffff",
-                                        color:
-                                          esActual || completado
-                                            ? "#ffffff"
-                                            : "#07195a",
-                                        border: esActual
-                                          ? "2px solid #f47c20"
-                                          : "2px solid #d9e2ef",
-                                        fontWeight: 950,
-                                        fontSize: "16px",
-                                        boxShadow: esActual
-                                          ? "0 0 0 7px rgba(244, 124, 32, 0.12)"
-                                          : "none",
-                                        position: "relative",
-                                      }}
-                                    >
-                                      {paso.numero}
-                                      {completado && (
-                                        <span
-                                          style={{
-                                            position: "absolute",
-                                            right: "-3px",
-                                            top: "-4px",
-                                            width: "14px",
-                                            height: "14px",
-                                            borderRadius: "999px",
-                                            background: "#22c55e",
-                                            border: "2px solid #ffffff",
-                                          }}
-                                        />
-                                      )}
-                                    </span>
-
-                                    <div
-                                      style={{
-                                        minWidth: "120px",
-                                        borderRadius: "12px",
-                                        padding: esActual ? "6px 8px" : "0",
-                                        background: esActual
-                                          ? "rgba(244, 124, 32, 0.08)"
-                                          : "transparent",
-                                      }}
-                                    >
-                                      <strong
-                                        style={{
-                                          display: "block",
-                                          color: "#07195a",
-                                          fontSize: "12px",
-                                          fontWeight: 950,
-                                        }}
-                                      >
-                                        {paso.titulo}
-                                      </strong>
-
-                                      <span
-                                        style={{
-                                          display: "block",
-                                          marginTop: "2px",
-                                          color: "#667085",
-                                          fontSize: "11px",
-                                          fontWeight: 750,
-                                        }}
-                                      >
-                                        {paso.texto}
-                                      </span>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </section>
-
-                          <section
-                            style={{
-                              border: "1px solid #e6ebf2",
-                              borderRadius: "18px",
-                              background: "#ffffff",
-                              padding: "13px 14px 11px",
-                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.04)",
-                            }}
-                          >
-                            <h3
-                              style={{
-                                margin: "0 0 8px",
-                                color: "#07195a",
-                                fontSize: "18px",
-                                fontWeight: 950,
-                              }}
-                            >
-                              Mis casos
-                            </h3>
-
-                            <div style={{ overflowX: "auto" }}>
-                              <table
-                                style={{
-                                  width: "100%",
-                                  minWidth: "820px",
-                                  borderCollapse: "separate",
-                                  borderSpacing: 0,
-                                  overflow: "hidden",
-                                  borderRadius: "14px",
-                                  border: "1px solid #e6ebf2",
-                                }}
-                              >
-                                <thead>
-                                  <tr style={{ background: "#f5f7fb" }}>
-                                    {[
-                                      "N° Caso",
-                                      "Seguro / póliza",
-                                      "Estado",
-                                      "Ejecutivo",
-                                      "Fecha",
-                                    ].map((titulo) => (
-                                      <th
-                                        key={titulo}
-                                        style={{
-                                          textAlign: "left",
-                                          padding: "9px 10px",
-                                          color: "#07195a",
-                                          fontSize: "11px",
-                                          fontWeight: 950,
-                                          textTransform: "uppercase",
-                                          letterSpacing: "0.02em",
-                                          borderBottom: "1px solid #e6ebf2",
-                                          whiteSpace: "nowrap",
-                                        }}
-                                      >
-                                        {titulo}
-                                      </th>
-                                    ))}
-                                  </tr>
-                                </thead>
-
-                                <tbody>
-                                  {siniestrosCliente.length === 0 ? (
-                                    <tr>
-                                      <td
-                                        colSpan="5"
-                                        style={{
-                                          padding: "24px 16px",
-                                          textAlign: "center",
-                                          color: "#667085",
-                                          fontSize: "12px",
-                                          fontWeight: 850,
-                                          borderBottom: "1px solid #e6ebf2",
-                                        }}
-                                      >
-                                        <strong
-                                          style={{
-                                            display: "block",
-                                            color: "#07195a",
-                                            fontSize: "14px",
-                                            fontWeight: 950,
-                                            marginBottom: "5px",
-                                          }}
-                                        >
-                                          No tienes siniestros registrados.
-                                        </strong>
-                                        Selecciona una póliza vigente y presiona
-                                        “Reportar siniestro” para iniciar un
-                                        caso.
-                                      </td>
-                                    </tr>
-                                  ) : (
-                                    siniestrosPaginados.map((siniestro) => {
-                                      const activo =
-                                        siniestroSeleccionado?.id ===
-                                        siniestro.id;
-                                      const meta = estadoMeta(
-                                        siniestro.tipoEstado,
-                                      );
-
-                                      return (
-                                        <tr
-                                          key={siniestro.id}
-                                          onClick={() =>
-                                            seleccionarCaso(siniestro)
-                                          }
-                                          style={{
-                                            cursor: "pointer",
-                                            background: activo
-                                              ? "#fff7ed"
-                                              : "#ffffff",
-                                            outline: activo
-                                              ? "1px solid rgba(244, 124, 32, 0.42)"
-                                              : "none",
-                                          }}
-                                        >
-                                          <td
-                                            style={{
-                                              padding: "9px 10px",
-                                              borderBottom: "1px solid #e6ebf2",
-                                              color: "#07195a",
-                                              fontSize: "12px",
-                                              fontWeight: 950,
-                                              whiteSpace: "nowrap",
-                                            }}
-                                          >
-                                            {siniestro.id}
-                                          </td>
-
-                                          <td
-                                            style={{
-                                              padding: "9px 10px",
-                                              borderBottom: "1px solid #e6ebf2",
-                                              color: "#07195a",
-                                              fontSize: "12px",
-                                              fontWeight: 900,
-                                              whiteSpace: "nowrap",
-                                            }}
-                                          >
-                                            <strong
-                                              style={{
-                                                display: "block",
-                                                fontWeight: 950,
-                                              }}
-                                            >
-                                              {siniestro.seguro}
-                                            </strong>
-                                            <span
-                                              style={{
-                                                color: "#667085",
-                                                fontSize: "11px",
-                                                fontWeight: 850,
-                                              }}
-                                            >
-                                              {siniestro.poliza}
-                                            </span>
-                                          </td>
-
-                                          <td
-                                            style={{
-                                              padding: "9px 10px",
-                                              borderBottom: "1px solid #e6ebf2",
-                                              whiteSpace: "nowrap",
-                                            }}
-                                          >
-                                            <span
-                                              style={{
-                                                display: "inline-flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                gap: "7px",
-                                                minWidth: "150px",
-                                                minHeight: "28px",
-                                                padding: "5px 12px",
-                                                borderRadius: "999px",
-                                                background: meta.background,
-                                                border: `1px solid ${meta.border}`,
-                                                color: meta.color,
-                                                fontSize: "11px",
-                                                fontWeight: 950,
-                                              }}
-                                            >
-                                              <img
-                                                src={meta.icono}
-                                                alt=""
-                                                style={{
-                                                  width: "13px",
-                                                  height: "13px",
-                                                  objectFit: "contain",
-                                                }}
-                                              />
-                                              {meta.texto}
-                                            </span>
-                                          </td>
-
-                                          <td
-                                            style={{
-                                              padding: "9px 10px",
-                                              borderBottom: "1px solid #e6ebf2",
-                                              color: "#07195a",
-                                              fontSize: "12px",
-                                              fontWeight: 950,
-                                              whiteSpace: "nowrap",
-                                            }}
-                                          >
-                                            {siniestro.ejecutivo}
-                                          </td>
-
-                                          <td
-                                            style={{
-                                              padding: "9px 10px",
-                                              borderBottom: "1px solid #e6ebf2",
-                                              color: "#07195a",
-                                              fontSize: "12px",
-                                              fontWeight: 950,
-                                              whiteSpace: "nowrap",
-                                            }}
-                                          >
-                                            {fechaFormateada(siniestro.fecha)}
-                                          </td>
-                                        </tr>
-                                      );
-                                    })
-                                  )}
-                                </tbody>
-                              </table>
-                            </div>
-
-                            {siniestrosCliente.length > CASOS_POR_PAGINA && (
-                              <div
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
-                                  gap: "10px",
-                                  marginTop: "9px",
-                                  flexWrap: "wrap",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    color: "#667085",
-                                    fontSize: "11px",
-                                    fontWeight: 850,
-                                  }}
-                                >
-                                  Mostrando {desdeSiniestro}-{hastaSiniestro} de{" "}
-                                  {totalSiniestros} casos
-                                </span>
-
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "5px",
-                                  }}
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setPaginaSiniestros((pagina) =>
-                                        Math.max(1, pagina - 1),
-                                      )
-                                    }
-                                    disabled={paginaActualSiniestros === 1}
-                                    style={{
-                                      border: "1px solid #d9e2ef",
-                                      background:
-                                        paginaActualSiniestros === 1
-                                          ? "#f5f7fb"
-                                          : "#ffffff",
-                                      color:
-                                        paginaActualSiniestros === 1
-                                          ? "#98a2b3"
-                                          : "#07195a",
-                                      borderRadius: "10px",
-                                      padding: "6px 9px",
-                                      fontWeight: 950,
-                                      cursor:
-                                        paginaActualSiniestros === 1
-                                          ? "not-allowed"
-                                          : "pointer",
-                                    }}
-                                  >
-                                    ‹
-                                  </button>
-
-                                  {Array.from(
-                                    { length: totalPaginasSiniestros },
-                                    (_, index) => index + 1,
-                                  ).map((pagina) => (
-                                    <button
-                                      key={pagina}
-                                      type="button"
-                                      onClick={() =>
-                                        setPaginaSiniestros(pagina)
-                                      }
-                                      style={{
-                                        border:
-                                          paginaActualSiniestros === pagina
-                                            ? "1px solid #07195a"
-                                            : "1px solid #d9e2ef",
-                                        background:
-                                          paginaActualSiniestros === pagina
-                                            ? "#07195a"
-                                            : "#ffffff",
-                                        color:
-                                          paginaActualSiniestros === pagina
-                                            ? "#ffffff"
-                                            : "#07195a",
-                                        borderRadius: "10px",
-                                        padding: "6px 10px",
-                                        fontWeight: 950,
-                                        cursor: "pointer",
-                                      }}
-                                    >
-                                      {pagina}
-                                    </button>
-                                  ))}
-
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setPaginaSiniestros((pagina) =>
-                                        Math.min(
-                                          totalPaginasSiniestros,
-                                          pagina + 1,
-                                        ),
-                                      )
-                                    }
-                                    disabled={
-                                      paginaActualSiniestros ===
-                                      totalPaginasSiniestros
-                                    }
-                                    style={{
-                                      border: "1px solid #d9e2ef",
-                                      background:
-                                        paginaActualSiniestros ===
-                                        totalPaginasSiniestros
-                                          ? "#f5f7fb"
-                                          : "#ffffff",
-                                      color:
-                                        paginaActualSiniestros ===
-                                        totalPaginasSiniestros
-                                          ? "#98a2b3"
-                                          : "#07195a",
-                                      borderRadius: "10px",
-                                      padding: "6px 9px",
-                                      fontWeight: 950,
-                                      cursor:
-                                        paginaActualSiniestros ===
-                                        totalPaginasSiniestros
-                                          ? "not-allowed"
-                                          : "pointer",
-                                    }}
-                                  >
-                                    ›
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-
-                            <p
-                              style={{
-                                margin: "8px 0 0",
-                                color: "#98a2b3",
-                                textAlign: "center",
-                                fontSize: "11px",
-                                fontWeight: 850,
-                              }}
-                            >
-                              {siniestrosCliente.length > 0
-                                ? "Última actualización: hoy, 00:18"
-                                : "Sin casos registrados"}
-                            </p>
-                          </section>
-                        </div>
-
-                        <aside style={{ display: "grid", gap: "10px" }}>
-                          <section
-                            style={{
-                              border: "1px solid #e6ebf2",
-                              borderRadius: "18px",
-                              background: "#ffffff",
-                              padding: "13px 14px",
-                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.04)",
-                            }}
-                          >
-                            <h3
-                              style={{
-                                margin: "0 0 8px",
-                                color: uploadRequerido ? "#c2410c" : "#07195a",
-                                fontSize: "16px",
-                                fontWeight: 950,
-                              }}
-                            >
-                              {uploadRequerido
-                                ? "Adjuntar respaldo requerido"
-                                : "Adjuntar respaldo"}
-                            </h3>
-
-                            <div
-                              style={{
-                                border: uploadRequerido
-                                  ? "1px dashed rgba(244, 124, 32, 0.34)"
-                                  : "1px dashed rgba(7, 25, 90, 0.22)",
-                                borderRadius: "16px",
-                                background: uploadRequerido
-                                  ? "#fffaf5"
-                                  : "#f8fafc",
-                                padding: "18px 14px",
-                                textAlign: "center",
-                                minHeight: "142px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                            >
-                              <div style={{ width: "100%" }}>
-                                <img
-                                  src={ICONOS.upload}
-                                  alt=""
-                                  style={{
-                                    width: "39px",
-                                    height: "39px",
-                                    objectFit: "contain",
-                                    display: "block",
-                                    margin: "0 auto 10px",
-                                  }}
-                                />
-
-                                <strong
-                                  style={{
-                                    display: "block",
-                                    color: "#07195a",
-                                    fontSize: "14px",
-                                    fontWeight: 950,
-                                  }}
-                                >
-                                  Fotos y documentos
-                                </strong>
-
-                                <p
-                                  style={{
-                                    margin: "5px auto 10px",
-                                    color: "#667085",
-                                    fontSize: "12px",
-                                    lineHeight: 1.35,
-                                    maxWidth: "285px",
-                                  }}
-                                >
-                                  Aquí se podrá subir PDF, fotos, constancias,
-                                  presupuestos e informes.
-                                </p>
-
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    alert(
-                                      "Carga simulada. Esta función se conectará al backend más adelante.",
-                                    )
-                                  }
-                                  style={{
-                                    minHeight: "32px",
-                                    borderRadius: "11px",
-                                    border: "1px solid #07195a",
-                                    background: "#ffffff",
-                                    color: "#07195a",
-                                    fontWeight: 950,
-                                    cursor: "pointer",
-                                    padding: "6px 14px",
-                                  }}
-                                >
-                                  Adjuntar archivo
-                                </button>
-                              </div>
-                            </div>
-                          </section>
-
-                          <section
-                            style={{
-                              border: "1px solid #e6ebf2",
-                              borderRadius: "18px",
-                              background: "#ffffff",
-                              padding: "13px 14px",
-                              boxShadow: "0 12px 26px rgba(7, 25, 90, 0.04)",
-                            }}
-                          >
-                            <h3
-                              style={{
-                                margin: "0 0 5px",
-                                color: "#07195a",
-                                fontSize: "16px",
-                                fontWeight: 950,
-                              }}
-                            >
-                              ¿Qué póliza deseas reportar?
-                            </h3>
-
-                            <p
-                              style={{
-                                margin: "0 0 8px",
-                                color: "#667085",
-                                fontSize: "12px",
-                                lineHeight: 1.35,
-                              }}
-                            >
-                              Selecciona tu póliza vigente y luego presiona
-                              “Reportar siniestro”.
-                            </p>
-
-                            <select
-                              disabled={polizasReportables.length === 0}
-                              value={polizaSeleccionada?.id || ""}
-                              onChange={(event) =>
-                                seleccionarPoliza(event.target.value)
-                              }
-                              style={{
-                                width: "100%",
-                                minHeight: "36px",
-                                border: "1px solid #d9e2ef",
-                                borderRadius: "12px",
-                                background: "#f8fafc",
-                                color: "#07195a",
-                                fontWeight: 900,
-                                fontSize: "12px",
-                                padding: "0 11px",
-                                outline: "none",
-                                cursor: "pointer",
-                              }}
-                            >
-                              {polizasReportables.length === 0 ? (
-                                <option value="">
-                                  No tienes pólizas vigentes registradas
-                                </option>
-                              ) : (
-                                Object.entries(categoriasReportables).map(
-                                  ([categoria, items]) => (
-                                    <optgroup
-                                      key={categoria}
-                                      label={`${categoria} (${items.length})`}
-                                    >
-                                      {items.map((item) => (
-                                        <option key={item.id} value={item.id}>
-                                          {item.nombre} · {item.poliza}
-                                        </option>
-                                      ))}
-                                    </optgroup>
-                                  ),
-                                )
-                              )}
-                            </select>
-
-                            {polizaSeleccionada ? (
-                              <div
-                                style={{
-                                  marginTop: "10px",
-                                  border: "1px solid rgba(7, 25, 90, 0.08)",
-                                  borderRadius: "14px",
-                                  background: "#f5f7fb",
-                                  padding: "10px 11px",
-                                }}
-                              >
-                                <small
-                                  style={{
-                                    display: "block",
-                                    color: "#f47c20",
-                                    fontSize: "10px",
-                                    fontWeight: 950,
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.04em",
-                                  }}
-                                >
-                                  Póliza seleccionada
-                                </small>
-
-                                <strong
-                                  style={{
-                                    display: "block",
-                                    marginTop: "3px",
-                                    color: "#07195a",
-                                    fontSize: "13px",
-                                    fontWeight: 950,
-                                    lineHeight: 1.2,
-                                  }}
-                                >
-                                  {polizaSeleccionada.nombre}
-                                </strong>
-
-                                <span
-                                  style={{
-                                    display: "block",
-                                    marginTop: "2px",
-                                    color: "#667085",
-                                    fontSize: "11px",
-                                    fontWeight: 800,
-                                  }}
-                                >
-                                  {polizaSeleccionada.categoria} ·{" "}
-                                  {polizaSeleccionada.poliza}
-                                </span>
-
-                                <span
-                                  style={{
-                                    display: "block",
-                                    marginTop: "7px",
-                                    color: reporteSiniestroActivo
-                                      ? "#067647"
-                                      : "#475467",
-                                    fontSize: "11px",
-                                    fontWeight: 900,
-                                  }}
-                                >
-                                  {reporteSiniestroActivo
-                                    ? "Reporte preparado para la póliza seleccionada."
-                                    : siniestroPorPoliza
-                                      ? "Esta póliza ya tiene un caso asociado."
-                                      : "Lista para iniciar un nuevo reporte."}
-                                </span>
-                              </div>
-                            ) : (
-                              <div
-                                style={{
-                                  marginTop: "10px",
-                                  border: "1px dashed #d9e2ef",
-                                  borderRadius: "14px",
-                                  background: "#f8fafc",
-                                  padding: "12px",
-                                  color: "#667085",
-                                  fontSize: "12px",
-                                  fontWeight: 850,
-                                  lineHeight: 1.35,
-                                }}
-                              >
-                                Cuando el backend entregue tus pólizas vigentes,
-                                podrás seleccionar una aquí para iniciar el
-                                reporte.
-                              </div>
-                            )}
-                          </section>
-                        </aside>
-                      </div>
-
-                      <section
-                        style={{
-                          marginTop: "10px",
-                          borderRadius: "18px",
-                          background:
-                            "linear-gradient(135deg, #07195a 0%, #031344 100%)",
-                          color: "#ffffff",
-                          padding: "12px 18px",
-                          display: "grid",
-                          gridTemplateColumns: "1.35fr 0.8fr 0.95fr",
-                          gap: "18px",
-                          alignItems: "center",
-                          boxShadow: "0 18px 38px rgba(7, 25, 90, 0.22)",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns: "48px 1fr",
-                            gap: "13px",
-                            alignItems: "center",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: "48px",
-                              height: "48px",
-                              borderRadius: "999px",
-                              border: "2px solid rgba(255, 255, 255, 0.7)",
-                              display: "grid",
-                              placeItems: "center",
-                              background: "rgba(255, 255, 255, 0.08)",
-                              position: "relative",
-                            }}
-                          >
-                            <span style={{ fontSize: "24px", lineHeight: 1 }}>
-                              👤
-                            </span>
-                            <span
-                              style={{
-                                position: "absolute",
-                                right: "4px",
-                                bottom: "4px",
-                                width: "13px",
-                                height: "13px",
-                                borderRadius: "999px",
-                                background: "#22c55e",
-                                border: "2px solid #ffffff",
-                              }}
-                            />
-                          </div>
-
-                          <div>
-                            <small
-                              style={{
-                                display: "block",
-                                opacity: 0.85,
-                                fontSize: "11px",
-                                fontWeight: 850,
-                              }}
-                            >
-                              Ejecutivo asignado
-                            </small>
-
-                            <strong
-                              style={{
-                                display: "block",
-                                marginTop: "3px",
-                                fontSize: "15px",
-                                fontWeight: 950,
-                              }}
-                            >
-                              {siniestroSeleccionado?.ejecutivo ||
-                                "Pendiente asignación"}
-                            </strong>
-
-                            <p
-                              style={{
-                                margin: "3px 0 0",
-                                opacity: 0.9,
-                                fontSize: "11px",
-                                lineHeight: 1.35,
-                              }}
-                            >
-                              Acompañamiento en denuncia, respaldo y seguimiento
-                              con la compañía.
-                            </p>
-                          </div>
-                        </div>
-
-                        <div
-                          style={{
-                            borderLeft: "1px solid rgba(255, 255, 255, 0.28)",
-                            paddingLeft: "18px",
-                          }}
-                        >
-                          <strong
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                              fontSize: "14px",
-                              fontWeight: 950,
-                            }}
-                          >
-                            <span style={{ fontSize: "17px" }}>◷</span>
-                            Horario de atención
-                          </strong>
-
-                          <p
-                            style={{
-                              margin: "5px 0 0",
-                              opacity: 0.9,
-                              fontSize: "12px",
-                              lineHeight: 1.35,
-                            }}
-                          >
-                            Lunes a viernes
-                            <br />
-                            09:00 a 18:00 hrs.
-                          </p>
-                        </div>
-
-                        <div
-                          style={{
-                            borderLeft: "1px solid rgba(255, 255, 255, 0.28)",
-                            paddingLeft: "18px",
-                          }}
-                        >
-                          <strong
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                              fontSize: "14px",
-                              fontWeight: 950,
-                            }}
-                          >
-                            <span style={{ fontSize: "17px" }}>📄</span>
-                            Estado actual
-                          </strong>
-
-                          <p
-                            style={{
-                              margin: "5px 0 0",
-                              opacity: 0.9,
-                              fontSize: "12px",
-                              lineHeight: 1.35,
-                            }}
-                          >
-                            {siniestroSeleccionado
-                              ? estadoActual.texto
-                              : "Sin caso seleccionado"}
-                            <br />
-                            {siniestroSeleccionado
-                              ? `Última actualización: ${siniestroSeleccionado.actualizado || "pendiente"}`
-                              : "Esperando conexión con backend"}
-                          </p>
-                        </div>
-                      </section>
-                    </>
-                  );
-                })()}
-              </div>
+              <ReportarSiniestro
+                polizas={polizas}
+                datosPerfil={datosPerfil}
+                nombreCliente={nombreCliente}
+              />
             )}
 
             {vista === "cuotas" && (
@@ -6416,449 +3900,12 @@ Estado: ${documento.estado}`);
               </div>
             )}
 
-            {vista === "beneficios" && (
-              <div
-                className="pc-panel pc-full-panel"
-                style={{
-                  width: "min(100%, 1480px)",
-                  maxWidth: "1480px",
-                  margin: "0 auto 70px",
-                  padding: "18px",
-                  overflow: "visible",
-                }}
-              >
-                <section
-                  style={{
-                    borderRadius: "22px",
-                    padding: "30px 34px",
-                    marginBottom: "18px",
-                    border: "1px solid #e4e9f3",
-                    background:
-                      "linear-gradient(135deg, #ffffff 0%, #fff4ee 100%)",
-                  }}
-                >
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      padding: "8px 14px",
-                      borderRadius: "999px",
-                      background: "rgba(244, 124, 32, 0.13)",
-                      color: "#f47c20",
-                      fontSize: "11px",
-                      fontWeight: 950,
-                      textTransform: "uppercase",
-                      marginBottom: "14px",
-                    }}
-                  >
-                    Club Prieto & Correa
-                  </span>
-
-                  <h2
-                    style={{
-                      margin: "0 0 10px",
-                      color: "#07195a",
-                      fontSize: "31px",
-                    }}
-                  >
-                    Descubre beneficios para clientes
-                  </h2>
-
-                  <p
-                    style={{
-                      margin: 0,
-                      maxWidth: "740px",
-                      color: "#56637a",
-                      lineHeight: 1.6,
-                      fontSize: "14px",
-                    }}
-                  >
-                    Accede a descuentos, convenios y promociones asociadas a tu
-                    portal de seguros. Esta sección queda preparada para
-                    conectarse al backend mediante{" "}
-                    <strong>/portal/mis-beneficios</strong>.
-                  </p>
-                </section>
-
-                <section
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "minmax(0, 1fr) 260px",
-                    gap: "16px",
-                    marginBottom: "18px",
-                    alignItems: "stretch",
-                  }}
-                >
-                  <article
-                    style={{
-                      minHeight: "280px",
-                      borderRadius: "22px",
-                      overflow: "hidden",
-                      position: "relative",
-                      display: "grid",
-                      gridTemplateColumns: "1fr 120px",
-                      alignItems: "center",
-                      padding: "34px",
-                      color: "#ffffff",
-                      backgroundImage: `linear-gradient(90deg, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.10)), url(${beneficioPrincipal?.imagen || "/restaurant.jpg"})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }}
-                  >
-                    <div style={{ position: "relative", zIndex: 2 }}>
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          padding: "8px 14px",
-                          borderRadius: "999px",
-                          background: "#f47c20",
-                          color: "#ffffff",
-                          fontSize: "11px",
-                          fontWeight: 950,
-                          textTransform: "uppercase",
-                          marginBottom: "18px",
-                        }}
-                      >
-                        Beneficio destacado
-                      </span>
-
-                      <h3
-                        style={{
-                          margin: "0 0 12px",
-                          fontSize: "33px",
-                          lineHeight: 1.08,
-                          maxWidth: "680px",
-                          color: "#ffffff",
-                          textShadow: "0 4px 22px rgba(0,0,0,0.55)",
-                        }}
-                      >
-                        {beneficioPrincipal?.titulo ||
-                          "Beneficios disponibles próximamente"}
-                      </h3>
-
-                      <p
-                        style={{
-                          margin: "0 0 16px",
-                          maxWidth: "560px",
-                          color: "rgba(255,255,255,0.9)",
-                          fontWeight: 800,
-                        }}
-                      >
-                        {beneficioPrincipal?.descripcion ||
-                          beneficioPrincipal?.bajada ||
-                          "Cuando existan beneficios activos aparecerán aquí."}
-                      </p>
-
-                      <small
-                        style={{
-                          display: "inline-flex",
-                          padding: "8px 13px",
-                          borderRadius: "999px",
-                          background: "rgba(255,255,255,0.14)",
-                          color: "#ffffff",
-                          fontWeight: 950,
-                        }}
-                      >
-                        Vigencia: {formatearFecha(beneficioPrincipal?.vigencia)}
-                      </small>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "7px",
-                          marginTop: "18px",
-                        }}
-                      >
-                        {beneficiosDestacados.map((beneficio, index) => (
-                          <button
-                            key={
-                              beneficio.id_beneficio || beneficio.id || index
-                            }
-                            type="button"
-                            onClick={() => setBeneficioSlide(index)}
-                            aria-label={`Ver beneficio destacado ${index + 1}`}
-                            style={{
-                              width:
-                                beneficioSlide % beneficiosDestacados.length ===
-                                index
-                                  ? "28px"
-                                  : "9px",
-                              height: "9px",
-                              border: "none",
-                              borderRadius: "999px",
-                              background:
-                                beneficioSlide % beneficiosDestacados.length ===
-                                index
-                                  ? "#f47c20"
-                                  : "rgba(255,255,255,0.55)",
-                              transition: "0.25s ease",
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        width: "86px",
-                        height: "86px",
-                        borderRadius: "22px",
-                        background: "rgba(255,255,255,0.80)",
-                        backdropFilter: "blur(10px)",
-                        display: "grid",
-                        placeItems: "center",
-                        justifySelf: "end",
-                        boxShadow: "0 12px 26px rgba(0,0,0,0.12)",
-                      }}
-                    >
-                      <img
-                        src={beneficioPrincipal?.icono || "/descuento.png"}
-                        alt=""
-                        style={{
-                          width: "42px",
-                          height: "42px",
-                          objectFit: "contain",
-                        }}
-                      />
-                    </div>
-                  </article>
-
-                  <aside style={{ display: "grid", gap: "12px" }}>
-                    {[
-                      [beneficiosBase.length, "Beneficios cargados"],
-                      [beneficiosActivos, "Activos"],
-                      [categoriasBeneficios.length, "Categorías"],
-                    ].map(([valor, label]) => (
-                      <article
-                        key={label}
-                        style={{
-                          background: "#ffffff",
-                          border: "1px solid #e6ebf2",
-                          borderTop: "4px solid #07195a",
-                          borderRadius: "18px",
-                          padding: "20px",
-                          minHeight: "86px",
-                        }}
-                      >
-                        <strong
-                          style={{
-                            display: "block",
-                            color: "#07195a",
-                            fontSize: "30px",
-                            marginBottom: "6px",
-                          }}
-                        >
-                          {valor}
-                        </strong>
-                        <span
-                          style={{
-                            color: "#56637a",
-                            fontSize: "11px",
-                            fontWeight: 950,
-                          }}
-                        >
-                          {label}
-                        </span>
-                      </article>
-                    ))}
-                  </aside>
-                </section>
-
-                <section
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    border: "1px solid #e6ebf2",
-                    borderRadius: "18px",
-                    padding: "12px",
-                    marginBottom: "18px",
-                    background: "#ffffff",
-                    overflowX: "auto",
-                  }}
-                >
-                  <strong
-                    style={{
-                      color: "#07195a",
-                      fontSize: "12px",
-                      textTransform: "uppercase",
-                      marginRight: "8px",
-                    }}
-                  >
-                    Categorías
-                  </strong>
-
-                  {categoriasBeneficios.map((categoria) => (
-                    <button
-                      key={categoria.id}
-                      type="button"
-                      onClick={() => setCategoriaBeneficioActiva(categoria.id)}
-                      style={{
-                        minWidth: "104px",
-                        height: "66px",
-                        border: "1px solid #dfe6f3",
-                        borderRadius: "14px",
-                        background:
-                          categoriaBeneficioActiva === categoria.id
-                            ? "#07195a"
-                            : "#ffffff",
-                        color:
-                          categoriaBeneficioActiva === categoria.id
-                            ? "#ffffff"
-                            : "#07195a",
-                        display: "grid",
-                        placeItems: "center",
-                        gap: "5px",
-                        fontSize: "11px",
-                        fontWeight: 950,
-                      }}
-                    >
-                      <img
-                        src={categoria.icono}
-                        alt=""
-                        style={{
-                          width: "24px",
-                          height: "24px",
-                          objectFit: "contain",
-                          filter:
-                            categoriaBeneficioActiva === categoria.id
-                              ? "brightness(0) invert(1)"
-                              : "none",
-                        }}
-                      />
-                      {categoria.nombre}
-                    </button>
-                  ))}
-                </section>
-
-                <section
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                    gap: "16px",
-                    paddingBottom: "80px",
-                  }}
-                >
-                  {beneficiosFiltrados.length === 0 ? (
-                    <div className="pc-empty" style={{ gridColumn: "1 / -1" }}>
-                      <h3>No hay beneficios en esta categoría</h3>
-                      <p>
-                        Prueba seleccionando otra categoría o revisa nuevamente
-                        cuando el backend esté conectado.
-                      </p>
-                    </div>
-                  ) : (
-                    beneficiosFiltrados.map((beneficio) => (
-                      <article
-                        key={beneficio.id_beneficio || beneficio.id}
-                        style={{
-                          minHeight: "260px",
-                          border: "1px solid #e6ebf2",
-                          borderRadius: "20px",
-                          padding: "18px",
-                          background: "#ffffff",
-                          display: "grid",
-                          gap: "12px",
-                          boxShadow: "0 10px 28px rgba(7,25,90,0.05)",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: "54px",
-                            height: "54px",
-                            borderRadius: "14px",
-                            background: "#f3f6fb",
-                            display: "grid",
-                            placeItems: "center",
-                          }}
-                        >
-                          <img
-                            src={
-                              beneficio.icono ||
-                              beneficio.imagen ||
-                              "/descuento.png"
-                            }
-                            alt=""
-                            style={{
-                              width: "28px",
-                              height: "28px",
-                              objectFit: "contain",
-                            }}
-                          />
-                        </div>
-
-                        <div>
-                          <span
-                            style={{
-                              display: "inline-flex",
-                              padding: "5px 10px",
-                              borderRadius: "999px",
-                              background:
-                                beneficio.estado === "proximamente"
-                                  ? "#fff0e6"
-                                  : "#ecfdf3",
-                              color:
-                                beneficio.estado === "proximamente"
-                                  ? "#f47c20"
-                                  : "#067647",
-                              fontSize: "11px",
-                              fontWeight: 950,
-                              marginBottom: "10px",
-                            }}
-                          >
-                            {beneficio.estado === "proximamente"
-                              ? "Próximamente"
-                              : "Activo"}
-                          </span>
-                          <h3
-                            style={{
-                              margin: "0 0 8px",
-                              color: "#07195a",
-                              fontSize: "18px",
-                            }}
-                          >
-                            {beneficio.titulo}
-                          </h3>
-                          <p
-                            style={{
-                              margin: "0 0 8px",
-                              color: "#667085",
-                              fontSize: "13px",
-                              lineHeight: 1.5,
-                            }}
-                          >
-                            {beneficio.descripcion ||
-                              beneficio.bajada ||
-                              "Beneficio disponible para clientes."}
-                          </p>
-                          <small style={{ color: "#56637a", fontWeight: 900 }}>
-                            Vigencia: {formatearFecha(beneficio.vigencia)}
-                          </small>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            abrirWhatsApp(
-                              `Hola, quiero más información sobre el beneficio: ${beneficio.titulo}`,
-                            )
-                          }
-                          style={{
-                            alignSelf: "end",
-                            minHeight: "40px",
-                            border: "none",
-                            borderRadius: "12px",
-                            background: "#07195a",
-                            color: "#ffffff",
-                            fontWeight: 950,
-                          }}
-                        >
-                          Solicitar información
-                        </button>
-                      </article>
-                    ))
-                  )}
-                </section>
-              </div>
+            {vista === "Club-PC" && (
+              <ClubBeneficios
+                beneficios={beneficios}
+                nombreVisible={nombreVisible}
+                rut={datosPerfil.rut}
+              />
             )}
           </>
         )}
