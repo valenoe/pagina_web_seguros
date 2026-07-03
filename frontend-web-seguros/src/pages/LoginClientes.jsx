@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { login, getMiCuenta } from "../services/api";
+import { login } from "../services/api";
 import "../styles/pages/LoginClientes.css";
 
 function formatearRut(valor) {
@@ -85,6 +85,8 @@ function LoginClientes() {
         throw new Error("No se recibió token desde el backend");
       }
 
+      // Purga espejos de perfil viejos (de antes del ClienteContext). Ya no se
+      // usan: el perfil lo trae el contexto con getMiCuenta al cargar el portal.
       [
         "nombre_cliente",
         "rut_cliente",
@@ -95,20 +97,8 @@ function LoginClientes() {
         "avatar_cliente",
       ].forEach((k) => localStorage.removeItem(k));
 
+      // Solo se guarda el token (llave de sesión). El perfil lo carga el contexto.
       localStorage.setItem("token", token);
-
-      try {
-        const perfil = await getMiCuenta(token);
-        localStorage.setItem(
-          "nombre_cliente",
-          perfil.nombre_o_razon_social || formulario.rut,
-        );
-        localStorage.setItem("rut_cliente", perfil.rut || formulario.rut);
-        localStorage.setItem("correo_cliente", perfil.email || "");
-        localStorage.setItem("telefono_cliente", perfil.telefono || "");
-      } catch {
-        localStorage.setItem("nombre_cliente", formulario.rut);
-      }
 
       if (recordarCuenta) {
         localStorage.setItem(
@@ -126,7 +116,6 @@ function LoginClientes() {
     } catch (error) {
       console.error("ERROR LOGIN:", error);
       localStorage.removeItem("token");
-      localStorage.removeItem("nombre_cliente");
       setError(
         "RUT o contraseña incorrectos. Verifica que estés en la pestaña correcta (Persona / Empresa).",
       );

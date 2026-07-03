@@ -1,0 +1,499 @@
+/* Perfil — estilos de la vista Perfil (datos, avatar, seguridad, preferencias).
+   Extraídos 1:1 de los estilos inline del JSX (mismo look). Las clases
+   compartidas del portal (pc-panel, pc-full-panel) siguen en PortalDashboard.css. */
+
+.perfil {
+  width: min(calc(100vw - 280px), 1660px);
+  max-width: 1660px;
+  margin: 0 auto;
+  padding: 16px 18px;
+}
+
+.perfil-wrap {
+  display: grid;
+  gap: 12px;
+}
+
+/* Mensaje de estado — toast flotante (no empuja el layout) + color por tipo */
+.perfil-mensaje {
+  position: fixed;
+  top: 84px;
+  right: 24px;
+  z-index: 200;
+  max-width: 360px;
+  border: 1px solid;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 12px;
+  font-weight: 850;
+  box-shadow: 0 16px 40px rgba(7, 25, 90, 0.18);
+  animation: perfil-toast-in 0.2s ease;
+}
+
+@keyframes perfil-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.perfil-mensaje--success {
+  background: #ecfdf3;
+  color: #067647;
+  border-color: #a6f4c5;
+}
+
+.perfil-mensaje--error {
+  background: #fef3f2;
+  color: #b42318;
+  border-color: #fecdca;
+}
+
+.perfil-mensaje--info {
+  background: rgba(244, 124, 32, 0.12);
+  color: var(--pc-blue);
+  border-color: rgba(244, 124, 32, 0.24);
+}
+
+/* ── Hero (cabecera azul) ── */
+.perfil-hero {
+  background: var(--pc-blue);
+  border-radius: 22px;
+  padding: 18px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  box-shadow: 0 18px 40px rgba(7, 25, 90, 0.18);
+}
+
+.perfil-hero-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.perfil-avatar {
+  width: 82px;
+  height: 82px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.perfil-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.perfil-avatar strong {
+  font-size: 34px;
+  font-weight: 950;
+}
+
+.perfil-hero-eyebrow {
+  font-size: 12px;
+  font-weight: 850;
+  opacity: 0.8;
+}
+
+.perfil-hero h2 {
+  margin: 4px 0 8px;
+  font-size: 28px;
+  font-weight: 950;
+}
+
+.perfil-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.perfil-chip {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.perfil-hero-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── Botones ── */
+.perfil-btn-foto {
+  background: #ffffff;
+  color: var(--pc-blue);
+  border-radius: 14px;
+  padding: 11px 14px;
+  font-size: 12px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.perfil-btn-foto input {
+  display: none;
+}
+
+.perfil-btn-ghost {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: transparent;
+  color: #ffffff;
+  border-radius: 14px;
+  padding: 11px 14px;
+  font-size: 12px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.perfil-btn-naranja {
+  border: none;
+  background: var(--pc-orange);
+  color: #ffffff;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.perfil-btn-azul {
+  border: none;
+  background: var(--pc-blue);
+  color: #ffffff;
+  border-radius: 14px;
+  padding: 13px 16px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.perfil-btn-cancelar {
+  border: 1px solid #d9e2ef;
+  background: #ffffff;
+  color: var(--pc-blue);
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.perfil-btn-block {
+  width: 100%;
+}
+
+/* ── Grid principal ── */
+.perfil-grid {
+  display: grid;
+  grid-template-columns: 1.55fr 0.95fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.perfil-col,
+.perfil-aside {
+  display: grid;
+  gap: 12px;
+}
+
+/* Tarjeta blanca reutilizable */
+.perfil-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 16px;
+  border: 1px solid rgba(7, 25, 90, 0.08);
+}
+
+.perfil-card--dark {
+  background: var(--pc-blue);
+  color: #ffffff;
+  border: none;
+}
+
+.perfil-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.perfil-card-title {
+  margin: 0 0 12px;
+  color: var(--pc-blue);
+  font-size: 19px;
+  font-weight: 950;
+}
+
+.perfil-card-head .perfil-card-title {
+  margin: 0;
+}
+
+.perfil-aside .perfil-card-title {
+  font-size: 18px;
+}
+
+.perfil-card--dark .perfil-card-title {
+  color: #ffffff;
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+.perfil-card-sub {
+  margin: 4px 0 0;
+  color: #667085;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.perfil-card--dark .perfil-card-sub {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0 0 12px;
+}
+
+/* ── Datos personales / preferencias ── */
+.perfil-datos-grid,
+.perfil-prefs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.perfil-prefs-grid {
+  gap: 9px;
+}
+
+.perfil-field {
+  display: grid;
+  gap: 7px;
+  background: #f5f7fb;
+  border: 1px solid rgba(7, 25, 90, 0.08);
+  border-radius: 14px;
+  padding: 11px 12px;
+}
+
+.perfil-field-label {
+  color: #667085;
+  font-size: 10px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.perfil-field-input {
+  width: 100%;
+  border: 1px solid #d9e2ef;
+  background: #ffffff;
+  color: var(--pc-blue);
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-weight: 900;
+  outline: none;
+}
+
+.perfil-field-value {
+  color: var(--pc-blue);
+  font-size: 14px;
+  font-weight: 950;
+  word-break: break-word;
+}
+
+/* Switch de preferencias */
+.perfil-switch {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border: none;
+  background: #f5f7fb;
+  border-radius: 13px;
+  padding: 11px 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.perfil-switch-title {
+  display: block;
+  color: var(--pc-blue);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.perfil-switch-sub {
+  color: #667085;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.perfil-switch-toggle {
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  padding: 3px;
+  background: #d9e2ef;
+  display: flex;
+  justify-content: flex-start;
+  transition: 0.2s ease;
+  flex: 0 0 auto;
+}
+
+.perfil-switch-toggle.is-on {
+  background: var(--pc-blue);
+  justify-content: flex-end;
+}
+
+.perfil-switch-knob {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #ffffff;
+  display: block;
+}
+
+/* ── Modal cambio de contraseña ── */
+.perfil-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 19, 68, 0.55);
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.perfil-modal {
+  width: min(520px, 100%);
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 22px;
+  box-shadow: 0 24px 70px rgba(3, 19, 68, 0.25);
+}
+
+.perfil-modal-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.perfil-modal-title {
+  margin: 0;
+  color: var(--pc-blue);
+  font-size: 22px;
+  font-weight: 950;
+}
+
+.perfil-modal-sub {
+  margin: 6px 0 0;
+  color: #667085;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.perfil-modal-close {
+  border: none;
+  background: #f5f7fb;
+  color: var(--pc-blue);
+  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.perfil-modal-step {
+  display: grid;
+  gap: 12px;
+}
+
+.perfil-modal-intro {
+  margin: 0 0 14px;
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 750;
+}
+
+.perfil-modal-field {
+  display: grid;
+  gap: 7px;
+}
+
+.perfil-modal-field span {
+  color: var(--pc-blue);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.perfil-modal-input {
+  border: 1px solid #d9e2ef;
+  border-radius: 13px;
+  padding: 12px;
+  font-weight: 900;
+  outline: none;
+}
+
+/* ── Responsivo ── */
+
+/* ≤1000px: la sidebar pasa a cajón → el contenido ocupa todo el ancho.
+   El aside baja bajo la columna principal y los stats pasan a 2 columnas. */
+@media (max-width: 1000px) {
+  .perfil {
+    width: 100%;
+    padding: 14px;
+  }
+
+  .perfil-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ≤700px: el hero apila info y acciones; datos y preferencias a 1 columna. */
+@media (max-width: 700px) {
+  .perfil-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .perfil-hero-actions {
+    width: 100%;
+  }
+
+  .perfil-datos-grid,
+  .perfil-prefs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ≤460px: título del hero más chico. */
+@media (max-width: 460px) {
+  .perfil-hero h2 {
+    font-size: 24px;
+  }
+
+  /* el aviso flotante ocupa el ancho (con margen) para no salirse en móvil */
+  .perfil-mensaje {
+    left: 12px;
+    right: 12px;
+    top: 76px;
+    max-width: none;
+  }
+}

@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Literal, Optional
 from pydantic import BaseModel
 
@@ -9,6 +10,10 @@ class RegistroIn(BaseModel):
     email: str
     telefono: Optional[str] = None
     whatsapp: Optional[str] = None
+    fecha_nacimiento: Optional[date] = None
+    direccion: Optional[str] = None
+    region: Optional[str] = None
+    comuna: Optional[str] = None
     password: str
 
 

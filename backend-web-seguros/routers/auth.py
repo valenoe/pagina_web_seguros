@@ -39,6 +39,10 @@ def registro(datos: RegistroIn, db: Session = Depends(get_db)):
         cliente = cliente_existente
         cliente.nombre_o_razon_social = datos.nombre
         cliente.tipo_cliente = datos.tipo_cliente
+        cliente.fecha_nacimiento = datos.fecha_nacimiento
+        cliente.direccion = datos.direccion
+        cliente.region = datos.region
+        cliente.comuna = datos.comuna
         cliente.cliente_activo = True
         db.flush()
         acceso = db.query(PortalAcceso).filter(PortalAcceso.cliente_id == cliente.id_cliente).first()
@@ -53,6 +57,10 @@ def registro(datos: RegistroIn, db: Session = Depends(get_db)):
             rut=datos.rut,
             tipo_cliente=datos.tipo_cliente,
             nombre_o_razon_social=datos.nombre,
+            fecha_nacimiento=datos.fecha_nacimiento,
+            direccion=datos.direccion,
+            region=datos.region,
+            comuna=datos.comuna,
         )
         db.add(cliente)
         db.flush()

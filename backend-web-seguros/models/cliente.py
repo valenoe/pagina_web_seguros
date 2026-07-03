@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -32,6 +32,10 @@ class Cliente(Base):
     rut = Column(String(20), nullable=False)
     tipo_cliente = Column(String(10), nullable=False)
     nombre_o_razon_social = Column(String(200), nullable=False)
+    fecha_nacimiento = Column(Date)
+    direccion = Column(String(300))
+    region = Column(String(100))
+    comuna = Column(String(100))
     foto_perfil = Column(String(500))
     cliente_activo = Column(Boolean, default=True)
     fecha_registro = Column(DateTime, server_default=func.now())
