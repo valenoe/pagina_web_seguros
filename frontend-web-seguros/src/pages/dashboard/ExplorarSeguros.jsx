@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useCliente } from "../../context/ClienteContext";
 import "../../styles/pages/PortalDashboard.css";
 
 /**
@@ -10,7 +11,9 @@ import "../../styles/pages/PortalDashboard.css";
  * funciones eran exclusivos de esta vista y se movieron aquí. Solo recibe 4
  * props compartidas. Extraído con los estilos inline tal cual (CSS a futuro).
  */
-function ExplorarSeguros({ cotizaciones, nombreCliente, abrirWhatsApp, formatearFecha }) {
+function ExplorarSeguros({ cotizaciones, abrirWhatsApp, formatearFecha }) {
+  const { cliente } = useCliente();
+  const nombreCliente = cliente?.nombre || "Cliente";
   const [seguroDetalleId, setSeguroDetalleId] = useState(null);
   const [seguroSlide, setSeguroSlide] = useState(0);
   const [filtroSeguros, setFiltroSeguros] = useState("todos");
@@ -234,9 +237,9 @@ ${seguro.categoria}
 
 Datos del cliente:
 Nombre: ${nombreCliente}
-RUT: ${localStorage.getItem("rut_cliente") || "No informado"}
-Correo: ${localStorage.getItem("correo_cliente") || "No informado"}
-Teléfono: ${localStorage.getItem("telefono_cliente") || "No informado"}
+RUT: ${cliente?.rut || "No informado"}
+Correo: ${cliente?.correo || "No informado"}
+Teléfono: ${cliente?.telefono || "No informado"}
 
 Datos principales:
 ${cotizacionCompacta.detalle || "No informado"}
@@ -869,9 +872,7 @@ ${cotizacionCompacta.comentario || "Sin comentario adicional"}`;
                                 <div>
                                   <small style={{ fontWeight: 900 }}>RUT</small>
                                   <input
-                                    value={
-                                      localStorage.getItem("rut_cliente") || ""
-                                    }
+                                    value={cliente?.rut || ""}
                                     readOnly
                                     style={{
                                       width: "100%",
@@ -898,10 +899,7 @@ ${cotizacionCompacta.comentario || "Sin comentario adicional"}`;
                                     Correo
                                   </small>
                                   <input
-                                    value={
-                                      localStorage.getItem("correo_cliente") ||
-                                      ""
-                                    }
+                                    value={cliente?.correo || ""}
                                     readOnly
                                     style={{
                                       width: "100%",

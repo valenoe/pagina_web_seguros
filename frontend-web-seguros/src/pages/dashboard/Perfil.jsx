@@ -1,28 +1,38 @@
-import { useState } from "react";
-import { subirFotoPerfil, fotoUrl } from "../../services/api";
+import { useState, useEffect } from "react";
+import { useCliente } from "../../context/ClienteContext";
+import { regionesComunas } from "../../data/regionesComunas";
 import "../../styles/pages/PortalDashboard.css";
 import "../../styles/pages/Perfil.css";
+
+const REGIONES = Object.keys(regionesComunas);
 
 /**
  * Perfil — datos personales del cliente, foto de avatar, cambio de contraseña
  * (flujo OTP simulado en frontend) y preferencias de notificación.
  *
- * Extraído del monolito Dashboard.jsx. AUTOCONTENIDO: el estado exclusivo del
- * perfil (edición, modal de clave, código OTP, preferencias, mensajes) vive
- * aquí; solo recibe como props lo COMPARTIDO con el resto del portal:
- * datosPerfil/setDatosPerfil, avatarPerfil/setAvatarPerfil y nombreCliente
- * (que también alimentan el header y el saludo).
+ * La identidad del cliente sale del ClienteContext (única fuente = API). El
+ * formulario mantiene un BORRADOR local editable (`datosPerfil`) que se
+ * sincroniza cuando llega/cambia `cliente`, y al guardar se envía a la BD con
+ * `actualizarCliente`. No se toca localStorage (salvo el token, que es de sesión).
  *
  * Estilos en su propio Perfil.css (clases perfil-*); las compartidas (pc-*)
  * siguen en PortalDashboard.css.
  */
-function Perfil({
-  datosPerfil,
-  setDatosPerfil,
-  avatarPerfil,
-  setAvatarPerfil,
-  nombreCliente,
-}) {
+function Perfil() {
+  const { cliente, actualizarCliente, subirFoto } = useCliente();
+
+  const nombreCliente = cliente?.nombre || "Cliente";
+
+  // Borrador editable del formulario, sembrado desde el contexto.
+  const [datosPerfil, setDatosPerfil] = useState(() => cliente || {});
+  const [avatarPerfil, setAvatarPerfil] = useState(cliente?.foto || "");
+
+  // Cuando el contexto trae/actualiza el cliente, se refresca el borrador
+  // (salvo mientras se está editando, para no pisar lo que el usuario escribe).
+  useEffect(() => {
+    if (cliente) setAvatarPerfil(cliente.foto || "");
+  }, [cliente]);
+
   const [editandoPerfil, setEditandoPerfil] = useState(false);
   const [modalClaveAbierto, setModalClaveAbierto] = useState(false);
   const [pasoClave, setPasoClave] = useState("inicio");
@@ -40,8 +50,15 @@ function Perfil({
     pagos: false,
   });
 
-  const rutCliente =
-    datosPerfil.rut || localStorage.getItem("rut_cliente") || "—";
+  // Refresca el borrador con lo de la BD cuando NO se está editando (así no se
+  // pisa lo que el usuario escribe; al guardar/cancelar vuelve a tomar la verdad).
+  useEffect(() => {
+    if (cliente && !editandoPerfil) setDatosPerfil(cliente);
+  }, [cliente, editandoPerfil]);
+
+  const rutCliente = datosPerfil.rut || "—";
+  const esEmpresa = datosPerfil.tipo_cliente === "empresa";
+  const tipoClienteLabel = esEmpresa ? "Empresa" : "Persona natural";
   const inicialCliente = (datosPerfil.nombre || nombreCliente || "C")
     .trim()
     .charAt(0)
@@ -59,13 +76,33 @@ function Perfil({
     );
   };
 
-  const guardarPerfil = () => {
-    localStorage.setItem("nombre_cliente", datosPerfil.nombre || "Cliente");
-    localStorage.setItem("correo_cliente", datosPerfil.correo || "");
-    localStorage.setItem("telefono_cliente", datosPerfil.telefono || "");
-    localStorage.setItem("direccion_cliente", datosPerfil.direccion || "");
-    setEditandoPerfil(false);
-    mostrarMensaje("Datos actualizados correctamente.", "success", 4200);
+  const guardarPerfil = async () => {
+    // null = "no cambiar" (el backend ignora los campos None); "" quedaría guardado.
+    const payload = {
+      nombre: datosPerfil.nombre || null,
+      email: datosPerfil.correo || null,
+      telefono: datosPerfil.telefono || null,
+      whatsapp: datosPerfil.whatsapp || null,
+      direccion: datosPerfil.direccion || null,
+    };
+    if (datosPerfil.region !== undefined) payload.region = datosPerfil.region || null;
+    if (datosPerfil.comuna !== undefined) payload.comuna = datosPerfil.comuna || null;
+    if (datosPerfil.fecha_nacimiento !== undefined)
+      payload.fecha_nacimiento = datosPerfil.fecha_nacimiento || null;
+
+    try {
+      // Guarda en la BD y refresca el contexto → header/saludo/otras vistas se
+      // actualizan solos (sin copias en localStorage).
+      await actualizarCliente(payload);
+      setEditandoPerfil(false);
+      mostrarMensaje("Datos actualizados correctamente.", "success", 4200);
+    } catch (error) {
+      mostrarMensaje(
+        `No se pudo guardar. ${error.message || "Revisa tu conexión con el servidor."}`,
+        "error",
+        5000,
+      );
+    }
   };
 
   const manejarAvatar = async (event) => {
@@ -78,11 +115,9 @@ function Perfil({
     mostrarMensaje("Subiendo foto...", "info", 10000);
 
     try {
-      const token = localStorage.getItem("token");
-      const cuenta = await subirFotoPerfil(token, archivo);
-      const url = fotoUrl(cuenta.foto_perfil);
-      setAvatarPerfil(url);
-      localStorage.setItem("avatar_cliente", url);
+      // subirFoto (contexto) hace el POST y refresca `cliente` → el useEffect
+      // de arriba pone la URL final del servidor en el avatar.
+      await subirFoto(archivo);
       mostrarMensaje(
         "Foto de perfil actualizada correctamente.",
         "success",
@@ -99,8 +134,9 @@ function Perfil({
   };
 
   const limpiarAvatar = () => {
+    // Solo limpia la vista previa local. No hay endpoint de borrado todavía, así
+    // que al recargar la foto del servidor vuelve (gap conocido en el handoff).
     setAvatarPerfil("");
-    localStorage.removeItem("avatar_cliente");
     mostrarMensaje("Foto de perfil eliminada.", "info", 3200);
   };
 
@@ -174,6 +210,65 @@ function Perfil({
       ) : (
         <strong className="perfil-field-value">
           {datosPerfil[campo] || "Pendiente"}
+        </strong>
+      )}
+    </label>
+  );
+
+  // Región y comuna: selects dependientes (la comuna depende de la región).
+  const selectRegion = () => (
+    <label className="perfil-field">
+      <span className="perfil-field-label">Región</span>
+      {editandoPerfil ? (
+        <select
+          className="perfil-field-input"
+          value={datosPerfil.region || ""}
+          onChange={(event) =>
+            // cambiar región resetea la comuna
+            setDatosPerfil((actual) => ({
+              ...actual,
+              region: event.target.value,
+              comuna: "",
+            }))
+          }
+        >
+          <option value="">Selecciona región</option>
+          {REGIONES.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <strong className="perfil-field-value">
+          {datosPerfil.region || "Pendiente"}
+        </strong>
+      )}
+    </label>
+  );
+
+  const selectComuna = () => (
+    <label className="perfil-field">
+      <span className="perfil-field-label">Comuna</span>
+      {editandoPerfil ? (
+        <select
+          className="perfil-field-input"
+          value={datosPerfil.comuna || ""}
+          disabled={!datosPerfil.region}
+          onChange={(event) => actualizarDatoPerfil("comuna", event.target.value)}
+        >
+          <option value="">
+            {datosPerfil.region ? "Selecciona comuna" : "Elige región primero"}
+          </option>
+          {(regionesComunas[datosPerfil.region] || []).map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <strong className="perfil-field-value">
+          {datosPerfil.comuna || "Pendiente"}
         </strong>
       )}
     </label>
@@ -282,12 +377,19 @@ function Perfil({
               <div className="perfil-datos-grid">
                 {inputPerfil("Nombre / razón social", "nombre")}
                 {inputPerfil("RUT", "rut", "text", true)}
+                {!esEmpresa &&
+                  inputPerfil("Fecha de nacimiento", "fecha_nacimiento", "date")}
                 {inputPerfil("Correo", "correo", "email")}
                 {inputPerfil("Teléfono", "telefono")}
+                {inputPerfil("WhatsApp", "whatsapp")}
                 {inputPerfil("Dirección", "direccion")}
+                {selectRegion()}
+                {selectComuna()}
                 <div className="perfil-field">
                   <span className="perfil-field-label">Tipo cliente</span>
-                  <strong className="perfil-field-value">Persona natural</strong>
+                  <strong className="perfil-field-value">
+                    {tipoClienteLabel}
+                  </strong>
                 </div>
               </div>
             </article>

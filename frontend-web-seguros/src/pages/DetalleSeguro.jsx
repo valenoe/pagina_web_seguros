@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useCliente } from "../context/ClienteContext";
 import "../styles/pages/DetalleSeguro.css";
 
 const WHATSAPP_EJECUTIVO = "56966541939";
@@ -40,16 +41,31 @@ function DetalleSeguro() {
 
   const seguro = segurosDetalle[id] || segurosDetalle.autos;
 
+  const { cliente } = useCliente();
+
   const [mostrarCotizador, setMostrarCotizador] = useState(false);
 
   const [formulario, setFormulario] = useState({
-    nombre: localStorage.getItem("nombre_cliente") || "",
-    rut: localStorage.getItem("rut_cliente") || "",
-    correo: localStorage.getItem("correo_cliente") || "",
-    telefono: localStorage.getItem("telefono_cliente") || "",
+    nombre: "",
+    rut: "",
+    correo: "",
+    telefono: "",
     detalle: "",
     comentario: "",
   });
+
+  // Prellena los datos del cliente cuando el contexto los trae (sin pisar lo
+  // que ya haya escrito el usuario).
+  useEffect(() => {
+    if (!cliente) return;
+    setFormulario((prev) => ({
+      ...prev,
+      nombre: prev.nombre || cliente.nombre || "",
+      rut: prev.rut || cliente.rut || "",
+      correo: prev.correo || cliente.correo || "",
+      telefono: prev.telefono || cliente.telefono || "",
+    }));
+  }, [cliente]);
 
   function actualizarFormulario(e) {
     const { name, value } = e.target;

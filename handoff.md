@@ -412,7 +412,41 @@ La rama de Matías **se separó ANTES de la migración de CSS**: trae de vuelta 
       - **PENDIENTE (frontend, cuando exista la columna):** conectar `guardarPerfil` a `actualizarMiCuenta` (hoy solo localStorage); agregar **región/comuna** al form (reusar `src/data/regionesComunas.js`); mostrar **tipo_cliente** real (hoy hardcodeado "Persona natural").
    4. **Notificaciones (feature aparte, al final):** la campana del header abre un **dropdown feo**; lo ideal es una **página dedicada** de notificaciones en vez del dropdown. Es su propia feature.
 
-   **Estado:** punto 1 ✅ listo. Foto del punto 3 ✅ conectada al backend. **Sigue el punto 2** (limpiar relleno hardcodeado + región/comuna), luego el resto del 3 (conectar `guardarPerfil` a `actualizarMiCuenta` + borrado de foto) y por último el 4 (notificaciones).
+   **Estado:** punto 1 ✅ listo. Foto del punto 3 ✅ conectada al backend.
+
+   **🚧 DECISIÓN DE ORDEN (2026-07-02): PRIMERO unir el formulario de registro con el backend, ANTES de tocar el siguiente punto del Perfil.** El registro sí crea la cuenta (guarda rut/tipo_cliente/nombre + teléfonos + email y hace login), pero **dirección, región, comuna y fecha_nacimiento se pierden** porque no hay columna. No tiene sentido agregar región/comuna al form del Perfil ni conectar `guardarPerfil` mientras el dato ni siquiera se persiste en el registro. Entonces el trabajo es, en este orden:
+   **Progreso (sesión 2026-07-02):**
+   1. **BD — ✅ HECHO.** Se agregaron las 4 columnas a `web_clientes` (`fecha_nacimiento date`, `direccion varchar(300)`, `region varchar(100)`, `comuna varchar(100)`, todas `NULL`), ubicadas tras `nombre_o_razon_social`. Aplicado en **DB.sql** (tabla completa actualizada) **y en la BD viva** (`ALTER TABLE` corrido por la usuaria; verificado que quedó idéntico al DB.sql). SQL de referencia:
+      ```sql
+      ALTER TABLE `web_clientes`
+        ADD COLUMN `fecha_nacimiento` date         DEFAULT NULL AFTER `nombre_o_razon_social`,
+        ADD COLUMN `direccion`        varchar(300) DEFAULT NULL AFTER `fecha_nacimiento`,
+        ADD COLUMN `region`           varchar(100) DEFAULT NULL AFTER `direccion`,
+        ADD COLUMN `comuna`           varchar(100) DEFAULT NULL AFTER `region`;
+      ```
+   2. **Backend Python — ⬜ SIGUIENTE (en este orden):**
+      - `models/cliente.py` → agregar las 4 columnas al modelo `Cliente`.
+      - Schemas → `RegistroIn` (aceptar los campos) y `ClientePerfilOut` (devolverlos).
+      - `routers/auth.py` (`/auth/registro`) → guardar `direccion/region/comuna/fecha_nacimiento`.
+      - PUT `/portal/perfil` (`actualizarMiCuenta`) → que también los actualice.
+   3. **Registro (front) — ⬜:** que `RegistroClientes.jsx` mande esos campos.
+   4. **Recién ahí, seguir con el Perfil:** punto 2 (limpiar relleno + región/comuna) y el resto del 3 (conectar `guardarPerfil` a `actualizarMiCuenta` + borrado de foto). Por último el 4 (notificaciones).
+
+   > **Recordatorio:** cuando se toque el schema de la BD, aplicar el cambio **en las dos** — DB.sql (versionado, para el Droplet) **y** la BD viva. No hay Alembic → es a mano.
+
+   **✅ HECHO — Paso 2 backend (columnas cliente) + Paso 3 registro front (sesión 2026-07-03):** modelo `Cliente`, `RegistroIn`, `ClientePerfilOut`, `ClientePerfilUpdate`, `/auth/registro` (ramas crear y reactivar) y PUT `/portal/perfil` ya manejan `fecha_nacimiento/direccion/region/comuna`. `RegistroClientes.jsx` ya los envía. Build backend+front OK.
+
+   **✅ HECHO — Refactor: API como ÚNICA fuente del perfil, fuera el espejo de localStorage (sesión 2026-07-03).** La usuaria pidió "nada en localStorage, info real, no copia vieja". Antes el perfil se **duplicaba** en localStorage (`nombre_cliente`, `correo_cliente`, `telefono_cliente`, `direccion_cliente`, `rut_cliente`, `avatar_cliente`) y 6 archivos leían/escribían ese espejo → datos que se desincronizaban.
+   - **Nuevo `src/context/ClienteContext.jsx`** (React Context = fuente compartida): hace `getMiCuenta` **una vez** al montar (si hay token), normaliza la respuesta del backend a la forma de la UI (`nombre/rut/correo/telefono/direccion/region/comuna/fecha_nacimiento/foto`), y expone `cliente`, `cargando`, `actualizarCliente(payload)` (PUT + refresca en vivo), `subirFoto(archivo)` (POST foto + refresca), `recargarCliente`, `limpiarCliente`. Envuelto en `App.jsx` (`<ClienteProvider>`).
+   - **Migrados a `useCliente()`:** `Dashboard` (deriva `datosPerfil/avatarPerfil/nombreCliente` del contexto; sacó `getMiCuenta` de su `Promise.allSettled` y todo el bloque de espejo; logout/sesión-expirada llaman `limpiarCliente`), `Perfil` (borrador local editable sembrado del contexto + `useEffect` que no pisa mientras se edita; `guardarPerfil`→`actualizarCliente`, avatar→`subirFoto`; **sin props**), `ExplorarSeguros`, `ReportarSiniestro`, `DetalleSeguro` (prefill vía `useEffect`), y `LoginClientes` (ya solo guarda `token`; purga los espejos viejos).
+   - **Resultado:** `localStorage` solo conserva `token` y `cuenta_recordada` (sesión / recuérdame — legítimo, NO es dato duplicado). Se eliminaron también fallbacks hardcodeados falsos (`12.456.789-3`, `correo@cliente.cl`). **`npm run build` pasa.**
+   - **⚠️ Falta probar en navegador/celular:** re-loguear (para purgar espejos viejos) y verificar header/saludo, editar perfil (que persista al recargar), detalle de seguro (prefill), reportar siniestro (autocompletar) y explorar seguros. Al recargar hay un parpadeo breve mientras responde `getMiCuenta` (normal). Sin commitear.
+   - **Gap conocido:** "Quitar foto" sigue solo local (no hay endpoint DELETE) → la foto del server vuelve al recargar.
+   - **Limpieza:** borrados `pages/PerfilClientes.jsx` + `styles/pages/PerfilCliente.css` (código muerto, no ruteado; era el perfil viejo de Matías con datos falsos).
+
+   **✅ HECHO — Perfil muestra TODOS los datos + whatsapp/teléfono bien conectados (sesión 2026-07-03):** el editar-perfil solo tenía nombre/RUT/correo/teléfono/dirección y un "tipo cliente" hardcodeado. Ahora incluye **fecha de nacimiento** (solo persona), **WhatsApp**, **Región** y **Comuna** (selects dependientes reusando `data/regionesComunas.js`), y **tipo cliente REAL** (persona→"Persona natural" / empresa→"Empresa").
+   - **Backend (hueco detectado por la usuaria):** teléfono y whatsapp viven en `web_cliente_telefonos` con `tipo`. `ClientePerfilOut` derivaba `telefono` de `telefonos[0]` (a ciegas) y **whatsapp no existía**. Corregido: deriva `telefono`/`whatsapp` **por tipo**; `ClientePerfilUpdate` acepta `whatsapp`; el PUT `/portal/perfil` usa un helper `guardar_telefono(tipo, valor)` que actualiza/crea la fila del tipo correcto. Contexto normaliza `whatsapp`. Build backend+front OK, sin commitear.
+   - ⚠️ Requiere **reiniciar uvicorn** (cambió el schema). Clientes registrados ANTES del fix del registro traen región/comuna/fecha/whatsapp como "Pendiente" (nunca se guardaron).
 
    **✅ DECISIÓN — Inicio se queda en Dashboard:** NO se extrae `resumen`/Inicio; es la portada/hub, se deja inline en el monolito a propósito (lo pidió la usuaria).
 

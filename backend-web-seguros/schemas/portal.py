@@ -26,6 +26,11 @@ class ClientePerfilOut(BaseModel):
     nombre_o_razon_social: str
     email: Optional[str] = None
     telefono: Optional[str] = None
+    whatsapp: Optional[str] = None
+    fecha_nacimiento: Optional[date] = None
+    direccion: Optional[str] = None
+    region: Optional[str] = None
+    comuna: Optional[str] = None
     foto_perfil: Optional[str] = None
     telefonos: list[TelefonoOut] = []
     emails: list[EmailOut] = []
@@ -34,8 +39,13 @@ class ClientePerfilOut(BaseModel):
 
     @model_validator(mode="after")
     def campos_desde_listas(self):
-        if self.telefono is None and self.telefonos:
-            self.telefono = self.telefonos[0].telefono
+        # teléfono y whatsapp se derivan por TIPO (no por posición en la lista)
+        if self.telefono is None:
+            tel = next((t for t in self.telefonos if t.tipo == "telefono"), None)
+            self.telefono = tel.telefono if tel else None
+        if self.whatsapp is None:
+            wsp = next((t for t in self.telefonos if t.tipo == "whatsapp"), None)
+            self.whatsapp = wsp.telefono if wsp else None
         if self.email is None and self.emails:
             self.email = self.emails[0].email
         return self
@@ -99,6 +109,11 @@ class ClientePerfilUpdate(BaseModel):
     nombre: Optional[str] = None
     email: Optional[str] = None
     telefono: Optional[str] = None
+    whatsapp: Optional[str] = None
+    fecha_nacimiento: Optional[date] = None
+    direccion: Optional[str] = None
+    region: Optional[str] = None
+    comuna: Optional[str] = None
 
 
 class PagoAgregadoOut(PagoPortalOut):

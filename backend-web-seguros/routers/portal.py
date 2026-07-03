@@ -39,6 +39,14 @@ def actualizar_perfil(
 ):
     if datos.nombre is not None:
         cliente.nombre_o_razon_social = datos.nombre
+    if datos.fecha_nacimiento is not None:
+        cliente.fecha_nacimiento = datos.fecha_nacimiento
+    if datos.direccion is not None:
+        cliente.direccion = datos.direccion
+    if datos.region is not None:
+        cliente.region = datos.region
+    if datos.comuna is not None:
+        cliente.comuna = datos.comuna
     if datos.email is not None:
         from models.cliente import ClienteEmail
         email_principal = db.query(ClienteEmail).filter(
@@ -48,20 +56,27 @@ def actualizar_perfil(
             email_principal.email = datos.email
         else:
             db.add(ClienteEmail(cliente_id=cliente.id_cliente, email=datos.email))
-    if datos.telefono is not None:
+    # teléfono y whatsapp viven en web_cliente_telefonos distinguidos por `tipo`;
+    # se actualiza (o crea) la fila del tipo correspondiente.
+    def guardar_telefono(tipo, valor):
         from models.cliente import ClienteTelefono
-        telefono_principal = db.query(ClienteTelefono).filter(
+        fila = db.query(ClienteTelefono).filter(
             ClienteTelefono.cliente_id == cliente.id_cliente,
-            ClienteTelefono.tipo == "telefono",
+            ClienteTelefono.tipo == tipo,
         ).first()
-        if telefono_principal:
-            telefono_principal.telefono = datos.telefono
+        if fila:
+            fila.telefono = valor
         else:
             db.add(ClienteTelefono(
                 cliente_id=cliente.id_cliente,
-                telefono=datos.telefono,
-                tipo="telefono",
+                telefono=valor,
+                tipo=tipo,
             ))
+
+    if datos.telefono is not None:
+        guardar_telefono("telefono", datos.telefono)
+    if datos.whatsapp is not None:
+        guardar_telefono("whatsapp", datos.whatsapp)
     cliente.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(cliente)

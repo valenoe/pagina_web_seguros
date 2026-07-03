@@ -1,4 +1,7 @@
-export const API_URL = "http://localhost:8000";
+// "/api" (relativo) → mismo origen que sirve el front; Vite lo reenvía al backend
+// (ver proxy en vite.config.js). Sin CORS y funciona por ngrok con un solo túnel.
+// En producción se define VITE_API_URL con la URL real del backend.
+export const API_URL = import.meta.env.VITE_API_URL ?? "/api";
 
 // Convierte una foto (URL relativa del backend, data: o http) en algo mostrable
 // por <img src>. El backend devuelve rutas tipo "/uploads/fotos/xxx" → hay que

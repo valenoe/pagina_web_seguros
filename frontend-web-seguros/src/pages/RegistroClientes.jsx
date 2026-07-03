@@ -190,6 +190,10 @@ function RegistroClientes() {
         email: formulario.correo,
         telefono: formulario.telefono || null,
         whatsapp: formulario.whatsapp || null,
+        fecha_nacimiento: formulario.fecha_nacimiento || null,
+        direccion: formulario.direccion || null,
+        region: formulario.region || null,
+        comuna: formulario.comuna || null,
         password: formulario.password,
       });
 

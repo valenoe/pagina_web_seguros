@@ -7,8 +7,6 @@ import ReportarSiniestro from "./dashboard/ReportarSiniestro";
 import ExplorarSeguros from "./dashboard/ExplorarSeguros";
 import Perfil from "./dashboard/Perfil";
 import {
-  fotoUrl,
-  getMiCuenta,
   getMisAlertas,
   getMisBeneficiarios,
   getMisBeneficios,
@@ -17,6 +15,7 @@ import {
   getMisPagos,
   getMisPolizas,
 } from "../services/api";
+import { useCliente } from "../context/ClienteContext";
 
 const VISTAS_PERMITIDAS = [
   "resumen",
@@ -57,11 +56,11 @@ function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const nombreClienteGuardado = localStorage.getItem("nombre_cliente") || "";
+  // Identidad del cliente: única fuente = API vía contexto (sin espejo localStorage).
+  const { cliente, limpiarCliente } = useCliente();
+
   const nombreCliente =
-    nombreClienteGuardado && !/[0-9]/.test(nombreClienteGuardado)
-      ? nombreClienteGuardado
-      : "Nombre";
+    cliente?.nombre && !/[0-9]/.test(cliente.nombre) ? cliente.nombre : "Nombre";
   const primerNombreCliente = nombreCliente.split(" ")[0] || "Nombre";
 
   const [cotizaciones, setCotizaciones] = useState([]);
@@ -106,16 +105,15 @@ function Dashboard() {
 
   const [documentoSeleccionado, setDocumentoSeleccionado] = useState(null);
 
-  const [avatarPerfil, setAvatarPerfil] = useState(
-    localStorage.getItem("avatar_cliente") || "",
-  );
-  const [datosPerfil, setDatosPerfil] = useState(() => ({
-    nombre: localStorage.getItem("nombre_cliente") || "Cliente",
-    rut: localStorage.getItem("rut_cliente") || "",
-    correo: localStorage.getItem("correo_cliente") || "",
-    telefono: localStorage.getItem("telefono_cliente") || "",
-    direccion: localStorage.getItem("direccion_cliente") || "",
-  }));
+  // Derivados del contexto (se refrescan solos cuando cambia `cliente`).
+  const avatarPerfil = cliente?.foto || "";
+  const datosPerfil = cliente || {
+    nombre: "Cliente",
+    rut: "",
+    correo: "",
+    telefono: "",
+    direccion: "",
+  };
 
   const nombreVisible = datosPerfil.nombre || nombreCliente || "Cliente";
   const primerNombreVisible = nombreVisible.split(" ")[0] || "Cliente";
@@ -133,8 +131,9 @@ function Dashboard() {
 
     async function cargarDatos() {
       try {
+        // El perfil (getMiCuenta) lo maneja el ClienteContext; aquí solo se
+        // cargan los datos de las secciones del portal.
         const [
-          cuentaResult,
           alertasResult,
           cotsResult,
           polsResult,
@@ -143,7 +142,6 @@ function Dashboard() {
           pagosResult,
           beneficiosResult,
         ] = await Promise.allSettled([
-          getMiCuenta(token),
           getMisAlertas(token),
           getMisCotizaciones(token),
           getMisPolizas(token),
@@ -152,72 +150,6 @@ function Dashboard() {
           getMisPagos(token),
           getMisBeneficios(token),
         ]);
-
-        if (cuentaResult.status === "fulfilled" && cuentaResult.value) {
-          const cuenta = cuentaResult.value;
-
-          const nombreCuenta =
-            cuenta.nombre ||
-            cuenta.nombre_o_razon_social ||
-            cuenta.razon_social ||
-            cuenta.cliente?.nombre_o_razon_social ||
-            datosPerfil.nombre;
-
-          const rutCuenta =
-            cuenta.rut ||
-            cuenta.rut_cliente ||
-            cuenta.cliente?.rut ||
-            datosPerfil.rut;
-
-          const correoCuenta =
-            cuenta.correo ||
-            cuenta.email ||
-            cuenta.cliente?.email ||
-            datosPerfil.correo;
-
-          const telefonoCuenta =
-            cuenta.telefono ||
-            cuenta.celular ||
-            cuenta.cliente?.telefono ||
-            datosPerfil.telefono;
-
-          const direccionCuenta =
-            cuenta.direccion ||
-            cuenta.domicilio ||
-            cuenta.cliente?.direccion ||
-            datosPerfil.direccion;
-
-          setDatosPerfil((actual) => ({
-            ...actual,
-            nombre: nombreCuenta || actual.nombre,
-            rut: rutCuenta || actual.rut,
-            correo: correoCuenta || actual.correo,
-            telefono: telefonoCuenta || actual.telefono,
-            direccion: direccionCuenta || actual.direccion,
-          }));
-
-          if (nombreCuenta)
-            localStorage.setItem("nombre_cliente", nombreCuenta);
-          if (rutCuenta) localStorage.setItem("rut_cliente", rutCuenta);
-          if (correoCuenta)
-            localStorage.setItem("correo_cliente", correoCuenta);
-          if (telefonoCuenta)
-            localStorage.setItem("telefono_cliente", telefonoCuenta);
-          if (direccionCuenta)
-            localStorage.setItem("direccion_cliente", direccionCuenta);
-
-          const fotoCuenta =
-            cuenta.avatar_url ||
-            cuenta.foto_perfil ||
-            cuenta.foto ||
-            cuenta.cliente?.foto_perfil;
-
-          if (fotoCuenta) {
-            const urlCuenta = fotoUrl(fotoCuenta);
-            setAvatarPerfil(urlCuenta);
-            localStorage.setItem("avatar_cliente", urlCuenta);
-          }
-        }
 
         if (alertasResult.status === "fulfilled") {
           setAlertas(
@@ -266,6 +198,7 @@ function Dashboard() {
       } catch {
         setError("Sesión expirada. Vuelve a ingresar.");
         localStorage.removeItem("token");
+        limpiarCliente();
         navigate("/login-clientes");
       } finally {
         setCargando(false);
@@ -273,10 +206,11 @@ function Dashboard() {
     }
 
     cargarDatos();
-  }, [navigate]);
+  }, [navigate, limpiarCliente]);
 
   function cerrarSesion() {
     localStorage.removeItem("token");
+    limpiarCliente();
     navigate("/login-clientes");
   }
 
@@ -345,9 +279,9 @@ ${documento.estado}
 
 Datos del cliente:
 Nombre: ${nombreCliente}
-RUT: ${localStorage.getItem("rut_cliente") || "No informado"}
-Correo: ${localStorage.getItem("correo_cliente") || "No informado"}
-Teléfono: ${localStorage.getItem("telefono_cliente") || "No informado"}
+RUT: ${datosPerfil.rut || "No informado"}
+Correo: ${datosPerfil.correo || "No informado"}
+Teléfono: ${datosPerfil.telefono || "No informado"}
 
 Quedo atento/a a su gestión.`;
 
@@ -1171,28 +1105,15 @@ Estado: ${documento.estado}`);
             {vista === "explora" && (
               <ExplorarSeguros
                 cotizaciones={cotizaciones}
-                nombreCliente={nombreCliente}
                 abrirWhatsApp={abrirWhatsApp}
                 formatearFecha={formatearFecha}
               />
             )}
 
-            {vista === "perfil" && (
-              <Perfil
-                datosPerfil={datosPerfil}
-                setDatosPerfil={setDatosPerfil}
-                avatarPerfil={avatarPerfil}
-                setAvatarPerfil={setAvatarPerfil}
-                nombreCliente={nombreCliente}
-              />
-            )}
+            {vista === "perfil" && <Perfil />}
 
             {vista === "siniestro" && (
-              <ReportarSiniestro
-                polizas={polizas}
-                datosPerfil={datosPerfil}
-                nombreCliente={nombreCliente}
-              />
+              <ReportarSiniestro polizas={polizas} />
             )}
 
             {vista === "Club-PC" && (

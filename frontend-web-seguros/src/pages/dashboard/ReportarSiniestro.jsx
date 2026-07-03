@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useCliente } from "../../context/ClienteContext";
 
 /**
  * Reportar Siniestro — vista del portal del cliente.
@@ -9,12 +10,15 @@ import { useState } from "react";
  *
  * CONTRATO DE DATOS:
  *   - polizas        -> broker (lista de polizas reportables). Hoy puede venir vacia.
- *   - datosPerfil    -> mi-backend (getMiCuenta): autocompleta el formulario.
- *   - nombreCliente  -> localStorage / mi-backend.
+ *   - datos del cliente (nombre/rut/correo/tel/direccion) -> ClienteContext
+ *     (getMiCuenta): autocompletan el formulario.
  *   - El listado de siniestros existentes viene de GET /portal/mis-siniestros
  *     (NO EXISTE AUN): hoy el arreglo interno arranca vacio a proposito.
  */
-function ReportarSiniestro({ polizas = [], datosPerfil = {}, nombreCliente = "" }) {
+function ReportarSiniestro({ polizas = [] }) {
+  const { cliente } = useCliente();
+  const datosPerfil = cliente || {};
+  const nombreCliente = cliente?.nombre || "";
   const [polizaReporteId, setPolizaReporteId] = useState("");
   const [siniestroSeleccionadoId, setSiniestroSeleccionadoId] = useState("");
   const [reporteSiniestroActivo, setReporteSiniestroActivo] = useState(false);
@@ -224,22 +228,10 @@ function ReportarSiniestro({ polizas = [], datosPerfil = {}, nombreCliente = "" 
 
                   const datosClienteFormulario = {
                     nombre: datosPerfil.nombre || nombreCliente || "Cliente",
-                    rut:
-                      datosPerfil.rut ||
-                      localStorage.getItem("rut_cliente") ||
-                      "12.456.789-3",
-                    correo:
-                      datosPerfil.correo ||
-                      localStorage.getItem("correo_cliente") ||
-                      "",
-                    telefono:
-                      datosPerfil.telefono ||
-                      localStorage.getItem("telefono_cliente") ||
-                      "",
-                    direccion:
-                      datosPerfil.direccion ||
-                      localStorage.getItem("direccion_cliente") ||
-                      "",
+                    rut: datosPerfil.rut || "",
+                    correo: datosPerfil.correo || "",
+                    telefono: datosPerfil.telefono || "",
+                    direccion: datosPerfil.direccion || "",
                   };
 
                   const abrirFormularioSiniestro = (modo = "digital") => {
