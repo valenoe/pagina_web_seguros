@@ -1,7 +1,8 @@
+import json
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class TelefonoOut(BaseModel):
@@ -31,11 +32,23 @@ class ClientePerfilOut(BaseModel):
     direccion: Optional[str] = None
     region: Optional[str] = None
     comuna: Optional[str] = None
+    preferencias_notificacion: Optional[dict] = None
     foto_perfil: Optional[str] = None
     telefonos: list[TelefonoOut] = []
     emails: list[EmailOut] = []
 
     model_config = {"from_attributes": True}
+
+    @field_validator("preferencias_notificacion", mode="before")
+    @classmethod
+    def parsear_preferencias(cls, v):
+        # en la BD se guarda como texto JSON; se devuelve como dict
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (ValueError, TypeError):
+                return None
+        return v
 
     @model_validator(mode="after")
     def campos_desde_listas(self):
@@ -114,6 +127,12 @@ class ClientePerfilUpdate(BaseModel):
     direccion: Optional[str] = None
     region: Optional[str] = None
     comuna: Optional[str] = None
+    preferencias_notificacion: Optional[dict] = None
+
+
+class CambioPasswordIn(BaseModel):
+    password_actual: str
+    password_nueva: str = Field(min_length=6, max_length=100)
 
 
 class PagoAgregadoOut(PagoPortalOut):

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import "../styles/components/PhoneInput.css";
 
 const PAISES = [
   { code: "+56", name: "Chile" },
@@ -84,12 +85,11 @@ export default function PhoneInput({ placeholder, value, onChange, name, require
   }
 
   return (
-    <div style={{ display: "flex", gap: "0.4rem" }}>
+    <div className="phone-input">
       <select
+        className="phone-input-code"
         value={personalizado ? OTRO : code}
         onChange={handleSelect}
-        /* width:auto → la caja se adapta al largo del texto de cada país */
-        style={{ flexShrink: 0, width: "auto" }}
       >
         {PAISES.map((p) => (
           <option key={p.code} value={p.code}>
@@ -101,17 +101,18 @@ export default function PhoneInput({ placeholder, value, onChange, name, require
 
       {personalizado && (
         <input
+          className="phone-input-custom"
           type="text"
           inputMode="numeric"
           value={code}
           onChange={handleCodePersonalizado}
           placeholder="+00"
           aria-label="Código de país"
-          style={{ flexShrink: 0, width: "4.5rem" }}
         />
       )}
 
       <input
+        className="phone-input-number"
         name={name}
         type="tel"
         value={numero}
@@ -119,7 +120,6 @@ export default function PhoneInput({ placeholder, value, onChange, name, require
         placeholder={placeholder || "912345678"}
         required={required}
         autoComplete="off"
-        style={{ flex: 1, minWidth: 0 }}
       />
     </div>
   );

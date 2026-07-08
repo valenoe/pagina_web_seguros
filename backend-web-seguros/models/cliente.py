@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -36,6 +36,7 @@ class Cliente(Base):
     direccion = Column(String(300))
     region = Column(String(100))
     comuna = Column(String(100))
+    preferencias_notificacion = Column(Text)  # JSON con las 6 preferencias
     foto_perfil = Column(String(500))
     cliente_activo = Column(Boolean, default=True)
     fecha_registro = Column(DateTime, server_default=func.now())

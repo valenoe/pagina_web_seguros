@@ -1,0 +1,2 @@
+ALTER TABLE `web_clientes`
+  ADD COLUMN `preferencias_notificacion` longtext DEFAULT NULL AFTER `comuna`;

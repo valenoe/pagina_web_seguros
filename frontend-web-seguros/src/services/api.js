@@ -124,6 +124,27 @@ export async function actualizarMiCuenta(token, data) {
   });
 }
 
+export async function cambiarPassword(token, data) {
+  // fetch propio (no apiPut) para poder mostrar el mensaje del backend,
+  // ej. "La contraseña actual no es correcta".
+  const res = await fetch(`${API_URL}/portal/password`, {
+    method: "PUT",
+    headers: { ...authHeaders(token), "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    let detalle = "No se pudo cambiar la contraseña.";
+    try {
+      const err = await res.json();
+      if (err?.detail) detalle = err.detail;
+    } catch {
+      /* respuesta sin cuerpo JSON */
+    }
+    throw new Error(detalle);
+  }
+  return res.json();
+}
+
 export async function subirFotoPerfil(token, archivo) {
   const formData = new FormData();
   formData.append("foto", archivo);
@@ -134,6 +155,18 @@ export async function subirFotoPerfil(token, archivo) {
     body: formData,
   });
 
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.detail || `Error ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function eliminarFotoPerfil(token) {
+  const res = await fetch(`${API_URL}/portal/perfil/foto`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error(data?.detail || `Error ${res.status}`);

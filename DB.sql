@@ -44,6 +44,7 @@ CREATE TABLE `web_clientes` (
   `direccion` varchar(300) DEFAULT NULL,
   `region` varchar(100) DEFAULT NULL,
   `comuna` varchar(100) DEFAULT NULL,
+  `preferencias_notificacion` longtext DEFAULT NULL,
   `foto_perfil` varchar(500) DEFAULT NULL,
   `cliente_activo` boolean DEFAULT true,
   `fecha_registro` timestamp DEFAULT (now()),

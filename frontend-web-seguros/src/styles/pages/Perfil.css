@@ -451,6 +451,37 @@
   outline: none;
 }
 
+/* Campo de contraseña con ojito para mostrar/ocultar */
+.perfil-clave-wrap {
+  position: relative;
+  display: grid;
+}
+
+.perfil-clave-wrap .perfil-modal-input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.perfil-clave-ojo {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 4px;
+  color: #8a97ab;
+  transition: color 0.15s ease;
+}
+
+.perfil-clave-ojo:hover {
+  color: var(--pc-blue);
+}
+
 /* ── Responsivo ── */
 
 /* ≤1000px: la sidebar pasa a cajón → el contenido ocupa todo el ancho.

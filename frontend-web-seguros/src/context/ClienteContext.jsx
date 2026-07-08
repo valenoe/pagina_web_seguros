@@ -3,6 +3,7 @@ import {
   getMiCuenta,
   actualizarMiCuenta,
   subirFotoPerfil,
+  eliminarFotoPerfil,
   fotoUrl,
 } from "../services/api";
 
@@ -30,6 +31,7 @@ function normalizar(cuenta) {
     region: cuenta.region || "",
     comuna: cuenta.comuna || "",
     fecha_nacimiento: cuenta.fecha_nacimiento || "",
+    preferencias: cuenta.preferencias_notificacion || null,
     foto: fotoUrl(cuenta.foto_perfil),
   };
 }
@@ -81,6 +83,15 @@ export function ClienteProvider({ children }) {
     return norm;
   }, []);
 
+  // Borra la foto del servidor (DELETE /portal/perfil/foto) y refresca.
+  const eliminarFoto = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    const cuenta = await eliminarFotoPerfil(token);
+    const norm = normalizar(cuenta);
+    setCliente(norm);
+    return norm;
+  }, []);
+
   // Se llama al cerrar sesión.
   const limpiarCliente = useCallback(() => setCliente(null), []);
 
@@ -90,6 +101,7 @@ export function ClienteProvider({ children }) {
     recargarCliente,
     actualizarCliente,
     subirFoto,
+    eliminarFoto,
     limpiarCliente,
   };
 

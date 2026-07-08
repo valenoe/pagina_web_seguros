@@ -13,7 +13,7 @@ from models.poliza import Poliza, PolizaPago, Beneficiario
 from models.siniestro import Siniestro
 from schemas.portal import (
     CotizacionPortalOut, PolizaPortalOut, PolizaDetalleOut,
-    PagoPortalOut, ClientePerfilOut, ClientePerfilUpdate,
+    PagoPortalOut, ClientePerfilOut, ClientePerfilUpdate, CambioPasswordIn,
     PagoAgregadoOut, CoberturaPortalOut, BeneficiarioAgregadoOut,
     SiniestroIn, SiniestroOut,
     DocumentoClienteOut, MetodoPagoOut, AlertaOut,
@@ -47,6 +47,9 @@ def actualizar_perfil(
         cliente.region = datos.region
     if datos.comuna is not None:
         cliente.comuna = datos.comuna
+    if datos.preferencias_notificacion is not None:
+        import json
+        cliente.preferencias_notificacion = json.dumps(datos.preferencias_notificacion)
     if datos.email is not None:
         from models.cliente import ClienteEmail
         email_principal = db.query(ClienteEmail).filter(
@@ -81,6 +84,31 @@ def actualizar_perfil(
     db.commit()
     db.refresh(cliente)
     return cliente
+
+
+@router.put("/password", status_code=200)
+def cambiar_password(
+    datos: CambioPasswordIn,
+    cliente: Cliente = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    import bcrypt
+    from models.cliente import PortalAcceso
+
+    acceso = db.query(PortalAcceso).filter(
+        PortalAcceso.cliente_id == cliente.id_cliente,
+        PortalAcceso.portal_acceso_activo == True,
+    ).first()
+    if not acceso or not acceso.password_hash:
+        raise HTTPException(status_code=400, detail="La cuenta no tiene contraseña configurada")
+
+    if not bcrypt.checkpw(datos.password_actual.encode(), acceso.password_hash.encode()):
+        raise HTTPException(status_code=400, detail="La contraseña actual no es correcta")
+
+    acceso.password_hash = bcrypt.hashpw(datos.password_nueva.encode(), bcrypt.gensalt()).decode()
+    acceso.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"mensaje": "Contraseña actualizada correctamente"}
 
 
 @router.get("/mis-cotizaciones", response_model=list[CotizacionPortalOut])
@@ -210,13 +238,25 @@ async def subir_foto_perfil(
     if ext not in EXTENSIONES_IMAGEN:
         raise HTTPException(status_code=400, detail="Solo se permiten imágenes JPG, PNG o WEBP")
 
-    nombre_archivo = f"{uuid.uuid4()}{ext}"
-    ruta = UPLOADS_DIR / "fotos" / nombre_archivo
-
     contenido = await foto.read()
     if len(contenido) > 5 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="La imagen no puede superar 5MB")
 
+    # Redimensionar a máx 400px (avatar) y reencodear a WebP para que pese poco.
+    from io import BytesIO
+    from PIL import Image, UnidentifiedImageError
+    try:
+        img = Image.open(BytesIO(contenido))
+        img = img.convert("RGBA")  # WebP soporta transparencia
+        img.thumbnail((400, 400))  # conserva proporción, solo achica
+        buffer = BytesIO()
+        img.save(buffer, format="WEBP", quality=80, method=6)
+        contenido = buffer.getvalue()
+    except (UnidentifiedImageError, OSError):
+        raise HTTPException(status_code=400, detail="No se pudo procesar la imagen")
+
+    nombre_archivo = f"{uuid.uuid4()}.webp"
+    ruta = UPLOADS_DIR / "fotos" / nombre_archivo
     ruta.write_bytes(contenido)
 
     if cliente.foto_perfil:
@@ -225,6 +265,22 @@ async def subir_foto_perfil(
             ruta_anterior.unlink()
 
     cliente.foto_perfil = f"/uploads/fotos/{nombre_archivo}"
+    cliente.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(cliente)
+    return cliente
+
+
+@router.delete("/perfil/foto", response_model=ClientePerfilOut)
+def eliminar_foto_perfil(
+    cliente: Cliente = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if cliente.foto_perfil:
+        ruta = UPLOADS_DIR / "fotos" / Path(cliente.foto_perfil).name
+        if ruta.exists():
+            ruta.unlink()
+    cliente.foto_perfil = None
     cliente.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(cliente)

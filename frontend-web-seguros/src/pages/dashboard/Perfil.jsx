@@ -1,10 +1,83 @@
 import { useState, useEffect } from "react";
 import { useCliente } from "../../context/ClienteContext";
+import { cambiarPassword } from "../../services/api";
 import { regionesComunas } from "../../data/regionesComunas";
 import "../../styles/pages/PortalDashboard.css";
 import "../../styles/pages/Perfil.css";
 
 const REGIONES = Object.keys(regionesComunas);
+
+// Valores por defecto de las preferencias de notificación (cuando el cliente
+// aún no las ha guardado nunca).
+const PREFERENCIAS_DEFAULT = {
+  email: true,
+  whatsapp: true,
+  vencimientos: true,
+  documentos: true,
+  siniestros: true,
+  pagos: true,
+};
+
+// Íconos SVG del ojo (abierto / tachado), estilo línea.
+function IconoOjo({ abierto }) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {abierto ? (
+        <>
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+          <circle cx="12" cy="12" r="3" />
+        </>
+      ) : (
+        <>
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+          <line x1="1" y1="1" x2="23" y2="23" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+/**
+ * Campo de contraseña con botón "ojito" para mostrar/ocultar.
+ * `autoComplete="new-password"` evita que el navegador autocomplete la
+ * contraseña guardada (si lo hiciera, con el ojito quedaría a la vista).
+ */
+function CampoClave({ label, value, onChange, placeholder }) {
+  const [ver, setVer] = useState(false);
+  return (
+    <label className="perfil-modal-field">
+      <span>{label}</span>
+      <div className="perfil-clave-wrap">
+        <input
+          type={ver ? "text" : "password"}
+          className="perfil-modal-input"
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          autoComplete="new-password"
+        />
+        <button
+          type="button"
+          className="perfil-clave-ojo"
+          onClick={() => setVer((v) => !v)}
+          aria-label={ver ? "Ocultar contraseña" : "Mostrar contraseña"}
+        >
+          <IconoOjo abierto={!ver} />
+        </button>
+      </div>
+    </label>
+  );
+}
 
 /**
  * Perfil — datos personales del cliente, foto de avatar, cambio de contraseña
@@ -19,7 +92,7 @@ const REGIONES = Object.keys(regionesComunas);
  * siguen en PortalDashboard.css.
  */
 function Perfil() {
-  const { cliente, actualizarCliente, subirFoto } = useCliente();
+  const { cliente, actualizarCliente, subirFoto, eliminarFoto } = useCliente();
 
   const nombreCliente = cliente?.nombre || "Cliente";
 
@@ -35,20 +108,21 @@ function Perfil() {
 
   const [editandoPerfil, setEditandoPerfil] = useState(false);
   const [modalClaveAbierto, setModalClaveAbierto] = useState(false);
-  const [pasoClave, setPasoClave] = useState("inicio");
-  const [codigoSeguridad, setCodigoSeguridad] = useState("");
-  const [codigoIngresado, setCodigoIngresado] = useState("");
+  const [claveActual, setClaveActual] = useState("");
   const [nuevaClave, setNuevaClave] = useState("");
   const [confirmarClave, setConfirmarClave] = useState("");
   const [mensaje, setMensaje] = useState({ texto: "", tipo: "info" });
   const [preferenciasPerfil, setPreferenciasPerfil] = useState({
-    email: true,
-    whatsapp: true,
-    vencimientos: true,
-    documentos: true,
-    siniestros: true,
-    pagos: false,
+    ...PREFERENCIAS_DEFAULT,
+    ...(cliente?.preferencias || {}),
   });
+
+  // Sincroniza las preferencias con lo guardado en la BD cuando llega el cliente.
+  useEffect(() => {
+    if (cliente?.preferencias) {
+      setPreferenciasPerfil({ ...PREFERENCIAS_DEFAULT, ...cliente.preferencias });
+    }
+  }, [cliente]);
 
   // Refresca el borrador con lo de la BD cuando NO se está editando (así no se
   // pisa lo que el usuario escribe; al guardar/cancelar vuelve a tomar la verdad).
@@ -133,45 +207,33 @@ function Perfil() {
     }
   };
 
-  const limpiarAvatar = () => {
-    // Solo limpia la vista previa local. No hay endpoint de borrado todavía, así
-    // que al recargar la foto del servidor vuelve (gap conocido en el handoff).
-    setAvatarPerfil("");
-    mostrarMensaje("Foto de perfil eliminada.", "info", 3200);
+  const limpiarAvatar = async () => {
+    const anterior = avatarPerfil;
+    setAvatarPerfil(""); // optimista
+    try {
+      await eliminarFoto(); // borra en el servidor y refresca el contexto
+      mostrarMensaje("Foto de perfil eliminada.", "info", 3200);
+    } catch (error) {
+      setAvatarPerfil(anterior);
+      mostrarMensaje(
+        `No se pudo eliminar la foto. ${error.message || "Revisa tu conexión."}`,
+        "error",
+        4500,
+      );
+    }
   };
 
-  const generarCodigoSeguridad = () => {
-    const codigo = String(Math.floor(100000 + Math.random() * 900000));
-    setCodigoSeguridad(codigo);
-    setCodigoIngresado("");
+  const cerrarModalClave = () => {
+    setModalClaveAbierto(false);
+    setClaveActual("");
     setNuevaClave("");
     setConfirmarClave("");
-    setPasoClave("codigo");
-    mostrarMensaje(
-      `Código de seguridad generado para prueba frontend: ${codigo}`,
-      "info",
-      6500,
-    );
   };
 
-  const validarCodigo = () => {
-    if (codigoIngresado.trim() !== codigoSeguridad) {
-      mostrarMensaje("El código ingresado no coincide.", "error", 3500);
-      return;
-    }
-
-    setPasoClave("clave");
-    mostrarMensaje(
-      "Código validado. Ingresa tu nueva contraseña.",
-      "success",
-      3500,
-    );
-  };
-
-  const actualizarClave = () => {
-    if (nuevaClave.length < 8) {
+  const actualizarClave = async () => {
+    if (nuevaClave.length < 6) {
       mostrarMensaje(
-        "La contraseña debe tener al menos 8 caracteres.",
+        "La contraseña nueva debe tener al menos 6 caracteres.",
         "error",
         3500,
       );
@@ -183,17 +245,39 @@ function Perfil() {
       return;
     }
 
-    setModalClaveAbierto(false);
-    setPasoClave("inicio");
-    setCodigoSeguridad("");
-    setCodigoIngresado("");
-    setNuevaClave("");
-    setConfirmarClave("");
-    mostrarMensaje("Contraseña actualizada correctamente.", "success", 5000);
+    try {
+      const token = localStorage.getItem("token");
+      await cambiarPassword(token, {
+        password_actual: claveActual,
+        password_nueva: nuevaClave,
+      });
+      cerrarModalClave();
+      mostrarMensaje("Contraseña actualizada correctamente.", "success", 5000);
+    } catch (error) {
+      // el backend responde "La contraseña actual no es correcta", etc.
+      mostrarMensaje(
+        error.message || "No se pudo cambiar la contraseña.",
+        "error",
+        5000,
+      );
+    }
   };
 
-  const alternarPreferencia = (clave) => {
-    setPreferenciasPerfil((actual) => ({ ...actual, [clave]: !actual[clave] }));
+  const alternarPreferencia = async (clave) => {
+    const previas = preferenciasPerfil;
+    const nuevas = { ...previas, [clave]: !previas[clave] };
+    setPreferenciasPerfil(nuevas); // optimista: se ve el cambio al instante
+
+    try {
+      await actualizarCliente({ preferencias_notificacion: nuevas });
+    } catch (error) {
+      setPreferenciasPerfil(previas); // revierte si el guardado falla
+      mostrarMensaje(
+        `No se pudo guardar la preferencia. ${error.message || "Revisa tu conexión."}`,
+        "error",
+        4000,
+      );
+    }
   };
 
   const inputPerfil = (label, campo, tipo = "text", bloqueado = false) => (
@@ -431,16 +515,13 @@ function Perfil() {
             <article className="perfil-card perfil-card--dark">
               <h3 className="perfil-card-title">Seguridad de cuenta</h3>
               <p className="perfil-card-sub">
-                Cambia tu contraseña usando un código de seguridad. En backend se
-                enviará por correo o SMS.
+                Cambia tu contraseña ingresando la actual. Si la olvidaste,
+                podrás recuperarla desde el inicio de sesión (próximamente).
               </p>
               <button
                 type="button"
                 className="perfil-btn-naranja perfil-btn-block"
-                onClick={() => {
-                  setModalClaveAbierto(true);
-                  setPasoClave("inicio");
-                }}
+                onClick={() => setModalClaveAbierto(true)}
               >
                 Cambiar contraseña
               </button>
@@ -455,93 +536,49 @@ function Perfil() {
                 <div>
                   <h3 className="perfil-modal-title">Cambiar contraseña</h3>
                   <p className="perfil-modal-sub">
-                    Flujo preparado para código de seguridad.
+                    Ingresa tu contraseña actual y la nueva.
                   </p>
                 </div>
 
                 <button
                   type="button"
                   className="perfil-modal-close"
-                  onClick={() => setModalClaveAbierto(false)}
+                  onClick={cerrarModalClave}
                 >
                   ×
                 </button>
               </div>
 
-              {pasoClave === "inicio" && (
-                <div>
-                  <p className="perfil-modal-intro">
-                    Para proteger tu cuenta, primero se genera un código de
-                    seguridad.
-                  </p>
+              <div className="perfil-modal-step">
+                <CampoClave
+                  label="Contraseña actual"
+                  value={claveActual}
+                  onChange={(event) => setClaveActual(event.target.value)}
+                  placeholder="Tu contraseña actual"
+                />
 
-                  <button
-                    type="button"
-                    className="perfil-btn-naranja perfil-btn-block"
-                    onClick={generarCodigoSeguridad}
-                  >
-                    Generar código de seguridad
-                  </button>
-                </div>
-              )}
+                <CampoClave
+                  label="Nueva contraseña"
+                  value={nuevaClave}
+                  onChange={(event) => setNuevaClave(event.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                />
 
-              {pasoClave === "codigo" && (
-                <div className="perfil-modal-step">
-                  <label className="perfil-modal-field">
-                    <span>Código de seguridad</span>
-                    <input
-                      className="perfil-modal-input"
-                      value={codigoIngresado}
-                      onChange={(event) =>
-                        setCodigoIngresado(event.target.value)
-                      }
-                      placeholder="Ingresa el código de 6 dígitos"
-                    />
-                  </label>
+                <CampoClave
+                  label="Confirmar contraseña"
+                  value={confirmarClave}
+                  onChange={(event) => setConfirmarClave(event.target.value)}
+                  placeholder="Repite tu nueva contraseña"
+                />
 
-                  <button
-                    type="button"
-                    className="perfil-btn-azul perfil-btn-block"
-                    onClick={validarCodigo}
-                  >
-                    Validar código
-                  </button>
-                </div>
-              )}
-
-              {pasoClave === "clave" && (
-                <div className="perfil-modal-step">
-                  <label className="perfil-modal-field">
-                    <span>Nueva contraseña</span>
-                    <input
-                      type="password"
-                      className="perfil-modal-input"
-                      value={nuevaClave}
-                      onChange={(event) => setNuevaClave(event.target.value)}
-                      placeholder="Mínimo 8 caracteres"
-                    />
-                  </label>
-
-                  <label className="perfil-modal-field">
-                    <span>Confirmar contraseña</span>
-                    <input
-                      type="password"
-                      className="perfil-modal-input"
-                      value={confirmarClave}
-                      onChange={(event) => setConfirmarClave(event.target.value)}
-                      placeholder="Repite tu nueva contraseña"
-                    />
-                  </label>
-
-                  <button
-                    type="button"
-                    className="perfil-btn-naranja perfil-btn-block"
-                    onClick={actualizarClave}
-                  >
-                    Actualizar contraseña
-                  </button>
-                </div>
-              )}
+                <button
+                  type="button"
+                  className="perfil-btn-naranja perfil-btn-block"
+                  onClick={actualizarClave}
+                >
+                  Actualizar contraseña
+                </button>
+              </div>
             </div>
           </div>
         )}

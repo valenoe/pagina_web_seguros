@@ -1,0 +1,58 @@
+/* Selector de código de país (+56, etc.) + número.
+   Look consistente con los inputs del sitio: bordes redondeados, flechita
+   propia en el select y foco naranjo de la marca. */
+
+.phone-input {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.phone-input select,
+.phone-input input {
+  border: 1.5px solid #d9e2ef;
+  border-radius: 12px;
+  padding: 11px 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--pc-blue, #07195a);
+  background-color: #fff;
+  outline: none;
+  box-sizing: border-box;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.phone-input select:focus,
+.phone-input input:focus {
+  border-color: var(--pc-orange, #f47c20);
+  box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.15);
+}
+
+/* Selector de país: sin la flecha del sistema, con una propia (SVG) */
+.phone-input-code {
+  flex-shrink: 0;
+  max-width: 12rem;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2307195a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+}
+
+/* Input del código manual ("Otro…") */
+.phone-input-custom {
+  flex-shrink: 0;
+  width: 5rem;
+  text-align: center;
+}
+
+.phone-input-number {
+  flex: 1;
+  min-width: 0;
+}
