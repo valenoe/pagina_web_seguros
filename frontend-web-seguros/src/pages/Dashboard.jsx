@@ -6,6 +6,7 @@ import MisSeguros from "./dashboard/MisSeguros";
 import ReportarSiniestro from "./dashboard/ReportarSiniestro";
 import ExplorarSeguros from "./dashboard/ExplorarSeguros";
 import Perfil from "./dashboard/Perfil";
+import Notificaciones from "./dashboard/Notificaciones";
 import {
   getMisAlertas,
   getMisBeneficiarios,
@@ -25,6 +26,7 @@ const VISTAS_PERMITIDAS = [
   "explora",
   "beneficiarios",
   "perfil",
+  "notificaciones",
 ];
 
 /**
@@ -70,7 +72,6 @@ function Dashboard() {
   const [documentos, setDocumentos] = useState([]);
   const [pagos, setPagos] = useState([]);
   const [alertas, setAlertas] = useState([]);
-  const [notificacionesAbiertas, setNotificacionesAbiertas] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
   // La URL es la fuente de verdad de la vista activa:
   //   /clientes/dashboard            → resumen
@@ -228,6 +229,10 @@ function Dashboard() {
 
   function formatearFecha(fecha) {
     if (!fecha) return "—";
+    // Fecha pura "YYYY-MM-DD": se formatea a mano para evitar el corrimiento de
+    // zona horaria (new Date la lee en UTC y en Chile, UTC−4, se va un día atrás).
+    const m = String(fecha).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
     return new Date(fecha).toLocaleDateString("es-CL");
   }
 
@@ -664,7 +669,7 @@ Estado: ${documento.estado}`);
           <div className="pc-header-user" style={{ position: "relative" }}>
             <button
               type="button"
-              onClick={() => setNotificacionesAbiertas((abierta) => !abierta)}
+              onClick={() => setVista("notificaciones")}
               title="Notificaciones"
               style={{
                 position: "relative",
@@ -711,85 +716,6 @@ Estado: ${documento.estado}`);
                 </span>
               )}
             </button>
-
-            {notificacionesAbiertas && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "54px",
-                  right: "54px",
-                  width: "340px",
-                  padding: "16px",
-                  background: "#ffffff",
-                  border: "1px solid #e6eaf4",
-                  borderRadius: "18px",
-                  boxShadow: "0 18px 45px rgba(7, 25, 90, 0.16)",
-                  zIndex: 50,
-                }}
-              >
-                <strong
-                  style={{
-                    display: "block",
-                    color: "#07195a",
-                    fontSize: "15px",
-                    marginBottom: "12px",
-                  }}
-                >
-                  Notificaciones
-                </strong>
-
-                {alertas.length > 0 ? (
-                  <div style={{ display: "grid", gap: "10px" }}>
-                    {alertas.slice(0, 5).map((alerta, index) => (
-                      <article
-                        key={alerta.id_alerta || alerta.id || index}
-                        style={{
-                          padding: "12px",
-                          borderRadius: "14px",
-                          background: "#f8faff",
-                          border: "1px solid #e7ecf7",
-                        }}
-                      >
-                        <strong
-                          style={{
-                            display: "block",
-                            color: "#07195a",
-                            fontSize: "12px",
-                            marginBottom: "5px",
-                          }}
-                        >
-                          {alerta.titulo || alerta.tipo || "Nueva notificación"}
-                        </strong>
-
-                        <p
-                          style={{
-                            color: "#56637a",
-                            fontSize: "11px",
-                            lineHeight: 1.5,
-                            margin: 0,
-                          }}
-                        >
-                          {alerta.mensaje ||
-                            alerta.descripcion ||
-                            "Tienes una actualización pendiente en tu portal."}
-                        </p>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <p
-                    style={{
-                      color: "#56637a",
-                      fontSize: "12px",
-                      lineHeight: 1.5,
-                      margin: 0,
-                    }}
-                  >
-                    No tienes notificaciones pendientes.
-                  </p>
-                )}
-              </div>
-            )}
 
             {vista !== "perfil" && (
             <div
@@ -999,9 +925,9 @@ Estado: ${documento.estado}`);
                         <span>Reportar siniestro →</span>
                       </button>
 
-                      <button onClick={() => abrirMisSeguros("documentos")}>
+                      <button onClick={() => abrirMisSeguros("polizas")}>
                         <img src="/documentos.png" alt="" />
-                        <span>Ver documentos →</span>
+                        <span>Mis pólizas →</span>
                       </button>
 
                       <button onClick={() => setVista("Club-PC")}>
@@ -1122,6 +1048,10 @@ Estado: ${documento.estado}`);
                 nombreVisible={nombreVisible}
                 rut={datosPerfil.rut}
               />
+            )}
+
+            {vista === "notificaciones" && (
+              <Notificaciones alertas={alertas} />
             )}
           </>
         )}

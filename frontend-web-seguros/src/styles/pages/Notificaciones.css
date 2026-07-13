@@ -1,0 +1,105 @@
+/* Página de Notificaciones (vista del portal). Clases notif-*. */
+
+.notif-head {
+  margin-bottom: clamp(16px, 2.5vw, 26px);
+}
+
+.notif-title {
+  margin: 0;
+  color: var(--pc-blue, #07195a);
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 900;
+}
+
+.notif-sub {
+  margin: 6px 0 0;
+  color: #56637a;
+  font-size: 0.95rem;
+}
+
+.notif-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.notif-card {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: #f8faff;
+  border: 1px solid #e7ecf7;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.notif-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(7, 25, 90, 0.08);
+}
+
+.notif-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 6px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: var(--pc-blue, #07195a);
+}
+
+.notif-card--warn .notif-dot {
+  background: #f0a020;
+}
+.notif-card--danger .notif-dot {
+  background: #e0483d;
+}
+.notif-card--info .notif-dot {
+  background: #2f7dd1;
+}
+
+.notif-card-title {
+  display: block;
+  color: var(--pc-blue, #07195a);
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.notif-card-text {
+  margin: 0;
+  color: #56637a;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+/* Estado vacío */
+.notif-empty {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: clamp(30px, 6vw, 60px) 20px;
+}
+
+.notif-empty-icon {
+  color: #b9c4da;
+}
+
+.notif-empty-title {
+  color: var(--pc-blue, #07195a);
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.notif-empty-text {
+  margin: 0;
+  max-width: 340px;
+  color: #7a869c;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}

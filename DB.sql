@@ -71,15 +71,25 @@ CREATE TABLE `web_polizas` (
   `cotizacion_id` integer,
   `numero_poliza` varchar(100),
   `compania` varchar(100),
+  `ramo` varchar(50) DEFAULT NULL,
+  `materia` varchar(300) DEFAULT NULL,
+  `producto` varchar(100) DEFAULT NULL,
   `fecha_inicio` date,
   `fecha_vencimiento` date,
-  `prima` decimal(12,2),
+  `prima` decimal(12,2),                     -- prima total (UF); bruta = total
+  `prima_neta` decimal(12,2) DEFAULT NULL,   -- UF
+  `prima_afecta` decimal(12,2) DEFAULT NULL, -- UF
+  `prima_exenta` decimal(12,2) DEFAULT NULL, -- UF
+  `iva` decimal(12,2) DEFAULT NULL,          -- UF
+  `monto_asegurado` decimal(14,2) DEFAULT NULL, -- UF
   `estado` varchar(20) DEFAULT 'activa',
   `origen` varchar(20) NOT NULL,
+  `forma_pago` varchar(50) DEFAULT NULL,
   `frecuencia_pago` varchar(20) DEFAULT NULL,
   `num_cuotas` integer DEFAULT NULL,
   `monto_cuota` decimal(12,2) DEFAULT NULL,
-  `fecha_proximo_pago` date DEFAULT NULL
+  `fecha_proximo_pago` date DEFAULT NULL,
+  `materia_asegurada` longtext DEFAULT NULL  -- JSON: detalles según ramo
 );
 
 CREATE TABLE `web_poliza_beneficiarios` (

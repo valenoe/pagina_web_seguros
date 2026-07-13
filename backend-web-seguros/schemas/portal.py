@@ -94,6 +94,8 @@ class PolizaPortalOut(BaseModel):
     seguro: SeguroResumen
     numero_poliza: str | None
     compania: str | None
+    ramo: Optional[str] = None
+    materia: Optional[str] = None
     fecha_inicio: date | None
     fecha_vencimiento: date | None
     prima: Decimal | None
@@ -114,8 +116,30 @@ class PagoPortalOut(BaseModel):
 
 
 class PolizaDetalleOut(PolizaPortalOut):
+    # desglose de prima (UF) — nullable
+    prima_neta: Optional[Decimal] = None
+    prima_afecta: Optional[Decimal] = None
+    prima_exenta: Optional[Decimal] = None
+    iva: Optional[Decimal] = None
+    monto_asegurado: Optional[Decimal] = None
+    producto: Optional[str] = None
+    forma_pago: Optional[str] = None
+    frecuencia_pago: Optional[str] = None
+    num_cuotas: Optional[int] = None
+    materia_asegurada: Optional[dict] = None  # JSON, detalles según ramo
     beneficiarios: list[BeneficiarioOut]
     pagos: list[PagoPortalOut]
+    documentos: list["DocumentoClienteOut"] = []
+
+    @field_validator("materia_asegurada", mode="before")
+    @classmethod
+    def parsear_materia(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (ValueError, TypeError):
+                return None
+        return v
 
 
 class ClientePerfilUpdate(BaseModel):
@@ -208,3 +232,8 @@ class AlertaOut(BaseModel):
     tipo: str
     titulo: str
     mensaje: str
+
+
+# Resuelve la referencia adelantada a DocumentoClienteOut en PolizaDetalleOut
+# (se define más abajo que PolizaDetalleOut).
+PolizaDetalleOut.model_rebuild()

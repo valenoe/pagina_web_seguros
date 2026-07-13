@@ -599,6 +599,31 @@ Aunque el nombre confunde, `.contacto-corredor` y `.contacto-corredor img` está
 4. Verificar visualmente la página en el navegador antes de commitear.
 5. Un commit por migración (o por sesión, si se hacen varias de golpe).
 
+### 🧾 REDISEÑO Mis Seguros + detalle de póliza (2026-07-09, EN CURSO)
+
+**Forma de datos del broker viejo (Brokerion)** — fuente en `C:\Users\valen\Documents\Prieto_Correa_seguros\bot_sistema_polizas` (Playwright que navega el sistema viejo + lector de PDF). El bot guarda un `metadata.json` por póliza con secciones: `maestro` (id, tipo/ramo, compañía, estado, numero_poliza, fechas, nombre, rut, materia), `informacion_general`, `cliente` (nombre/rut/correo/celular), `materia_asegurada` (VARÍA por ramo: hogar→construcción/dirección/monto edificio/contenido; auto→patente/marca/modelo…), `datos_pago` (compañía, forma_pago, producto, prima bruta UF), `cuotas` (numero/monto UF/vencimiento/estado), `archivos_adjuntos` (PDFs), `notas`, `bitacora`, `renovaciones`, `endosos`. El **lector de PDF** (`bot_hogar/extraccion_pdf.csv`) agrega el desglose fino de prima que el broker web no da: `monto_asegurado_uf, prima_neta_uf, prima_afecta_uf, prima_exenta_uf, iva_uf, prima_bruta_uf, prima_total_uf` (todo UF). El lector es **parcial**: casas info completa, autos solo primas → **campos nullable**.
+
+**✅ HECHO — schema `web_polizas` ampliado** (DB.sql + BD local; **falta host**). Se agregó: `ramo`, `materia`, `producto`, `forma_pago` (varchar); desglose de prima en UF `prima_neta, prima_afecta, prima_exenta, iva` + `monto_asegurado` (decimal); y `materia_asegurada` **longtext JSON** (detalles variables por ramo). El `prima` existente = **prima total** (se decidió bruta = total, una sola columna). Modelo `Poliza`, `PolizaPortalOut` (+ramo/materia) y `PolizaDetalleOut` (+todo el desglose + `materia_asegurada` parseado + `documentos`) actualizados. Relación `Poliza.documentos` (viewonly) para traer los PDFs por póliza.
+
+**✅ HECHO — UI:** nueva página **`pages/dashboard/PolizaDetalle.jsx`** + CSS (ruta `/clientes/dashboard/poliza/:idPoliza`, standalone con "Volver a Mis Seguros"). Secciones: Resumen · Prima (desglose UF, solo filas con valor) · Materia asegurada (itera el JSON) · Cuotas (tabla) · **Documentos** (PDFs de esa póliza). En **Mis Seguros**: botón **"Ver"** por fila en Pólizas → abre el detalle; **tab "Documentos" ELIMINADO** (los documentos viven dentro de cada póliza; decisión usuaria). La acción rápida de Inicio "Ver documentos" pasó a "Mis pólizas". `npm run build` pasa.
+
+**⚠️ Pendientes:** (1) `ALTER TABLE web_polizas` en la **BD del host** (ver abajo). (2) Los props de documentos que MisSeguros ya no usa (documentosDemo, filtrosDocumentos, etc.) quedaron pasándose desde Dashboard sin uso → limpieza futura. (3) Poblar/POBLAR datos demo enriquecidos para probar. (4) El resto del dashboard del cliente y sus tablas también se van a rediseñar (esto fue solo Mis Seguros, el primero).
+
+**ALTER para el host (MySQL, sin `IF NOT EXISTS`):**
+```sql
+ALTER TABLE `web_polizas`
+  ADD COLUMN `ramo` varchar(50) DEFAULT NULL,
+  ADD COLUMN `materia` varchar(300) DEFAULT NULL,
+  ADD COLUMN `producto` varchar(100) DEFAULT NULL,
+  ADD COLUMN `prima_neta` decimal(12,2) DEFAULT NULL,
+  ADD COLUMN `prima_afecta` decimal(12,2) DEFAULT NULL,
+  ADD COLUMN `prima_exenta` decimal(12,2) DEFAULT NULL,
+  ADD COLUMN `iva` decimal(12,2) DEFAULT NULL,
+  ADD COLUMN `monto_asegurado` decimal(14,2) DEFAULT NULL,
+  ADD COLUMN `forma_pago` varchar(50) DEFAULT NULL,
+  ADD COLUMN `materia_asegurada` longtext DEFAULT NULL;
+```
+
 ### 🆕 Decisiones de modelado de datos (acordadas en conversación — agregar al #1)
 
 **Tres conceptos SEPARADOS, no se mezclan ni se duplican:**

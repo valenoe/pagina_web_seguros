@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -13,21 +13,41 @@ class Poliza(Base):
     cotizacion_id = Column(Integer, ForeignKey("web_cotizaciones.id_cotizacion"))
     numero_poliza = Column(String(100))
     compania = Column(String(100))
+    ramo = Column(String(50))            # tipo del broker: hogar, auto, ...
+    materia = Column(String(300))        # descripción de la materia asegurada
+    producto = Column(String(100))
     fecha_inicio = Column(Date)
     fecha_vencimiento = Column(Date)
+    # Desglose de prima (todo en UF; nullable porque el lector de PDF/broker puede
+    # no traer todos). `prima` = prima total (bruta y total se asumen iguales).
     prima = Column(Numeric(12, 2))
+    prima_neta = Column(Numeric(12, 2))
+    prima_afecta = Column(Numeric(12, 2))
+    prima_exenta = Column(Numeric(12, 2))
+    iva = Column(Numeric(12, 2))
+    monto_asegurado = Column(Numeric(14, 2))
     estado = Column(String(20), default="activa")
     origen = Column(String(20), nullable=False)
+    forma_pago = Column(String(50))
     frecuencia_pago = Column(String(20))
     num_cuotas = Column(Integer)
     monto_cuota = Column(Numeric(12, 2))
     fecha_proximo_pago = Column(Date)
+    # Detalles variables según el ramo (hogar: construcción/dirección/montos;
+    # auto: patente/marca/modelo...). JSON para tolerar la variedad.
+    materia_asegurada = Column(Text)
 
     cliente = relationship("Cliente", back_populates="polizas")
     seguro = relationship("SeguroCatalogo", back_populates="polizas")
     cotizacion = relationship("Cotizacion", back_populates="poliza")
     beneficiarios = relationship("Beneficiario", back_populates="poliza")
     pagos = relationship("PolizaPago", back_populates="poliza", order_by="PolizaPago.numero_cuota")
+    documentos = relationship(
+        "DocumentoCliente",
+        foreign_keys="DocumentoCliente.poliza_id",
+        viewonly=True,
+        overlaps="poliza",
+    )
 
 
 class Beneficiario(Base):

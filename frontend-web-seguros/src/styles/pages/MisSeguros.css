@@ -212,8 +212,9 @@
 }
 
 .ms-cols-pol {
-  grid-template-columns: 1.3fr 1fr 1.1fr 0.8fr 0.9fr;
-  min-width: 640px;
+  grid-template-columns: 1.3fr 1fr 1.1fr 0.8fr 0.9fr auto;
+  min-width: 700px;
+  align-items: center;
 }
 
 .ms-cell-strong {

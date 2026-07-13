@@ -19,6 +19,7 @@ import LoginClientes from "../pages/LoginClientes";
 import RegistroClientes from "../pages/RegistroClientes";
 import Dashboard from "../pages/Dashboard";
 import DetalleSeguro from "../pages/DetalleSeguro";
+import PolizaDetalle from "../pages/dashboard/PolizaDetalle";
 
 /* Cotizaciones */
 import Cotizador from "../pages/Cotizador";
@@ -80,6 +81,11 @@ export default function Router() {
         <Route
           path="/clientes/dashboard"
           element={<Dashboard />}
+        />
+
+        <Route
+          path="/clientes/dashboard/poliza/:idPoliza"
+          element={<PolizaDetalle />}
         />
 
         <Route

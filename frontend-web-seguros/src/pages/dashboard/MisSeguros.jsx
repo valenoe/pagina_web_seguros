@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../../styles/pages/PortalDashboard.css";
 import "../../styles/pages/MisSeguros.css";
 import Cuotas from "./Cuotas";
@@ -51,6 +52,7 @@ function MisSeguros({
   setVista,
   abrirWhatsApp,
 }) {
+  const navigate = useNavigate();
   const [busquedaPolizas, setBusquedaPolizas] = useState("");
 
   const polizasActivas = polizasNormalizadas.filter((p) =>
@@ -106,7 +108,6 @@ function MisSeguros({
       <div className="ms-tabs">
         {[
           ["polizas", "Pólizas", "Pól"],
-          ["documentos", "Documentos", "Doc"],
           ["beneficiarios", "Beneficiarios", "Ben"],
           ["cuotas", "Pagos y cuotas", "Pagos"],
         ].map(([tab, label, corto]) => (
@@ -162,6 +163,7 @@ function MisSeguros({
               <span>Compañía</span>
               <span>Estado</span>
               <span>Vencimiento</span>
+              <span></span>
             </div>
 
             {polizasFiltradas.length === 0 ? (
@@ -187,6 +189,15 @@ function MisSeguros({
                   <span className="ms-cell-muted">
                     {formatearFecha(p.fecha_vencimiento)}
                   </span>
+                  <button
+                    type="button"
+                    className="ms-btn-sm ms-btn-sm--primary"
+                    onClick={() =>
+                      navigate(`/clientes/dashboard/poliza/${p.id_poliza}`)
+                    }
+                  >
+                    Ver
+                  </button>
                 </div>
               ))
             )}
@@ -249,135 +260,6 @@ function MisSeguros({
                   >
                     {textoEstado(normalizarEstado(beneficiario.estado))}
                   </span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {tabMisSeguros === "documentos" && (
-        <div>
-          <div className="ms-stats-strip">
-            <span>
-              <strong>{documentosDemo.length}</strong>Documentos totales
-            </span>
-            <span>
-              <strong>{polizasConDocumentos}</strong>Pólizas asociadas
-            </span>
-            <span>
-              <strong>{documentosDisponibles}</strong>Disponibles
-            </span>
-            <span>
-              <strong>{documentosDemo.length - documentosDisponibles}</strong>
-              Bajo solicitud
-            </span>
-          </div>
-
-          <div className="ms-filters">
-            <input
-              type="text"
-              name="busqueda"
-              className="ms-input ms-input--search"
-              value={filtrosDocumentos.busqueda}
-              onChange={actualizarFiltroDocumento}
-              placeholder="Buscar documento..."
-            />
-
-            <select
-              name="seguro"
-              className="ms-select"
-              value={filtrosDocumentos.seguro}
-              onChange={actualizarFiltroDocumento}
-            >
-              {segurosDocumentos.map((seguro) => (
-                <option key={seguro} value={seguro}>
-                  {seguro === "todos" ? "Todos los seguros" : seguro}
-                </option>
-              ))}
-            </select>
-
-            <select
-              name="tipo"
-              className="ms-select"
-              value={filtrosDocumentos.tipo}
-              onChange={actualizarFiltroDocumento}
-            >
-              {tiposDocumentos.map((tipo) => (
-                <option key={tipo} value={tipo}>
-                  {tipo === "todos" ? "Todos los tipos" : tipo}
-                </option>
-              ))}
-            </select>
-
-            <select
-              name="estado"
-              className="ms-select"
-              value={filtrosDocumentos.estado}
-              onChange={actualizarFiltroDocumento}
-            >
-              {estadosDocumentos.map((estado) => (
-                <option key={estado} value={estado}>
-                  {estado === "todos" ? "Todos los estados" : estado}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="ms-table">
-            <div className="ms-thead ms-cols-doc">
-              <span>Documento</span>
-              <span>Seguro / Póliza</span>
-              <span>Tipo</span>
-              <span>Estado</span>
-              <span>Fecha</span>
-              <span>Acciones</span>
-            </div>
-
-            {documentosFiltrados.length === 0 ? (
-              <div className="pc-empty">
-                <h3>No se encontraron documentos</h3>
-                <p>
-                  Prueba cambiando los filtros o contacta a tu ejecutivo si
-                  necesitas apoyo.
-                </p>
-              </div>
-            ) : (
-              documentosFiltrados.map((documento) => (
-                <div className="ms-row ms-cols-doc" key={documento.id}>
-                  <strong className="ms-cell-strong">{documento.nombre}</strong>
-                  <span className="ms-cell-muted">{documento.seguro}</span>
-                  <span>{documento.tipo}</span>
-                  <span
-                    className={`ms-doc-badge ${
-                      documento.estado === "Disponible"
-                        ? "is-disponible"
-                        : documento.estado === "En preparación"
-                          ? "is-preparacion"
-                          : "is-otro"
-                    }`}
-                  >
-                    {documento.estado}
-                  </span>
-                  <span>{formatearFecha(documento.fecha)}</span>
-                  <div className="ms-row-actions">
-                    <button
-                      type="button"
-                      className="ms-btn-sm ms-btn-sm--primary"
-                      onClick={() => abrirPreviewDocumento(documento)}
-                    >
-                      Ver PDF
-                    </button>
-                    <button
-                      type="button"
-                      className="ms-btn-sm ms-btn-sm--outline"
-                      onClick={() => descargarDocumento(documento)}
-                    >
-                      {documento.estado === "Disponible"
-                        ? "Descargar"
-                        : "Ejecutivo"}
-                    </button>
-                  </div>
                 </div>
               ))
             )}

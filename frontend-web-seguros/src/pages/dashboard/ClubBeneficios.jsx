@@ -61,6 +61,10 @@ const BENEFICIOS_DEMO = [
 
 function formatearFecha(fecha) {
   if (!fecha) return "—";
+  // Fecha pura "YYYY-MM-DD": se formatea a mano para evitar el corrimiento de
+  // zona horaria (new Date la lee en UTC y en Chile, UTC−4, se va un día atrás).
+  const m = String(fecha).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
   return new Date(fecha).toLocaleDateString("es-CL");
 }
 
