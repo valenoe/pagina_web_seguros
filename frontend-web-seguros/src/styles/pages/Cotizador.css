@@ -5,6 +5,15 @@
   background: #f6f7fb;
 }
 
+/* Cotizador embebido en el portal (vista Explorar Seguros): sin el padding/alto/
+   fondo de página completa; el marco del dashboard ya aporta el espaciado. Así
+   no queda ese hueco grande entre el saludo del portal y el título del cotizador. */
+.cotizador-en-portal .cotizador {
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+}
+
 .cotizador-box,
 .cotizador-info {
   width: 100%;
@@ -114,6 +123,93 @@
   grid-column: 1 / -1;
 }
 
+/* ── Campos dinámicos por ramo (materia asegurada) ── */
+.cotizador-subtitulo {
+  margin: 6px 0 0;
+  color: var(--pc-blue);
+  font-size: 16px;
+  font-weight: 950;
+  border-top: 1px solid #e6eaf4;
+  padding-top: 16px;
+}
+
+.cotizador-opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  padding-top: 4px;
+}
+
+/* Cada opción: checkbox/radio chico al lado del texto (no el input grande) */
+.cotizador-form .cotizador-opcion {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #33415c;
+}
+
+.cotizador-form .cotizador-opcion input {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border-radius: 0;
+  accent-color: var(--pc-orange);
+}
+
+/* ── Aviso de sesión / sugerencia de login (arriba del formulario) ── */
+.cotizador-aviso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: #eef3ff;
+  border: 1px solid #dbe6ff;
+  color: var(--pc-blue);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* Campos NOT NULL del cliente (nombre, RUT, tipo): bloqueados en plomo cuando
+   hay sesión, para que no se editen. Los de otras tablas (correo/teléfono) sí. */
+.cotizador-form input:disabled,
+.cotizador-form select:disabled {
+  background: #eef1f6;
+  color: #6b7690;
+  cursor: not-allowed;
+}
+
+.cotizador-aviso-acciones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cotizador-aviso-btn {
+  background: var(--pc-blue);
+  color: #fff;
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.cotizador-aviso-btn:hover {
+  background: var(--pc-orange);
+}
+
+.cotizador-aviso-link {
+  color: var(--pc-blue);
+  font-weight: 900;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
 .cotizador-form button {
   height: 56px;
   border: none;
@@ -146,95 +242,8 @@
   margin-bottom: 16px;
 }
 
-.cotizacion-exitosa {
-  /* min-height (no height fija) + sin overflow:hidden: en pantallas bajas
-     o móvil en horizontal el contenido crece/scrollea en vez de recortarse */
-  min-height: calc(100vh - 95px);
-  padding: 40px 7%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(135deg, var(--pc-blue), var(--pc-text));
-}
-
-.cotizacion-card {
-  width: 100%;
-  max-width: 980px;
-  padding: 8px 70px 42px;
-  background: white;
-  border-radius: 34px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
-}
-
-.cotizacion-logo {
-  width: 170px;
-  margin-bottom: 6px;
-}
-
-.success-icon {
-  width: 62px;
-  height: 62px;
-  background: var(--pc-orange);
-  color: white;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  font-size: 34px;
-  font-weight: 900;
-  margin-bottom: 10px;
-}
-
-.cotizacion-card > span {
-  background: rgba(244, 124, 32, 0.12);
-  color: var(--pc-orange);
-  padding: 8px 18px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 900;
-  text-transform: uppercase;
-  margin-bottom: 18px;
-}
-
-.cotizacion-card h1 {
-  max-width: 760px;
-  color: var(--pc-blue);
-  font-size: 50px;
-  line-height: 1.08;
-  margin-bottom: 26px;
-}
-
-.cotizacion-card p {
-  max-width: 620px;
-  color: #555;
-  font-size: 20px;
-  line-height: 1.65;
-  margin-bottom: 40px;
-}
-
-.cotizacion-buttons {
-  display: flex;
-  gap: 18px;
-}
-
-.cotizacion-buttons a {
-  padding: 18px 34px;
-  border-radius: 999px;
-  color: white;
-  font-size: 17px;
-  font-weight: 900;
-  transition: 0.2s;
-}
-
-.cotizacion-buttons a:first-child {
-  background: var(--pc-blue);
-}
-.cotizacion-buttons a:last-child {
-  background: var(--pc-orange);
-}
+/* Los estilos de la página de Cotización Exitosa (.cotizacion-*) se movieron a
+   su propia hoja: styles/pages/CotizacionExitosa.css */
 
 @media (max-width: 1000px) {
   .cotizador-header h1 {
@@ -252,17 +261,5 @@
 @media (max-width: 700px) {
   .cotizador-form {
     grid-template-columns: 1fr;
-  }
-
-  .cotizacion-buttons {
-    flex-direction: column;
-  }
-
-  .cotizacion-card {
-    padding: 30px;
-  }
-
-  .cotizacion-card h1 {
-    font-size: 34px;
   }
 }

@@ -379,6 +379,16 @@
   .ms-tab-short {
     display: inline;
   }
+
+  /* La pestaña ACTIVA muestra su nombre COMPLETO (para que se entienda qué
+     estás viendo); las inactivas quedan en su versión corta. */
+  .ms-tab.is-active .ms-tab-full {
+    display: inline;
+  }
+
+  .ms-tab.is-active .ms-tab-short {
+    display: none;
+  }
 }
 
 @media (max-width: 460px) {

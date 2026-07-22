@@ -112,7 +112,15 @@ function LoginClientes() {
         localStorage.removeItem("cuenta_recordada");
       }
 
-      window.location.href = "/clientes/dashboard";
+      // Si vino con ?redirect=/ruta interna, vuelve ahí (ej. el cotizador);
+      // si no, al dashboard. Se valida que sea una ruta interna (evita open redirect).
+      const redirect = new URLSearchParams(window.location.search).get("redirect");
+      const destino =
+        redirect && redirect.startsWith("/") && !redirect.startsWith("//")
+          ? redirect
+          : "/clientes/dashboard";
+
+      window.location.href = destino;
     } catch (error) {
       console.error("ERROR LOGIN:", error);
       localStorage.removeItem("token");

@@ -1,7 +1,9 @@
 import "./styles/global.css";
 import Router from "./routes/Router";
 import WhatsAppButton from "./components/WhatsAppButton";
-import ChatBot from "./components/ChatBot";
+// Corredín (ChatBot) OCULTO temporalmente mientras está en proceso de renovación.
+// NO eliminar: para volver a mostrarlo, descomentar el import y el <ChatBot /> de abajo.
+// import ChatBot from "./components/ChatBot";
 import { ClienteProvider } from "./context/ClienteContext";
 
 function App() {
@@ -9,7 +11,7 @@ function App() {
     <ClienteProvider>
       <Router />
       <WhatsAppButton />
-      <ChatBot />
+      {/* <ChatBot />  ← Corredín oculto temporalmente (en renovación) */}
     </ClienteProvider>
   );
 }

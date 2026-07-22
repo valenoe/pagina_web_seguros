@@ -1,5 +1,123 @@
 # Handoff — Migración CSS (App.css → archivos separados)
 
+---
+
+## ⭐ PENDIENTE IMPORTANTE — Notificación por correo de los formularios (contacto + cotización)
+
+**Fecha:** 2026-07-21.
+**Estado:** ⬜ NO implementado. Decidido hacerlo; falta ejecutar.
+
+**Problema:** hoy los dos formularios públicos **solo se guardan en la BD** — no avisan a nadie. Para enterarse de un lead o cotización hay que **entrar al panel admin** (`admin-web-seguros`, puerto 5174 → secciones "Leads" y "Cotizaciones") y mirar. **No llega ningún correo.** Confirmado en código: NO hay envío de email en el backend (sin `smtplib`/SMTP/SendGrid/Resend).
+
+- Contacto: `POST /contacto/` → tabla `web_leads_contacto` (`routers/contacto.py`).
+- Cotización: `POST /cotizaciones/` → tabla `web_cotizaciones` (`routers/cotizaciones.py`).
+- El admin las lee solo-lectura: `GET /admin/leads`, `GET /admin/cotizaciones` (`routers/admin.py:64-72`).
+
+**Objetivo:** que cada vez que entre un formulario nuevo, **llegue un aviso por correo** a la casilla que atienda la corredora.
+
+**Método acordado — Gmail SMTP con una cuenta NUEVA (gratis):**
+- **Por qué cuenta nueva:** nadie en la empresa tiene acceso al dominio `prietocorrea.cl`, así que NO se puede usar `segurosdigitales@prietocorrea.cl` como remitente. Se crea un Gmail dedicado (ej. `notificaciones.prietocorrea@gmail.com`).
+- Gmail SMTP es gratis (~500 correos/día, de sobra para avisos). Alternativas si algún día se quiere algo más pro: Resend / Brevo (también con plan gratis).
+- **Requisito de la cuenta nueva:** activar verificación en 2 pasos + generar una **"contraseña de aplicación"** (16 caracteres) → esa va en el `.env`, NO la clave normal. La contraseña de app es secreta; la pega la usuaria directo en `.env` (que está en `.gitignore`).
+
+**Trabajo a hacer (cuando la usuaria tenga la cuenta Gmail lista):**
+1. Servicio de correo en el backend (SMTP Gmail), enviando con `BackgroundTasks` para no frenar la respuesta del formulario.
+2. Disparar el aviso desde `crear_contacto` y `crear_cotizacion`.
+3. Variables nuevas en `.env` + `.env.example`: remitente (Gmail nuevo), contraseña de app, destinatario(s). Documentar en README.
+
+**Falta que la usuaria defina/entregue:** (a) el correo Gmail nuevo creado; (b) a qué casilla(s) deben llegar los avisos (puede ser la misma nueva y/o su `vchaparro`).
+
+---
+
+## ⭐ PENDIENTE IMPORTANTE — Analítica de visitas (Google Analytics 4)
+
+**Fecha:** 2026-07-21.
+**Estado:** ⬜ NO implementado. Decidido hacerlo con **Google Analytics 4**.
+
+**Problema:** hoy NO hay forma de saber cuántas personas visitan la página — no hay ninguna herramienta de analítica instalada (confirmado en código: sin `gtag`/GA/Plausible/Umami; las coincidencias en `Privacidad.jsx` y `package-lock.json` son texto/nombres, no tracking real).
+
+**Método elegido:** **Google Analytics 4** (gratis). Se evaluaron alternativas sin cookies (Cloudflare Web Analytics, Umami, Plausible); la usuaria **está OK con usar cookies**, así que se va con GA4 por el detalle completo (visitas, páginas top, países, dispositivos, tiempo real).
+
+**⚠️ Solo mide con la página PUBLICADA** (Droplet + dominio). En `localhost` no cuenta visitas reales → esta tarea va de la mano con el despliegue.
+
+**Trabajo a hacer:**
+1. **La usuaria** crea la propiedad en [analytics.google.com](https://analytics.google.com) (cuenta → propiedad Web con el dominio real) y obtiene el **ID de medición `G-XXXXXXXXXX`** (NO es secreto, va visible en el navegador).
+2. **Código:** pegar el fragmento oficial de gtag.js en el `<head>` de `frontend-web-seguros/index.html` con ese ID. (Opcional recomendado: usar `VITE_GA_ID` en `.env` para no trackear en dev; index.html de Vite no lee env directo → o se hardcodea el ID público, o se inyecta por plugin.)
+3. **Aviso de cookies:** como GA4 usa cookies, agregar un banner simple ("Usamos cookies para analizar el tráfico — Aceptar"). Pendiente de confirmar por la usuaria si se incluye.
+
+**Falta que la usuaria entregue:** el `G-XXXXXXXXXX` de la propiedad GA4 creada, y decidir si se agrega el banner de cookies.
+
+---
+
+## ⭐ PENDIENTE IMPORTANTE — Renovar el chatbot Corredín (imagen + nombre + leer de la BD)
+
+**Fecha:** 2026-07-21.
+**Estado:** ⬜ En renovación. El chatbot está **OCULTO temporalmente** (no eliminado) mientras se rehace.
+
+**Ocultamiento actual:** en `frontend-web-seguros/src/App.jsx` se comentaron el `import ChatBot` y el `<ChatBot />`. Para volver a mostrarlo, descomentar esas 2 líneas (hay nota en el código). **NO está roto — está oculto a propósito.** Todo el código sigue intacto: `components/ChatBot.jsx`, `styles/components/ChatBot.css`, `services/corredinService.js`, `knowledge/corredinKnowledge.js`.
+
+**Qué hay que cambiar al renovarlo:**
+1. **Imagen/avatar:** cambiar la imagen actual de Corredín por una adecuada.
+2. **Nombre:** ponerle un nombre apropiado (revisar si "Corredín" se mantiene o se cambia; hoy el nombre está en el JSX/estilos `corredin-*` y en los textos del widget).
+3. **Leer de la BD (lo principal):** hoy el bot responde con data **hardcodeada** en `src/knowledge/corredinKnowledge.js` (precios UF, coberturas, asistencias, exclusiones). Debe pasar a **leer del backend** — `corredinService.js` ya consume `GET /seguros/` (endpoint público de solo lectura) y tiene fallbacks listos, pero `GET /seguros/` hoy solo devuelve `nombre/descripcion/categoria/url_externa/flags`; falta la data rica.
+   - Esto está ligado al pendiente ya existente más abajo: **"🤖 Bot real desde la BD"** (agregar columnas a `web_seguros_catalogo`, actualizar modelo/schemas/admin CRUD, migrar la BD a mano — sin Alembic — y sembrar los datos de `corredinKnowledge.js`). Ver ese punto para el detalle técnico.
+
+**Nota:** la usuaria no está segura de si la imagen/avatar "sale" (se recupera) — verificar de dónde se está tomando hoy al retomar.
+
+---
+
+## PENDIENTE — Normalizar los campos por ramo (materia asegurada / datos por seguro)
+
+**Fecha:** 2026-07-21.
+
+**Objetivo:** que todas las pólizas/cotizaciones **de un mismo tipo de seguro** compartan la **misma estructura de campos**, sin crear una tabla distinta por seguro. Los campos específicos siguen viviendo en el **JSON flexible** que ya existe: `web_polizas.materia_asegurada` (póliza) y `web_cotizaciones.datos_adicionales` (cotización). La idea es una **plantilla por ramo** (config en código `data/materiaPorRamo.js`, o una tabla única `web_ramo_campos` editable desde el admin) que fije qué claves lleva cada ramo.
+
+**Situación actual:**
+- `formularios.md` (carpeta madre) define campos para: **Auto, Hogar, Mujer Segura, Garantías**. (Ver también DB / `datos_adicionales`.)
+- El **cotizador real es genérico**: hoy solo guarda `region` y `comuna` en `web_cotizaciones.datos_adicionales` (`Cotizador.jsx:105`), NO los campos por ramo. O sea, formularios.md es el plan, aún no implementado.
+
+**Clasificación por seguro (decisión de la usuaria, 2026-07-21):**
+- **Formulario/cotizador INTERNO → se desarrolla acá:** **Auto, Hogar, Mujer Segura, Garantías** (los que están en formularios.md).
+- **Cotizador EXTERNO / link → NO llegan datos a nuestro sistema:**
+  - **Mascotas** (link BCI), **RCI Argentina** (link BCI), **SOAP** (probablemente tendrá link), **Asistencia en Viaje** (cotizador propio, lo hizo otra persona; sus datos NO llegan acá).
+  - Para estos, los datos de la **PÓLIZA** (`web_polizas` / `materia_asegurada`) vendrán del **BROKER**. La usuaria buscará después qué campos trae cada uno y los pasará — **para poblar `web_polizas`, NO para el cotizador**.
+- **Accidentes Personales:** sin formulario ni link definido aún → TBD.
+
+**🕒 "De ahí vemos" (pendiente posterior, anotado a pedido de la usuaria):** verificar que los datos **coincidan / sean consistentes entre la COTIZACIÓN (`datos_adicionales`) y la PÓLIZA (`materia_asegurada`)** de un mismo ramo — que un hogar cotizado y su póliza emitida tengan los mismos campos. Se aborda después de definir las plantillas.
+
+---
+
+## PENDIENTE — Historial de teléfono/correo del cliente (fecha de modificación)
+
+**Fecha:** 2026-07-21. **Prioridad: media (idea a evaluar).**
+
+**Contexto:** en el **cotizador con sesión iniciada** (ya hecho): los datos NOT NULL de `web_clientes` (nombre, RUT, tipo_cliente) salen **bloqueados en plomo** (no editables). El **correo y el teléfono** (que viven en tablas aparte: `web_cliente_emails`, `web_cliente_telefonos`) **quedan editables**, por si el cliente cambió de número/correo; el valor que use se guarda en la **cotización** (columnas `email`/`telefono` de `web_cotizaciones`).
+
+**La idea a evaluar (planteada por la usuaria):**
+- Que el teléfono/correo del perfil se pueda **actualizar con el último usado**, y sobre todo que el cliente pueda después **ver qué números/correos ha usado y cuándo los cambió** (si pregunta "¿qué número tengo registrado?").
+- Para eso, `web_cliente_telefonos` y `web_cliente_emails` deberían llevar un campo **`fecha_modificacion`** (o una **tabla de historial** aparte), y la lógica tomaría el **último**.
+
+**Decisiones de diseño pendientes:**
+1. ¿El perfil se actualiza solo con lo último ingresado en una cotización, o el cotizador solo lo registra en la cotización sin tocar el perfil? (hoy: solo va a la cotización, no toca el perfil).
+2. ¿Basta con `fecha_modificacion` en la misma fila (se pierde el historial al sobrescribir), o se necesita **tabla de historial** para conservar los anteriores? → si se quiere "ver los números que ha usado", **hace falta historial** (no basta un solo campo que se sobrescribe).
+3. Alcance: schema (BD.sql + BD viva + host) + backend + UI en el Perfil para mostrar el historial.
+
+**Nota:** la usuaria mencionó que tiene **más ideas extras** sobre esto — anotarlas aquí cuando las pase.
+
+---
+
+## PENDIENTE MENOR (nice-to-have) — Mostrar el valor de la UF del día
+
+**Fecha:** 2026-07-21. **Prioridad: baja.**
+
+Los montos del portal (primas, cuotas, montos asegurados) están **en UF**. Estaría bueno que **en algún lado** aparezca el **valor de la UF del día**, para que el usuario pueda hacer la conversión mental si quiere.
+
+- **NO convertir las cuotas/primas a pesos** (decisión de la usuaria): la UF cambia día a día y mes a mes, así que mostrar "$" fijo al lado de cada cuota confunde. Solo mostrar la UF del día, informativo.
+- **Dónde podría ir:** en el detalle de póliza se **quitó** la nota `"Valores en UF (referenciales)."` (`poldet-nota` en `PolizaDetalle.jsx`) porque no gustaba; ese es un buen lugar para poner el "UF hoy: $XX.XXX" en su lugar. O un indicador chico en el header del portal.
+- **Cómo (sin dependencias nuevas):** endpoint backend `GET /indicadores/uf` que trae la UF de **mindicador.cl** (`https://mindicador.cl/api/uf`, gratis, sin API key) con `urllib`, la **cachea por día** (misma UF todo el día) y tiene **fallback** al último valor si la fuente falla. El front la pide una vez y la muestra. Fuente oficial alternativa: CMF (`api.cmfchile.cl`, requiere llave gratis).
+
+---
+
 ## Objetivo
 
 Dividir `frontend-web-seguros/src/App.css` (~5 900 líneas) en archivos CSS separados, uno por página o componente principal. El archivo único es inmanejable: cualquier cambio de estilo implica buscar en miles de líneas, genera conflictos de merge con el trabajo de Matías en la rama de frontend, y mezcla estilos del portal interno con los de la web pública.

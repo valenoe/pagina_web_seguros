@@ -7,6 +7,8 @@ import ReportarSiniestro from "./dashboard/ReportarSiniestro";
 import ExplorarSeguros from "./dashboard/ExplorarSeguros";
 import Perfil from "./dashboard/Perfil";
 import Notificaciones from "./dashboard/Notificaciones";
+import PolizaDetalle from "./dashboard/PolizaDetalle";
+import CotizacionExitosaContent from "../components/CotizacionExitosaContent";
 import {
   getMisAlertas,
   getMisBeneficiarios,
@@ -27,6 +29,7 @@ const VISTAS_PERMITIDAS = [
   "beneficiarios",
   "perfil",
   "notificaciones",
+  "cotizacion-exitosa",
 ];
 
 /**
@@ -78,12 +81,16 @@ function Dashboard() {
   //   /clientes/dashboard/:vista     → esa vista
   // `setVista` se conserva como API interna, pero ahora navega en vez de
   // mutar estado, así cada cambio de componente cambia también la ruta.
-  const { vista: vistaParam } = useParams();
+  const { vista: vistaParam, idPoliza } = useParams();
   const vistaSolicitada =
     vistaParam || obtenerVistaDesdeRuta(location) || "resumen";
-  const vista = VISTAS_PERMITIDAS.includes(vistaSolicitada)
-    ? vistaSolicitada
-    : "resumen";
+  // Al ver el detalle de una póliza, el marco se comporta como "Mis Seguros"
+  // (menú resaltado + saludo), y el contenido central es <PolizaDetalle/>.
+  const vista = idPoliza
+    ? "mis-seguros"
+    : VISTAS_PERMITIDAS.includes(vistaSolicitada)
+      ? vistaSolicitada
+      : "resumen";
 
   function setVista(nuevaVista) {
     navigate(
@@ -92,6 +99,18 @@ function Dashboard() {
         : `/clientes/dashboard/${nuevaVista}`,
     );
   }
+
+  // Secciones "especiales" (sub-páginas) que muestran un botón Volver en el
+  // header en vez del saludo: detalle de póliza y notificaciones.
+  const enPoliza = Boolean(idPoliza);
+  const enNotificaciones = vista === "notificaciones";
+  const seccionEspecial = enPoliza || enNotificaciones;
+  // "Volver atrás": regresa a donde estabas (estas sub-páginas se abren desde
+  // cualquier vista). Si no hay historial (entraste por URL directa), cae a Inicio.
+  const volverContexto = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/clientes/dashboard");
+  };
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
@@ -657,13 +676,24 @@ Estado: ${documento.estado}`);
             <span />
           </button>
 
-          {vista !== "perfil" && (
-            <div className="pc-header-greeting">
-              <div>
-                <h1>¡Hola, {nombreVisible}!</h1>
-                <p>Nos alegra tenerte de vuelta.</p>
+          {seccionEspecial ? (
+            <button
+              type="button"
+              className="pc-header-volver"
+              onClick={volverContexto}
+            >
+              <span aria-hidden="true">←</span>
+              Volver
+            </button>
+          ) : (
+            vista !== "perfil" && (
+              <div className="pc-header-greeting">
+                <div>
+                  <h1>¡Hola, {nombreVisible}!</h1>
+                  <p>Nos alegra tenerte de vuelta.</p>
+                </div>
               </div>
-            </div>
+            )
           )}
 
           <div className="pc-header-user" style={{ position: "relative" }}>
@@ -786,6 +816,8 @@ Estado: ${documento.estado}`);
           <p className="cargando">Cargando...</p>
         ) : error ? (
           <p className="form-error">{error}</p>
+        ) : idPoliza ? (
+          <PolizaDetalle />
         ) : (
           <>
             {vista === "resumen" && (
@@ -1052,6 +1084,12 @@ Estado: ${documento.estado}`);
 
             {vista === "notificaciones" && (
               <Notificaciones alertas={alertas} />
+            )}
+
+            {vista === "cotizacion-exitosa" && (
+              <div className="cotizacion-exitosa-portal">
+                <CotizacionExitosaContent />
+              </div>
             )}
           </>
         )}

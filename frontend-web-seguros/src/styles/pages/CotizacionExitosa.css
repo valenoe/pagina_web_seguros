@@ -1,0 +1,119 @@
+/* Página de Cotización Exitosa (clases cotizacion-*). Estilos propios + responsivo.
+   Antes vivían dentro de Cotizador.css; se separaron a su propia hoja. */
+
+.cotizacion-exitosa {
+  /* min-height (no height fija) + sin overflow:hidden: en pantallas bajas o
+     móvil horizontal el contenido crece/scrollea en vez de recortarse */
+  min-height: calc(100vh - 95px);
+  padding: clamp(20px, 5vw, 40px) clamp(16px, 7vw, 90px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, var(--pc-blue), var(--pc-text));
+}
+
+/* Dentro del portal: sin el fondo azul de página completa; solo centra la
+   tarjeta en el área de contenido del dashboard. */
+.cotizacion-exitosa-portal {
+  display: grid;
+  place-items: center;
+  padding: clamp(10px, 3vw, 30px) 0;
+}
+
+.cotizacion-card {
+  width: 100%;
+  max-width: 980px;
+  padding: clamp(28px, 5vw, 42px) clamp(24px, 6vw, 70px);
+  background: white;
+  border-radius: clamp(22px, 3vw, 34px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
+}
+
+.cotizacion-logo {
+  width: clamp(90px, 12vw, 120px); /* logo cuadrado (1080×1080) */
+  height: auto;
+  margin-bottom: 6px;
+}
+
+.success-icon {
+  width: clamp(52px, 8vw, 62px);
+  height: clamp(52px, 8vw, 62px);
+  background: var(--pc-orange);
+  color: white;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: clamp(28px, 4.5vw, 34px);
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.cotizacion-card > span {
+  background: rgba(244, 124, 32, 0.12);
+  color: var(--pc-orange);
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.cotizacion-card h1 {
+  max-width: 760px;
+  color: var(--pc-blue);
+  font-size: clamp(28px, 5vw, 50px);
+  line-height: 1.1;
+  margin-bottom: clamp(16px, 2.5vw, 26px);
+}
+
+.cotizacion-card p {
+  max-width: 620px;
+  color: #555;
+  font-size: clamp(16px, 2.2vw, 20px);
+  line-height: 1.6;
+  margin-bottom: clamp(26px, 4vw, 40px);
+}
+
+.cotizacion-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+
+.cotizacion-buttons a {
+  padding: clamp(13px, 2vw, 18px) clamp(22px, 4vw, 34px);
+  border-radius: 999px;
+  color: white;
+  font-size: clamp(15px, 1.8vw, 17px);
+  font-weight: 900;
+  transition: 0.2s;
+}
+
+.cotizacion-buttons a:first-child {
+  background: var(--pc-blue);
+}
+.cotizacion-buttons a:last-child {
+  background: var(--pc-orange);
+}
+.cotizacion-buttons a:hover {
+  filter: brightness(1.08);
+}
+
+/* Móvil: los botones se apilan a lo ancho (no gigantes en una sola fila). */
+@media (max-width: 600px) {
+  .cotizacion-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .cotizacion-buttons a {
+    width: 100%;
+    text-align: center;
+  }
+}

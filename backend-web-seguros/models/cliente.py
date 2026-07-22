@@ -37,7 +37,9 @@ class Cliente(Base):
     region = Column(String(100))
     comuna = Column(String(100))
     preferencias_notificacion = Column(Text)  # JSON con las 6 preferencias
-    foto_perfil = Column(String(500))
+    foto_perfil = Column(String(500))  # avatar recortado (lo que se muestra)
+    foto_original = Column(String(500))  # foto sin recortar, para re-encuadrar
+    foto_crop = Column(Text)  # JSON del encuadre {x,y,w,h} normalizado 0..1
     cliente_activo = Column(Boolean, default=True)
     fecha_registro = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime)

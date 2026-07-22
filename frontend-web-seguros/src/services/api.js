@@ -145,9 +145,12 @@ export async function cambiarPassword(token, data) {
   return res.json();
 }
 
-export async function subirFotoPerfil(token, archivo) {
+export async function subirFotoPerfil(token, archivo, crop) {
   const formData = new FormData();
-  formData.append("foto", archivo);
+  // `crop` (encuadre {x,y,w,h}) siempre; `foto` solo cuando es una imagen nueva
+  // (al re-ajustar una foto ya subida se recorta la original guardada en el server).
+  formData.append("crop", JSON.stringify(crop || {}));
+  if (archivo) formData.append("foto", archivo);
 
   const res = await fetch(`${API_URL}/portal/perfil/foto`, {
     method: "POST",

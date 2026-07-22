@@ -41,11 +41,9 @@ function PolizaDetalle() {
       .finally(() => setCargando(false));
   }, [idPoliza, navigate]);
 
-  const volver = () => navigate("/clientes/dashboard/mis-seguros");
-
   if (cargando) {
     return (
-      <div className="poldet-page">
+      <div className="poldet-page pc-panel pc-full-panel">
         <div className="poldet-wrap">
           <p className="poldet-cargando">Cargando póliza…</p>
         </div>
@@ -55,11 +53,8 @@ function PolizaDetalle() {
 
   if (error || !poliza) {
     return (
-      <div className="poldet-page">
+      <div className="poldet-page pc-panel pc-full-panel">
         <div className="poldet-wrap">
-          <button className="poldet-volver" onClick={volver}>
-            ← Volver a Mis Seguros
-          </button>
           <p className="poldet-error">{error || "Póliza no encontrada."}</p>
         </div>
       </div>
@@ -81,12 +76,8 @@ function PolizaDetalle() {
   const pagos = poliza.pagos || [];
 
   return (
-    <div className="poldet-page">
+    <div className="poldet-page pc-panel pc-full-panel">
       <div className="poldet-wrap">
-        <button className="poldet-volver" onClick={volver}>
-          ← Volver a Mis Seguros
-        </button>
-
         <header className="poldet-header">
           <span className="poldet-ramo">{poliza.ramo || poliza.seguro?.nombre || "Póliza"}</span>
           <h1>{poliza.seguro?.nombre || poliza.materia || "Póliza"}</h1>
@@ -127,7 +118,6 @@ function PolizaDetalle() {
                 ))}
               </tbody>
             </table>
-            <p className="poldet-nota">Valores en UF (referenciales).</p>
           </section>
         )}
 

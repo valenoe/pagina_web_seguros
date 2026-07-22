@@ -19,7 +19,6 @@ import LoginClientes from "../pages/LoginClientes";
 import RegistroClientes from "../pages/RegistroClientes";
 import Dashboard from "../pages/Dashboard";
 import DetalleSeguro from "../pages/DetalleSeguro";
-import PolizaDetalle from "../pages/dashboard/PolizaDetalle";
 
 /* Cotizaciones */
 import Cotizador from "../pages/Cotizador";
@@ -83,9 +82,12 @@ export default function Router() {
           element={<Dashboard />}
         />
 
+        {/* El detalle de póliza se renderiza DENTRO del marco del Dashboard
+            (menú + header), no como página suelta. Dashboard detecta :idPoliza
+            y muestra <PolizaDetalle/> en el área de contenido. */}
         <Route
           path="/clientes/dashboard/poliza/:idPoliza"
-          element={<PolizaDetalle />}
+          element={<Dashboard />}
         />
 
         <Route

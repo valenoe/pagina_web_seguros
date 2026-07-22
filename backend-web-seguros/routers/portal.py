@@ -1,7 +1,8 @@
+import json
 import uuid
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from database import get_db
 from dependencies import get_current_user
@@ -230,41 +231,91 @@ def mis_beneficiarios(
 
 @router.post("/perfil/foto", response_model=ClientePerfilOut)
 async def subir_foto_perfil(
-    foto: UploadFile = File(...),
+    crop: str = Form(...),
+    foto: UploadFile | None = File(None),
     cliente: Cliente = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    ext = Path(foto.filename or "").suffix.lower()
-    if ext not in EXTENSIONES_IMAGEN:
-        raise HTTPException(status_code=400, detail="Solo se permiten imágenes JPG, PNG o WEBP")
+    """
+    Guarda la foto de perfil con recorte ajustable.
 
-    contenido = await foto.read()
-    if len(contenido) > 5 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="La imagen no puede superar 5MB")
+    - `foto`: imagen nueva (opcional). Si viene, se guarda la ORIGINAL (sin
+      recortar, máx 1400px) para poder re-encuadrar después.
+    - `crop`: encuadre normalizado {x,y,w,h} (fracciones 0..1 de la original).
+      El avatar cuadrado (400px) se recorta EN EL SERVIDOR según ese encuadre.
 
-    # Redimensionar a máx 400px (avatar) y reencodear a WebP para que pese poco.
+    Al re-ajustar una foto ya subida, el front manda solo `crop` (sin `foto`) y
+    el recorte se hace sobre la original guardada.
+    """
     from io import BytesIO
     from PIL import Image, UnidentifiedImageError
+
+    # Encuadre normalizado {x,y,w,h} en fracciones 0..1 de la imagen original.
     try:
-        img = Image.open(BytesIO(contenido))
-        img = img.convert("RGBA")  # WebP soporta transparencia
-        img.thumbnail((400, 400))  # conserva proporción, solo achica
-        buffer = BytesIO()
-        img.save(buffer, format="WEBP", quality=80, method=6)
-        contenido = buffer.getvalue()
-    except (UnidentifiedImageError, OSError):
-        raise HTTPException(status_code=400, detail="No se pudo procesar la imagen")
+        c = json.loads(crop)
+        rx = min(max(float(c["x"]), 0.0), 1.0)
+        ry = min(max(float(c["y"]), 0.0), 1.0)
+        rw = min(max(float(c["w"]), 0.0), 1.0)
+        rh = min(max(float(c["h"]), 0.0), 1.0)
+    except (ValueError, TypeError, KeyError):
+        raise HTTPException(status_code=400, detail="Encuadre inválido")
+
+    # 1) Obtener la imagen ORIGINAL (recién subida, o la ya guardada).
+    if foto is not None:
+        ext = Path(foto.filename or "").suffix.lower()
+        if ext not in EXTENSIONES_IMAGEN:
+            raise HTTPException(status_code=400, detail="Solo se permiten imágenes JPG, PNG o WEBP")
+        contenido = await foto.read()
+        if len(contenido) > 8 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="La imagen no puede superar 8MB")
+        try:
+            original = Image.open(BytesIO(contenido)).convert("RGBA")
+        except (UnidentifiedImageError, OSError):
+            raise HTTPException(status_code=400, detail="No se pudo procesar la imagen")
+
+        # Guardar la original downsizeada (máx 1400px) para re-encuadrar luego.
+        base_img = original.copy()
+        base_img.thumbnail((1400, 1400))
+        buf_o = BytesIO()
+        base_img.save(buf_o, format="WEBP", quality=82, method=6)
+        nombre_orig = f"{uuid.uuid4()}_orig.webp"
+        (UPLOADS_DIR / "fotos" / nombre_orig).write_bytes(buf_o.getvalue())
+        if cliente.foto_original:
+            ant = UPLOADS_DIR / "fotos" / Path(cliente.foto_original).name
+            if ant.exists():
+                ant.unlink()
+        cliente.foto_original = f"/uploads/fotos/{nombre_orig}"
+    else:
+        # Re-encuadre: usar la original ya guardada.
+        if not cliente.foto_original:
+            raise HTTPException(status_code=400, detail="No hay foto original para ajustar")
+        ruta_orig = UPLOADS_DIR / "fotos" / Path(cliente.foto_original).name
+        if not ruta_orig.exists():
+            raise HTTPException(status_code=400, detail="La foto original no está disponible")
+        try:
+            base_img = Image.open(ruta_orig).convert("RGBA")
+        except (UnidentifiedImageError, OSError):
+            raise HTTPException(status_code=400, detail="No se pudo procesar la foto original")
+
+    # 2) Recortar el cuadrado según el encuadre → avatar 400px WebP.
+    W, H = base_img.size
+    side = int(round(min(rw * W, rh * H)))
+    side = max(1, min(side, W, H))
+    left = max(0, min(int(round(rx * W)), W - side))
+    top = max(0, min(int(round(ry * H)), H - side))
+    recorte = base_img.crop((left, top, left + side, top + side)).resize((400, 400))
+    buf = BytesIO()
+    recorte.save(buf, format="WEBP", quality=80, method=6)
 
     nombre_archivo = f"{uuid.uuid4()}.webp"
-    ruta = UPLOADS_DIR / "fotos" / nombre_archivo
-    ruta.write_bytes(contenido)
-
+    (UPLOADS_DIR / "fotos" / nombre_archivo).write_bytes(buf.getvalue())
     if cliente.foto_perfil:
-        ruta_anterior = UPLOADS_DIR / "fotos" / Path(cliente.foto_perfil).name
-        if ruta_anterior.exists():
-            ruta_anterior.unlink()
-
+        ant = UPLOADS_DIR / "fotos" / Path(cliente.foto_perfil).name
+        if ant.exists():
+            ant.unlink()
     cliente.foto_perfil = f"/uploads/fotos/{nombre_archivo}"
+
+    cliente.foto_crop = json.dumps({"x": rx, "y": ry, "w": rw, "h": rh})
     cliente.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(cliente)
@@ -276,11 +327,16 @@ def eliminar_foto_perfil(
     cliente: Cliente = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if cliente.foto_perfil:
-        ruta = UPLOADS_DIR / "fotos" / Path(cliente.foto_perfil).name
-        if ruta.exists():
-            ruta.unlink()
+    # Borra tanto el avatar recortado como la original y el encuadre.
+    for campo in ("foto_perfil", "foto_original"):
+        valor = getattr(cliente, campo)
+        if valor:
+            ruta = UPLOADS_DIR / "fotos" / Path(valor).name
+            if ruta.exists():
+                ruta.unlink()
     cliente.foto_perfil = None
+    cliente.foto_original = None
+    cliente.foto_crop = None
     cliente.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(cliente)

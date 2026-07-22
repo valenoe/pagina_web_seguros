@@ -14,6 +14,7 @@ class SeguroCatalogo(Base):
     url_externa = Column(String(500))
     seguro_activo = Column(Boolean, default=True)
     categoria = Column(String(50), nullable=False, default="Otros")
+    ramo = Column(String(50))  # slug del ramo (auto, hogar, …) → plantilla de campos
     orden_display = Column(Integer, default=0)
 
     cotizaciones = relationship("Cotizacion", back_populates="seguro")

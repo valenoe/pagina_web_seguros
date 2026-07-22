@@ -13,6 +13,7 @@ class SeguroIn(BaseModel):
     url_externa: Optional[str] = None
     seguro_activo: bool = True
     categoria: str = "Otros"
+    ramo: Optional[str] = None
     orden_display: int = 0
 
 
@@ -25,6 +26,7 @@ class SeguroAdminOut(BaseModel):
     url_externa: Optional[str]
     seguro_activo: bool
     categoria: str
+    ramo: Optional[str] = None
     orden_display: int
     model_config = {"from_attributes": True}
 

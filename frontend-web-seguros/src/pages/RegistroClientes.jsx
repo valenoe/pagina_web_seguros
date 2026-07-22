@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import PhoneInput from "../components/PhoneInput";
-import { registroCliente, verificarRutDisponible } from "../services/api";
+import { registroCliente, login, verificarRutDisponible } from "../services/api";
 import { regionesComunas } from "../data/regionesComunas";
 import "../styles/pages/RegistroOnboarding.css";
 
@@ -182,6 +182,7 @@ function RegistroClientes() {
 
     setEnviando(true);
 
+    // 1) Crear la cuenta
     try {
       await registroCliente({
         tipo_cliente: formulario.tipo_cliente,
@@ -196,9 +197,6 @@ function RegistroClientes() {
         comuna: formulario.comuna || null,
         password: formulario.password,
       });
-
-      setExito("¡Cuenta creada! Redirigiendo al login...");
-      setTimeout(() => navigate("/login-clientes"), 2000);
     } catch (err) {
       if (err.message?.includes("409")) {
         setError(
@@ -209,8 +207,43 @@ function RegistroClientes() {
           err.message || "Error al crear la cuenta. Intenta nuevamente.",
         );
       }
-    } finally {
       setEnviando(false);
+      return;
+    }
+
+    // 2) Auto-login: entrar directo al portal con el tipo (persona/empresa) recién creado
+    try {
+      const data = await login({
+        rut: formulario.rut,
+        tipo_cliente: formulario.tipo_cliente,
+        password: formulario.password,
+      });
+
+      const token = data?.access_token;
+      if (!token) throw new Error("No se recibió token");
+
+      // Purga espejos de perfil viejos (igual que en LoginClientes); el perfil
+      // lo carga el ClienteContext con getMiCuenta al entrar al portal.
+      [
+        "nombre_cliente",
+        "rut_cliente",
+        "correo_cliente",
+        "telefono_cliente",
+        "direccion_cliente",
+        "tipo_cliente",
+        "avatar_cliente",
+      ].forEach((k) => localStorage.removeItem(k));
+
+      localStorage.setItem("token", token);
+
+      setExito("¡Cuenta creada! Entrando a tu portal...");
+      // window.location para que el ClienteProvider se monte limpio y cargue getMiCuenta
+      window.location.href = "/clientes/dashboard";
+    } catch {
+      // La cuenta SÍ se creó, pero el auto-login falló: mandar al login manual.
+      setEnviando(false);
+      setExito("¡Cuenta creada! Redirigiendo al login...");
+      setTimeout(() => navigate("/login-clientes"), 1500);
     }
   }
 

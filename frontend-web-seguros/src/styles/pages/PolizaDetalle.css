@@ -1,31 +1,13 @@
-/* Página de detalle de póliza (standalone). Clases poldet-*. */
-
-.poldet-page {
-  min-height: 100vh;
-  background: #eef2fb;
-  padding: clamp(16px, 4vw, 40px) clamp(12px, 4vw, 40px);
-}
+/* Detalle de póliza. Se renderiza DENTRO del marco del Dashboard, dentro de una
+   tarjeta blanca (.pc-panel .pc-full-panel, igual que Mis Seguros). Clases poldet-*. */
 
 .poldet-wrap {
-  max-width: 900px;
-  margin: 0 auto;
   display: grid;
   gap: 18px;
 }
 
-.poldet-volver {
-  justify-self: start;
-  background: none;
-  border: 0;
-  color: var(--pc-blue, #07195a);
-  font-weight: 800;
-  font-size: 0.95rem;
-  cursor: pointer;
-  padding: 6px 0;
-}
-.poldet-volver:hover {
-  color: var(--pc-orange, #f47c20);
-}
+/* El botón "Volver" ya no vive aquí: está en el header del Dashboard
+   (.pc-header-volver), contextual a la sección. */
 
 .poldet-cargando,
 .poldet-error {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCliente } from "../../context/ClienteContext";
 import { cambiarPassword } from "../../services/api";
 import { regionesComunas } from "../../data/regionesComunas";
@@ -106,6 +106,16 @@ function Perfil() {
     if (cliente) setAvatarPerfil(cliente.foto || "");
   }, [cliente]);
 
+  // --- Recorte de foto (zoom + reposición; el recorte final lo hace el servidor) ---
+  const CROP_FRAME = 260; // px del cuadrito de recorte (coincide con el CSS)
+  const [recorteSrc, setRecorteSrc] = useState(null); // si != null el modal está abierto
+  const [recorteZoom, setRecorteZoom] = useState(1);
+  const [recorteOffset, setRecorteOffset] = useState({ x: 0, y: 0 });
+  const [recorteNat, setRecorteNat] = useState({ w: 0, h: 0 }); // tamaño natural de la imagen
+  const recorteFileRef = useRef(null); // File de la imagen nueva (null al re-ajustar)
+  const recorteCropInicialRef = useRef(null); // encuadre a aplicar al abrir (re-ajuste)
+  const recorteDragRef = useRef(null);
+
   const [editandoPerfil, setEditandoPerfil] = useState(false);
   const [modalClaveAbierto, setModalClaveAbierto] = useState(false);
   const [claveActual, setClaveActual] = useState("");
@@ -179,32 +189,178 @@ function Perfil() {
     }
   };
 
-  const manejarAvatar = async (event) => {
-    const archivo = event.target.files?.[0];
-    if (!archivo) return;
-
-    const anterior = avatarPerfil;
-    // vista previa inmediata mientras se sube al servidor
-    setAvatarPerfil(URL.createObjectURL(archivo));
-    mostrarMensaje("Subiendo foto...", "info", 10000);
-
+  // Sube al servidor la imagen (o solo el encuadre, si `file` es null) y refresca.
+  // El servidor recorta según `crop` y devuelve el avatar final → el contexto
+  // actualiza `cliente` y el useEffect de arriba pone la URL del server en el avatar.
+  const subirFotoConEncuadre = async (file, crop) => {
+    mostrarMensaje("Guardando foto...", "info", 10000);
     try {
-      // subirFoto (contexto) hace el POST y refresca `cliente` → el useEffect
-      // de arriba pone la URL final del servidor en el avatar.
-      await subirFoto(archivo);
+      await subirFoto(file, crop);
       mostrarMensaje(
         "Foto de perfil actualizada correctamente.",
         "success",
         3600,
       );
     } catch (error) {
-      setAvatarPerfil(anterior);
       mostrarMensaje(
-        `No se pudo subir la foto. ${error.message || "Revisa tu conexión con el servidor."}`,
+        `No se pudo guardar la foto. ${error.message || "Revisa tu conexión con el servidor."}`,
         "error",
         5000,
       );
     }
+  };
+
+  // Deja el modal de recorte en su estado inicial y lo abre con `src`.
+  // `file`: File de la imagen nueva (null si se re-ajusta la ya guardada).
+  // `cropInicial`: encuadre guardado a aplicar al cargar (re-ajuste).
+  const abrirRecorte = (src, { file = null, cropInicial = null } = {}) => {
+    recorteFileRef.current = file;
+    recorteCropInicialRef.current = cropInicial;
+    setRecorteZoom(1);
+    setRecorteOffset({ x: 0, y: 0 });
+    setRecorteNat({ w: 0, h: 0 });
+    setRecorteSrc(src);
+  };
+
+  // Al elegir un archivo NO se sube: se abre el modal de recorte para ajustarlo.
+  const manejarAvatar = (event) => {
+    const archivo = event.target.files?.[0];
+    event.target.value = ""; // permite volver a elegir el mismo archivo
+    if (!archivo) return;
+    abrirRecorte(URL.createObjectURL(archivo), { file: archivo });
+  };
+
+  // Reabre el recorte con la foto ORIGINAL guardada, en el encuadre previo, para
+  // poder re-encuadrar libremente (mover, alejar). Si es una foto vieja sin
+  // original guardada, cae a la versión recortada (edición limitada).
+  const editarFotoActual = () => {
+    const src = cliente?.fotoOriginal || avatarPerfil;
+    if (!src) return;
+    abrirRecorte(src, { cropInicial: cliente?.crop || null });
+  };
+
+  const cerrarRecorte = () => {
+    setRecorteSrc((src) => {
+      // Solo revocar los objectURL propios (los de archivo elegido); la foto del
+      // servidor es una URL normal y no se debe revocar.
+      if (src?.startsWith("blob:")) URL.revokeObjectURL(src);
+      return null;
+    });
+    recorteDragRef.current = null;
+  };
+
+  // Limita el desplazamiento para que la imagen SIEMPRE cubra el cuadrito.
+  const limitarOffset = (x, y, zoom, nat = recorteNat) => {
+    if (!nat.w || !nat.h) return { x: 0, y: 0 };
+    const escala = (CROP_FRAME / Math.min(nat.w, nat.h)) * zoom;
+    const maxX = Math.max(0, (nat.w * escala - CROP_FRAME) / 2);
+    const maxY = Math.max(0, (nat.h * escala - CROP_FRAME) / 2);
+    return {
+      x: Math.min(maxX, Math.max(-maxX, x)),
+      y: Math.min(maxY, Math.max(-maxY, y)),
+    };
+  };
+
+  const onRecorteImgLoad = (e) => {
+    const nat = { w: e.target.naturalWidth, h: e.target.naturalHeight };
+    setRecorteNat(nat);
+
+    // Si venimos de "Ajustar foto", reconstruir zoom/offset desde el encuadre
+    // guardado (fracciones normalizadas) para reabrir en el mismo encuadre.
+    const cropIni = recorteCropInicialRef.current;
+    recorteCropInicialRef.current = null; // se aplica una sola vez
+    if (cropIni && cropIni.w && cropIni.h && nat.w && nat.h) {
+      const sSize = cropIni.w * nat.w;
+      const zoom = Math.min(4, Math.max(1, Math.min(nat.w, nat.h) / sSize));
+      const escala = (CROP_FRAME / Math.min(nat.w, nat.h)) * zoom;
+      const dispW = nat.w * escala;
+      const dispH = nat.h * escala;
+      const left = -(cropIni.x * nat.w) * escala;
+      const top = -(cropIni.y * nat.h) * escala;
+      setRecorteZoom(zoom);
+      setRecorteOffset(
+        limitarOffset(
+          left - (CROP_FRAME - dispW) / 2,
+          top - (CROP_FRAME - dispH) / 2,
+          zoom,
+          nat,
+        ),
+      );
+    } else {
+      setRecorteZoom(1);
+      setRecorteOffset({ x: 0, y: 0 });
+    }
+  };
+
+  const cambiarZoom = (nuevoZoom) => {
+    const z = Math.min(4, Math.max(1, nuevoZoom));
+    setRecorteZoom(z);
+    setRecorteOffset((o) => limitarOffset(o.x, o.y, z));
+  };
+
+  const onRecortePointerDown = (e) => {
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    recorteDragRef.current = {
+      px: e.clientX,
+      py: e.clientY,
+      ox: recorteOffset.x,
+      oy: recorteOffset.y,
+    };
+  };
+
+  const onRecortePointerMove = (e) => {
+    const d = recorteDragRef.current;
+    if (!d) return;
+    setRecorteOffset(
+      limitarOffset(d.ox + (e.clientX - d.px), d.oy + (e.clientY - d.py), recorteZoom),
+    );
+  };
+
+  const onRecortePointerUp = () => {
+    recorteDragRef.current = null;
+  };
+
+  // Calcula el encuadre normalizado (fracciones 0..1 de la imagen) y lo envía.
+  // El recorte real lo hace el servidor sobre la imagen original.
+  const aplicarRecorte = async () => {
+    if (!recorteNat.w || !recorteNat.h) return;
+
+    const escala = (CROP_FRAME / Math.min(recorteNat.w, recorteNat.h)) * recorteZoom;
+    const dispW = recorteNat.w * escala;
+    const dispH = recorteNat.h * escala;
+    const left = (CROP_FRAME - dispW) / 2 + recorteOffset.x;
+    const top = (CROP_FRAME - dispH) / 2 + recorteOffset.y;
+    const sSize = CROP_FRAME / escala;
+    const clamp01 = (n) => Math.min(1, Math.max(0, n));
+    const crop = {
+      x: clamp01(-left / escala / recorteNat.w),
+      y: clamp01(-top / escala / recorteNat.h),
+      w: clamp01(sSize / recorteNat.w),
+      h: clamp01(sSize / recorteNat.h),
+    };
+
+    // Archivo a enviar: la imagen nueva. Si es una foto vieja sin original
+    // guardada, se manda la actual como semilla (misma-origen vía proxy /api).
+    let file = recorteFileRef.current;
+    if (!file && !cliente?.fotoOriginal && recorteSrc) {
+      try {
+        const blob = await fetch(recorteSrc).then((r) => r.blob());
+        file = new File([blob], "foto.webp", {
+          type: blob.type || "image/webp",
+        });
+      } catch {
+        mostrarMensaje(
+          "No se pudo preparar la imagen. Sube una foto nueva.",
+          "error",
+          5000,
+        );
+        return;
+      }
+    }
+
+    cerrarRecorte();
+    // file null = re-ajuste: el servidor recorta la original ya guardada.
+    await subirFotoConEncuadre(file, crop);
   };
 
   const limpiarAvatar = async () => {
@@ -388,6 +544,106 @@ function Perfil() {
           </div>
         )}
 
+        {recorteSrc &&
+          (() => {
+            const escala =
+              recorteNat.w && recorteNat.h
+                ? (CROP_FRAME / Math.min(recorteNat.w, recorteNat.h)) * recorteZoom
+                : recorteZoom;
+            const dispW = recorteNat.w * escala;
+            const dispH = recorteNat.h * escala;
+            const left = (CROP_FRAME - dispW) / 2 + recorteOffset.x;
+            const top = (CROP_FRAME - dispH) / 2 + recorteOffset.y;
+            return (
+              <div className="perfil-modal-overlay" onClick={cerrarRecorte}>
+                <div
+                  className="perfil-modal perfil-crop-modal"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="perfil-modal-head">
+                    <div>
+                      <h3 className="perfil-modal-title">Ajusta tu foto</h3>
+                      <p className="perfil-modal-sub">
+                        Arrástrala para centrar y usa el control para acercar o
+                        alejar.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="perfil-modal-close"
+                      onClick={cerrarRecorte}
+                      aria-label="Cerrar"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div
+                    className="perfil-crop-frame"
+                    onPointerDown={onRecortePointerDown}
+                    onPointerMove={onRecortePointerMove}
+                    onPointerUp={onRecortePointerUp}
+                    onPointerCancel={onRecortePointerUp}
+                  >
+                    <img
+                      src={recorteSrc}
+                      alt="Ajuste de foto"
+                      draggable={false}
+                      onLoad={onRecorteImgLoad}
+                      style={{
+                        width: `${dispW}px`,
+                        height: `${dispH}px`,
+                        transform: `translate(${left}px, ${top}px)`,
+                      }}
+                    />
+                  </div>
+
+                  <div className="perfil-crop-zoom">
+                    <button
+                      type="button"
+                      onClick={() => cambiarZoom(recorteZoom - 0.2)}
+                      aria-label="Alejar"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="range"
+                      min="1"
+                      max="4"
+                      step="0.01"
+                      value={recorteZoom}
+                      onChange={(e) => cambiarZoom(parseFloat(e.target.value))}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => cambiarZoom(recorteZoom + 0.2)}
+                      aria-label="Acercar"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <div className="perfil-crop-actions">
+                    <button
+                      type="button"
+                      className="perfil-btn-ghost"
+                      onClick={cerrarRecorte}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="perfil-btn-naranja"
+                      onClick={aplicarRecorte}
+                    >
+                      Aplicar y subir
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
         <section className="perfil-hero">
           <div className="perfil-hero-info">
             <div className="perfil-avatar">
@@ -412,6 +668,16 @@ function Perfil() {
               {avatarPerfil ? "Cambiar foto" : "Subir foto"}
               <input type="file" accept="image/*" onChange={manejarAvatar} />
             </label>
+
+            {avatarPerfil && (
+              <button
+                type="button"
+                className="perfil-btn-ghost"
+                onClick={editarFotoActual}
+              >
+                Ajustar foto
+              </button>
+            )}
 
             {avatarPerfil && (
               <button

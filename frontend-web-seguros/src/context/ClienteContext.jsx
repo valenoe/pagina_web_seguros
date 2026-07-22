@@ -33,6 +33,8 @@ function normalizar(cuenta) {
     fecha_nacimiento: cuenta.fecha_nacimiento || "",
     preferencias: cuenta.preferencias_notificacion || null,
     foto: fotoUrl(cuenta.foto_perfil),
+    fotoOriginal: fotoUrl(cuenta.foto_original), // sin recortar, para re-encuadrar
+    crop: cuenta.foto_crop || null, // encuadre guardado {x,y,w,h}
   };
 }
 
@@ -74,10 +76,11 @@ export function ClienteProvider({ children }) {
     return norm;
   }, []);
 
-  // Sube la foto (POST /portal/perfil/foto) y refresca.
-  const subirFoto = useCallback(async (archivo) => {
+  // Sube/ajusta la foto (POST /portal/perfil/foto) y refresca.
+  // `archivo` puede ser null al re-ajustar (el server recorta la original guardada).
+  const subirFoto = useCallback(async (archivo, crop) => {
     const token = localStorage.getItem("token");
-    const cuenta = await subirFotoPerfil(token, archivo);
+    const cuenta = await subirFotoPerfil(token, archivo, crop);
     const norm = normalizar(cuenta);
     setCliente(norm);
     return norm;

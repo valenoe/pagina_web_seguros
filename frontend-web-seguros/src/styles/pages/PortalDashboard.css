@@ -146,6 +146,36 @@ PORTAL CLIENTE â€” DASHBOARD DEFINITIVO
   margin-bottom: 16px;
 }
 
+/* Botón "Volver" contextual del header: aparece solo en sub-páginas
+   (detalle de póliza, notificaciones), en el lugar del saludo. */
+.pc-header-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--pc-border);
+  background: #ffffff;
+  color: var(--pc-blue);
+  font-weight: 850;
+  font-size: 15px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(7, 25, 90, 0.06);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.pc-header-volver:hover {
+  background: #f4f7fd;
+  color: var(--pc-blue-dark);
+}
+
+.pc-header-volver span {
+  font-size: 17px;
+  line-height: 1;
+}
+
 /* Botón hamburguesa: oculto en desktop, visible solo en el cajón móvil (≤1000px) */
 .pc-menu-toggle {
   display: none;

@@ -34,15 +34,17 @@ class ClientePerfilOut(BaseModel):
     comuna: Optional[str] = None
     preferencias_notificacion: Optional[dict] = None
     foto_perfil: Optional[str] = None
+    foto_original: Optional[str] = None
+    foto_crop: Optional[dict] = None
     telefonos: list[TelefonoOut] = []
     emails: list[EmailOut] = []
 
     model_config = {"from_attributes": True}
 
-    @field_validator("preferencias_notificacion", mode="before")
+    @field_validator("preferencias_notificacion", "foto_crop", mode="before")
     @classmethod
-    def parsear_preferencias(cls, v):
-        # en la BD se guarda como texto JSON; se devuelve como dict
+    def parsear_json(cls, v):
+        # en la BD se guardan como texto JSON; se devuelven como dict
         if isinstance(v, str):
             try:
                 return json.loads(v)

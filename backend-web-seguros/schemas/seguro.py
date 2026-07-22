@@ -9,6 +9,7 @@ class SeguroOut(BaseModel):
     permite_tradicional: bool
     url_externa: str | None
     categoria: str
+    ramo: str | None = None
     seguro_activo: bool
     orden_display: int
 

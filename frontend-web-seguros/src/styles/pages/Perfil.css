@@ -482,6 +482,79 @@
   color: var(--pc-blue);
 }
 
+/* ── Recorte de foto (modal de ajuste antes de subir) ── */
+.perfil-crop-modal {
+  width: min(340px, 100%);
+}
+
+/* Cuadrito de recorte: mismo look (cuadrado redondeado) que .perfil-avatar */
+.perfil-crop-frame {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  max-width: 100%;
+  margin: 2px auto 0;
+  border-radius: 40px;
+  overflow: hidden;
+  background: #eef1f7;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  box-shadow: 0 0 0 1px rgba(3, 19, 68, 0.08) inset;
+}
+
+.perfil-crop-frame:active {
+  cursor: grabbing;
+}
+
+.perfil-crop-frame img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.perfil-crop-zoom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 4px 2px;
+}
+
+.perfil-crop-zoom input[type="range"] {
+  flex: 1;
+  accent-color: var(--pc-orange, #f28c1d);
+  cursor: pointer;
+}
+
+.perfil-crop-zoom button {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 10px;
+  background: #f5f7fb;
+  color: var(--pc-blue);
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.perfil-crop-zoom button:hover {
+  background: #e9eef7;
+}
+
+.perfil-crop-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 /* ── Responsivo ── */
 
 /* ≤1000px: la sidebar pasa a cajón → el contenido ocupa todo el ancho.
