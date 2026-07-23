@@ -2,6 +2,34 @@
 
 ---
 
+## 🔴 URGENTE — Conexión a la BD se cae por inactividad ("MySQL server has gone away")
+
+**Fecha:** 2026-07-23. **Prioridad: URGENTE (bug en PRODUCCIÓN).**
+
+**Síntoma (visto en los logs del server, `journalctl -u backend-seguros`):**
+```
+sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError)
+(2006, "MySQL server has gone away (SSLEOFError(8, 'EOF occurred ...')))")
+```
+Aparece tras periodos sin tráfico (ej. de madrugada): la primera petición al backend revienta.
+
+**Causa:** `backend-web-seguros/database.py` hace `engine = create_engine(DATABASE_URL)` **sin protección de pool**. La BD cierra las conexiones ociosas (su `wait_timeout`), pero SQLAlchemy reutiliza esa conexión ya muerta → error. Es intermitente y molesto en prod.
+
+**Fix (1 línea, bajo riesgo) — en `backend-web-seguros/database.py`:**
+```python
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,   # verifica la conexión antes de usarla; reconecta si está muerta
+    pool_recycle=1800,    # recicla conexiones de más de 30 min (antes de que caduquen)
+)
+```
+
+**Desplegar:** commit + push a main → en el server `git pull origin main` + `sudo systemctl restart backend-seguros`. (No requiere cambios de BD.)
+
+**Contexto del deploy (server DigitalOcean, para el próximo chat):** el proyecto está en `/var/www/pagina_web_seguros`, rama `main`. Backend con systemd (`backend-seguros.service`), uvicorn en `127.0.0.1:8000`, Apache en 80/443 (vhost `web-seguros.conf`), BD `seguros_web_db`. Actualizar = `git pull` + (si hay cambios de schema) ALTERs a mano en `sudo mysql seguros_web_db` + `systemctl restart backend-seguros` + `npm run build` en `frontend-web-seguros/`. Al 2026-07-23 el server quedó actualizado a `490d6af`.
+
+---
+
 ## ⭐ PENDIENTE IMPORTANTE — Notificación por correo de los formularios (contacto + cotización)
 
 **Fecha:** 2026-07-21.
